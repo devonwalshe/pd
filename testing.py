@@ -57,10 +57,10 @@ class PipelineDiscovery(object):
   
   #### PRIVATE #####
 def import_datasets():
-  df1 = pd.read_excel('data/case_1_2014.xlsx')
-  df2 = pd.read_excel('data/case_1_2019.xlsx')
-  df1.columns = columns
-  df2.columns = columns
+  df1 = pd.read_excel('data/case_1_2014.xlsx', names=columns)
+  df2 = pd.read_excel('data/case_1_2019.xlsx', names=columns)
+  df1.index.name = "A"
+  df2.index.name = "B"
   return(df1, df2)
   
 def get_welds(df):
@@ -111,6 +111,51 @@ indexer = recordlinkage.Index()
 indexer.block(on=['feature', 'ds_weld_id'])
 index = indexer.index(df1_features, df2_features)
 
+### remove when orientation doesn't match
+def remove_orientation(index, df1, df2):
+  for i in range(len(index)):
+    a_idx = index[i][0]
+    b_idx = index[i][1]
+    df1.iloc[a_idx].orientation
+    
+  
+
 comp = recordlinkage.Compare()
-comp.numeric('ds_weld_dist', 'ds_weld_dist', method='gauss')
+comp.numeric('ds_weld_dist', 'ds_weld_dist', method='gauss', missing_value=np.NaN)
+comp.numeric('us_weld_dist', 'us_weld_dist', method='gauss', missing_value=np.NaN)
+comp.numeric('orientation', 'orientation', method='gauss', missing_value=np.NaN)
 results = comp.compute(index, df1_features, df2_features)
+results.index = results.index.rename(['A', 'B'])
+results['match_score'] = results.iloc[:,0:results.shape[1]].mean(axis=1)
+results.to_csv('data/test.csv')
+
+### Select matches based on some random value plucked out of histogram and an eyeball dataset
+matches = results[results['match_score'] >= .92]
+
+### This currently isn't working for when data has orientation on one side and not the other
+### Before generating match_score - check if both datasets have data or not.
+### check results more carefully - don't feel bad if everything doesn't match correctly!
+
+### Generate comparison dataset
+def gen_comparison(results, df1, df2):
+  results = results.iloc[:,-1].to_frame().join(df1,how='inner').join(df2, how='inner', lsuffix='_A', rsuffix='_B')
+  return(results)
+
+
+
+### gen eyeball ds
+def gen_eyeball(results, df1, df2):
+  ncol = df1.shape[1] + 1 # to account for additional results metric
+  eyeballer = []
+  columns = df1.columns.tolist()
+  results_sorted = results.sort_values(0, ascending=False)
+  for i in range(results_sorted.shape[0]):
+    eyeballer += [results_sorted.iloc[i].tolist() + df1.iloc[results_sorted.index.get_level_values('A')[i]].tolist()]
+    eyeballer += [results_sorted.iloc[i].tolist() + df2.iloc[results_sorted.index.get_level_values('B')[i]].tolist()]
+    eyeballer += [["" for i in range(ncol)]]
+  df = pd.DataFrame(eyeballer, columns = ["match_score"] + columns)
+  return(df)
+  
+## remove 
+
+    
