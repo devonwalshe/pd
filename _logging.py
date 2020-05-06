@@ -1,7 +1,7 @@
 import logging, time, functools
 
 
-logging.basicConfig(format='%(asctime)s %(message)s', datefmt='%Y-%m-%d %H:%M:%S.%f')
+logging.basicConfig(format='%(asctime)s.%(msecs)03d | %(levelname)s | %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 ### set up logger
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)

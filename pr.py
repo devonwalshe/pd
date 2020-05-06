@@ -5,31 +5,35 @@ import numpy as np
 from math import radians, cos, sin, asin, sqrt, atan2, degrees
 from _logging import timed, logger
 
+columns = ['id', 'wc', 'feature', 'us_weld_dist', 'wt', 'depth', 'length', 'width', 'orientation', 'pressure_1', 'pressure_2', 'joint_length', 'lat', 'lng', 'comments']
+
 ### Describes a PIG's run through a pipeline on a certain date
 class PigRun(object):
-  def __init__(self, path, run_label="A"):
-    self.columns = ['id', 'wc', 'feature', 'us_weld_dist', 'wt', 'depth', 'length', 'width', 'orientation', 'pressure_1', 'pressure_2', 'joint_length', 'lat', 'lng', 'comments']
-    self.path = path
-    self.run_label = run_label
-    self.raw_df = self.import_run()
-    self.df = self.process_raw_df()
+  def __init__(self, init_columns = columns):
+    self.init_columns = init_columns
+    self.init_df = None
+    self.file_path = None
     pass
     
+  def init_run(self, path, label='A'):
+    '''
+    sets up the initial dataframe
+    '''
+    ### Import
+    raw_df = pd.read_excel(path, names=self.init_columns, sheet_name="Original")
+    raw_df.index.name = label
+    self.raw_df = raw_df
+    ### Process
+    init_df = reduce(lambda result, function: function(result), (self.join_welds, self.calculate_weld_distance, 
+                                                                 self.add_sort_ids, self.add_haversine, self.add_orientation_coords), 
+                                              self.raw_df)
+    ### sets the attribute for the initial data frame
+    self.init_df = init_df
+    return(self)
+    
   def import_run(self):
-    df = pd.read_excel(self.path, names=self.columns, sheet_name="Original")
-    df.index.name = self.run_label
+
     return(df)
-  
-  def process_raw_df(self):
-    '''
-    processing pipeline for a pig run
-    '''
-    ### TODO - add some data cleaning - orientations etc
-    processed_df = reduce(lambda result, function: function(result), (self.join_welds, self.calculate_weld_distance, 
-                                                                      self.add_sort_ids, self.add_haversine), 
-                                                   self.raw_df)
-    return(processed_df)
-  
   
   def get_welds(self, df):
     '''
@@ -41,14 +45,14 @@ class PigRun(object):
     for i in range(0,rows):
       if i == 0: 
         us_weld = df.iloc[widx[widx >= i].min()].id
-        ds_weld = np.NaN
+        # ds_weld = np.NaN
       elif i == rows - 1:
         us_weld = np.NaN
-        ds_weld = df.iloc[widx[widx <= i].max()].id
+        # ds_weld = df.iloc[widx[widx <= i].max()].id
       else:
         us_weld = df.iloc[widx[widx >= i].min()].id
-        ds_weld = df.iloc[widx[widx <= i].max()].id
-      ids.append([ds_weld, us_weld])
+        # ds_weld = df.iloc[widx[widx <= i].max()].id
+      ids.append(us_weld)
     return(ids)
   
   @timed(logger)
@@ -56,19 +60,22 @@ class PigRun(object):
     '''
     join weld position and subtract from feature position to get distance from upstream weld
     '''
-    welds = pd.DataFrame(self.get_welds(df), columns=['ds_weld_id', 'us_weld_id'])
+    welds = pd.DataFrame(self.get_welds(df), columns=['us_weld_id'])
     welds = welds.astype('object')
-    
     return(df.join(welds, how='left'))
 
+  @timed(logger)
   def calculate_weld_distance(self, df):
     '''
     join weld position and subtract from feature position to get distance from upstream weld
     '''
-    us_weld_join = df.merge(df[(df.feature == "WELD")][['id','wc']], left_on='us_weld_id', right_on='id', how='left')
-    ds_weld_join = df.merge(df[(df.feature == "WELD")][['id','wc']], left_on='ds_weld_id', right_on='id', how='left')
-    df['us_weld_dist'] = us_weld_join['wc_y'] - us_weld_join['wc_x']
-    df['ds_weld_dist'] = us_weld_join['wc_x'] - ds_weld_join['wc_y']
+    us_weld_join = df.merge(df[(df.feature == "WELD")][['id','wc','lat', 'lng']], left_on='us_weld_id', right_on='id', how='left')
+    df['us_weld_dist_coord'] = [self.calculate_haversine_dist(lng1, lat1 , lng2, lat2, 'm') for 
+                                lng1, lat1, lng2, lat2 in 
+                                zip(us_weld_join.lng_x, us_weld_join.lat_x, us_weld_join.lng_y, us_weld_join.lat_y)]
+    # ds_weld_join = df.merge(df[(df.feature == "WELD")][['id','wc']], left_on='ds_weld_id', right_on='id', how='left')
+    df['us_weld_dist_wc'] = us_weld_join['wc_y'] - us_weld_join['wc_x']
+    # df['ds_weld_dist'] = us_weld_join['wc_x'] - ds_weld_join['wc_y']
     return(df)
   
   @timed(logger)  
@@ -124,13 +131,19 @@ class PigRun(object):
     reverse_bearing = (initial_bearing - 180) % 360
     return(compass_bearing, reverse_bearing)
     
-  def calculate_haversine_dist(self, lng1, lat1, lng2, lat2):
+  def calculate_haversine_dist(self, lng1, lat1, lng2, lat2, unit='km'):
     """
-    'Single-point' Haversine: Calculates the great circle distance
+    Haversine: Calculates the great circle distance
     between a to points
-    """
     
-    r = 6371 # Radius of earth in kilometers. Use 3956 for miles
+    a = sin²(Δφ/2) + cos φ1 ⋅ cos φ2 ⋅ sin²(Δλ/2)
+    """
+    # Radius of earth in kilometers. Use 3956 for miles
+    if unit == "m":
+      r = 6371000
+    elif unit == "km":
+      r = 6371
+    ### Set points to radians  
     lon1, lat1, lon2, lat2 = map(radians, [lng1, lat1, lng2, lat2])
     # haversine formula 
     dlon = lon2 - lon1 
@@ -138,8 +151,35 @@ class PigRun(object):
     a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
     c = 2 * asin(sqrt(a)) 
     # Return
-    # should be (53, -0.003810847009248608, 0.007785977672197353, -1.8160105675190676, 0.5640252050785214, -1.8198214145283163, 0.5718111827507187)
     return(c*r)
+  
+  def add_orientation_coords(self, df):
+    '''
+    add orientation coordinate
+    '''
+    df[['orientation_x', 'orientation_y']] = pd.DataFrame([self.calculate_distance(theta) for theta in df.orientation])
+    return(df)
+  
+  def calculate_distance(self, theta):
+    '''
+    calculate distance between two orientations
+    
+    parametric equation for a circle:
+      x = r * cos(a)
+      y = r * sin(a)
+    where cx,cy = origin and a is in radians
+    '''
+    ### return if not a degree we can work with
+    if theta == np.nan:
+      return(np.NaN)
+    ### Set radius of pipe to arbitrary distance
+    r = 15
+    ### Angles to radians
+    a  = radians(theta)
+    ### Degrees to x/y
+    x,y = (r * cos(a), r * sin(a))
+    
+    return(x,y)
   
   def add_sort_ids(self, df):
     '''
