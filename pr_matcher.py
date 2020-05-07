@@ -2,6 +2,7 @@ import recordlinkage
 import pandas as pd
 import numpy as np
 from math import sin, cos, atan2, asin, radians, degrees
+from _logging import logger, timed
 
 ### Organise the work
 class PigRunMatcher(object):
@@ -12,29 +13,22 @@ class PigRunMatcher(object):
     self.df2 = pr2.init_df
     self.matched_welds = None
     
-  def match_pipeline(self):
+  @timed(logger)
+  def match_runs(self):
     ### Step one - match welds and update original dataframes
     matched_welds = self.match_welds()
     ### Step two - add match information to datasets
     self.map_runs(matched_welds)
-    ### Step three - match features that aren't a weld, dent or
+    ### Step three - match features that aren't a weld, dent or mill anomalys
     matched_features = self.match_features()
-    ### Setp four - match welds, dents and mill anomaly's
+    ### Step four - match welds, dents and mill anomaly's
     # self.match_features()
     ### Step five - assemble final dataset
-    unmatched_A = df1[df1.feature != "WELD"].drop(matched_features.A)
-    unmatched_B = df2[df2.feature != "WELD"].drop(matched_features.B)
-    ### Add left and right columns 
-    empty_A = pd.DataFrame(None, index=unmatched_A.index, columns = self.df1.columns)
-    empty_B = pd.DataFrame(None, index=unmatched_B.index, columns = self.df2.columns)
-    joined_A = empty_B.join(unmatched_B, lsuffix = "_A", rsuffix="_B")
-    joined_B = unmatched_A.join(empty_A, lsuffix="_A", rsuffix='_B')
-    unmatched = pd.concat([joined_A, joined_B])
+    runs_joined = self.assemble_data(matched_welds,matched_features)
+    ### Return
+    return(runs_joined)
     
-    
-    matched_features = matched_features.loc[:,~matched_features.columns.str.contains('_orig|_left|_right')]
-    ### Bind them together
-    
+  @timed(logger)
   def match_welds(self):
     ### Subset welds
     w1 = self.df1[self.df1.feature=='WELD']
@@ -69,15 +63,16 @@ class PigRunMatcher(object):
     self.df1 = self.df1.rename(columns=rename_cols)
     self.df2 = self.df2.rename(columns=rename_cols)
     ### Add new column from mapper
-    self.df1[['us_weld_id', 'us_weld_id_right']] = a_mapper[['id_A', 'id_B']]
-    self.df2[['us_weld_id', 'us_weld_id_left']] = b_mapper[['id_B', 'id_A']]
+    self.df1[['us_weld_id']] = a_mapper[['id_A']]
+    self.df2[['us_weld_id']] = b_mapper[['id_B']]
     ### Calculate new weld distances
     self.df1 = self.pr1.calculate_weld_distance(self.df1)
     self.df2 = self.pr2.calculate_weld_distance(self.df2)
     ### Add sorting ids
     self.df1 = self.pr1.add_sort_ids(self.df1)
     self.df2 = self.pr2.add_sort_ids(self.df2)
-    
+  
+  @timed(logger)
   def match_features(self):
     '''
     Match features from the shared pipe sections
@@ -94,14 +89,9 @@ class PigRunMatcher(object):
     comp.numeric('h_dist', 'h_dist', method='squared', missing_value=np.NaN, scale=.000025)
     comp.numeric('us_weld_dist_coord', 'us_weld_dist_coord', method='gauss', scale=.02)
     comp.geo('lat', 'lng', 'lat', 'lng', method='squared', scale = .00005)
-    # comp.geo('orientation_x','orientation_y','orientation_x','orientation_y', method='gauss', missing_value=np.NaN)
-    
     ### Get results
     results = comp.compute(index, f1, f2)
     results['match_score'] = results.iloc[:,0:results.shape[1]].mean(axis=1)
-    ### Normalise match_score
-    results['mean_norm'] = (results.match_score-results.match_score.mean())/results.match_score.std()
-    results['max_min_norm'] = (results.match_score-results.match_score.min())/(results.match_score.max()-results.match_score.min())
     ### Get matches above 99 and take top ones where there are multiple
     matches = results[results['match_score'] >= .98]
     matches = matches[matches.groupby('A')['match_score'].transform(max) == matches['match_score']]
@@ -148,6 +138,49 @@ class PigRunMatcher(object):
                      )  
     return(joined)
 
+  @timed(logger)
+  def assemble_data(self, matched_welds, matched_features):
+    '''
+    Takes matched welds and features, subsets the df into unmatched, and matched welds / features
+    organises the columns, and joines them together
+    '''
+    keep_columns = ['id_A', 'wc_A', 'feature_A', 'us_weld_dist_A', 'wt_A', 'depth_A', 'length_A', 'width_A', 
+                   'orientation_A', 'pressure_1_A', 'pressure_2_A', 'joint_length_A', 'lat_A', 'lng_A', 'comments_A', 
+                   'us_weld_id_A', 'us_weld_dist_coord_A', 'us_weld_dist_wc_A', 'h_dist_A', 'orientation_x_A', 
+                   'orientation_y_A', 'id_B', 'wc_B', 'feature_B', 'us_weld_dist_B', 'wt_B', 'depth_B', 
+                   'length_B', 'width_B', 'orientation_B', 'pressure_1_B', 'pressure_2_B', 'joint_length_B', 'lat_B', 
+                   'lng_B', 'comments_B', 'us_weld_id_B', 'us_weld_dist_coord_B', 'us_weld_dist_wc_B', 'h_dist_B', 
+                   'orientation_x_B', 'orientation_y_B', 'pipe_section', 'section_sequence']
+    ### Organised unmatched
+    unmatched_A = self.df1.drop(pd.concat([matched_welds.A, matched_features.A]))
+    unmatched_B = self.df2.drop(pd.concat([matched_welds.B, matched_features.B]))
+    empty_A, empty_B = (pd.DataFrame(None, index=unmatched_A.index, columns = self.df1.columns),
+                        pd.DataFrame(None, index=unmatched_B.index, columns = self.df2.columns))
+    joined_A, joined_B = (unmatched_A.join(empty_A, lsuffix="_A", rsuffix='_B'),
+                          empty_B.join(unmatched_B, lsuffix = "_A", rsuffix="_B"))
+    unmatched = pd.concat([joined_A, joined_B]).reset_index()
+    section = pd.concat([unmatched[unmatched.pipe_section_A.notnull()].pipe_section_A,
+                        unmatched[unmatched.pipe_section_B.notnull()].pipe_section_B]).to_list()
+    sequence = pd.concat([unmatched[unmatched.section_sequence_A.notnull()].section_sequence_A,
+                         unmatched[unmatched.section_sequence_B.notnull()].section_sequence_B]).to_list()
+    unmatched[['pipe_section', 'section_sequence']] = pd.DataFrame([section, sequence], dtype="object").transpose()
+    ### Organise matched welds
+    matched_welds[['pipe_section', 
+                   'section_sequence']] = pd.concat([matched_welds['pipe_section_A'], 
+                                                     pd.Series([200 for i in range(matched_welds.shape[0])])], axis=1)
+    ### Organise matched features
+    matched_features[['pipe_section', 'section_sequence']] = matched_features[['pipe_section_A', 'section_sequence_A']]
+    ### Normalise columns
+    unmatched, matched_welds, matched_features = (unmatched[keep_columns], 
+                                                 matched_welds[keep_columns], 
+                                                 matched_features[keep_columns])
+    ### Bind together
+    runs_joined = pd.concat([matched_welds, matched_features, unmatched])
+    runs_joined = runs_joined.sort_values(['pipe_section', 'section_sequence'])
+    ### return
+    return(runs_joined)
+    
+    
   ### gen eyeball ds
   def gen_eyeball(results, df1, df2):
     '''
@@ -167,9 +200,10 @@ class PigRunMatcher(object):
     
   def non_matches(self, matches, weld=True):
     '''
-    subset the missing welds from the match and return lists of each
+    subset the missing items from the match and return lists of each
     '''
-    matched_df = self.df1.iloc[matches.index.get_level_values("A")].reset_index().join(self.df2.iloc[matches.index.get_level_values("B")].reset_index(), lsuffix="_A", rsuffix="_B")
+    matched_df = self.df1.iloc[matches.index.get_level_values("A")].reset_index()\
+                         .join(self.df2.iloc[matches.index.get_level_values("B")].reset_index(), lsuffix="_A", rsuffix="_B")
     if weld:
       missing_a = set(matched_welds.id_A.to_list()).symmetric_difference(set(df1[df1.feature=='WELD'].id.to_list()))
       missing_b = set(matched_welds.id_B.to_list()).symmetric_difference(set(df2[df2.feature=='WELD'].id.to_list()))
