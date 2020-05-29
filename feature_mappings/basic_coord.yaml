@@ -39,7 +39,6 @@ output_columns:
     - lng
     - comments
     - feature_category
-    - wc_norm
   sort_cols:
     - pipe_section
     - section_sequence

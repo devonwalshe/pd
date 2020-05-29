@@ -5,6 +5,7 @@ from math import sin, cos, atan2, asin, radians, degrees
 from _logging import logger, timed
 
 from conf import mappings
+from weld_matcher import WeldMatcher
 
 ### Organise the work
 class PigRunMatcher(object):
@@ -21,12 +22,15 @@ class PigRunMatcher(object):
   @timed(logger)
   def match_runs(self):
     ### Normalise wheel counts
-    self.normalise_wc(self.df1, self.df2)
+    # self.normalise_wc(self.df1, self.df2)
     ### Step one - match welds and update original dataframes
-    matched_welds = self.match_welds()
+    if self.coord_match:
+      matched_welds = WeldMatcher(self.df1, self.df2, True).match_welds()
+    else:
+      matched_welds = WeldMatcher(self.df1, self.df2, False).match_welds()
     ### Step two - add match information to datasets, and rematch welds so we have the right ids
     self.map_runs(matched_welds)
-    matched_welds = self.match_welds()
+    matched_welds = WeldMatcher(self.df1, self.df2, True).match_welds()
     ### Step three - features that aren't a weld, dent or mill anomalys
     matched_features = self.match_features()
     ### Step four - match welds, dents and mill anomaly's
@@ -37,25 +41,25 @@ class PigRunMatcher(object):
     return(runs_joined)
     
   
-  ### TODO - tear this out into its own class
-  @timed(logger)
-  def match_welds(self, coords=True):
-    ### Subset welds
-    w1 = self.df1[self.df1.feature=='WELD']
-    w2 = self.df2[self.df2.feature=='WELD']
-    ### Build index based on nearest records using the haversine distance (Sorted Neighbourhod)
-    indexer = recordlinkage.Index()
-    indexer.sortedneighbourhood(left_on='h_dist', right_on='h_dist', window = 15)
-    index = indexer.index(w1, w2)
-    ### set up comparison
-    comp = recordlinkage.Compare()
-    comp.numeric('h_dist', 'h_dist', method='gauss')
-    results = comp.compute(index, w1, w2).rename(columns={0:"hdist"})
-    ### get exact matches
-    matches = results[results.hdist == 1]
-    ### pull in data from both sides
-    matched_welds = self.join_from_index(matches.index)
-    return(matched_welds)
+  # ### TODO - tear this out into its own class
+  # @timed(logger)
+  # def match_welds(self, coords=True):
+  #   ### Subset welds
+  #   w1 = self.df1[self.df1.feature=='WELD']
+  #   w2 = self.df2[self.df2.feature=='WELD']
+  #   ### Build index based on nearest records using the haversine distance (Sorted Neighbourhod)
+  #   indexer = recordlinkage.Index()
+  #   indexer.sortedneighbourhood(left_on='h_dist', right_on='h_dist', window = 15)
+  #   index = indexer.index(w1, w2)
+  #   ### set up comparison
+  #   comp = recordlinkage.Compare()
+  #   comp.numeric('h_dist', 'h_dist', method='gauss')
+  #   results = comp.compute(index, w1, w2).rename(columns={0:"hdist"})
+  #   ### get exact matches
+  #   matches = results[results.hdist == 1]
+  #   ### pull in data from both sides
+  #   matched_welds = self.join_from_index(matches.index)
+  #   return(matched_welds)
   
 
   def map_runs(self, matched_welds):
@@ -82,7 +86,9 @@ class PigRunMatcher(object):
     ### Add sorting ids
     self.df1 = self.pr1.add_sort_ids(self.df1)
     self.df2 = self.pr2.add_sort_ids(self.df2)
-    ### rematch_welds
+    ### update the final weld
+    self.df1.loc[self.df1.pipe_section == -1, "pipe_section"] = max(self.df1.pipe_section) + 1
+    self.df2.loc[self.df2.pipe_section == -1, "pipe_section"] = max(self.df2.pipe_section) + 1
     
   
   @timed(logger)
