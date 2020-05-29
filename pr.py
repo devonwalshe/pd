@@ -1,38 +1,55 @@
-import datetime, sys, logging
+import datetime, sys, logging, yaml
 from functools import reduce
 import pandas as pd
 import numpy as np
 from math import radians, cos, sin, asin, sqrt, atan2, degrees
 from _logging import timed, logger
-
-columns = ['id', 'wc', 'feature', 'us_weld_dist', 'wt', 'depth', 'length', 'width', 'orientation', 'pressure_1', 'pressure_2', 'joint_length', 'lat', 'lng', 'comments']
+from conf import mappings
 
 ### Describes a PIG's run through a pipeline on a certain date
 class PigRun(object):
-  def __init__(self, init_columns = columns):
-    self.init_columns = init_columns
+  def __init__(self, mapping='basic_coord'):
+    self.mapping = mapping
     self.init_df = None
     self.file_path = None
-    pass
-    
-  def init_run(self, path, label='A'):
+  
+  def init_run(self, path, mapping, label='A'):
     '''
     sets up the initial dataframe
     '''
     ### Import
-    raw_df = pd.read_excel(path, names=self.init_columns, sheet_name="Original")
+    raw_df = pd.read_excel(path, sheet_name="Original")[mappings[mapping]['input_columns'].keys()]
+    raw_df.columns = mappings[mapping]['input_columns'].values()
     raw_df.index.name = label
     self.raw_df = raw_df
+    
+    ### Establish pipeline
+    funcs = (self.join_welds, self.feature_categorize, self.calculate_weld_distance, self.add_sort_ids, self.add_orientation_coords, self.impute_wt, self.add_haversine) \
+            if mappings[mapping]['coordinates'] else \
+            (self.join_welds, self.feature_categorize, self.calculate_weld_distance, self.add_sort_ids, self.add_orientation_coords, self.impute_wt)
     ### Process
-    init_df = reduce(lambda result, function: function(result), (self.join_welds, self.calculate_weld_distance, 
-                                                                 self.add_sort_ids, self.add_haversine, self.add_orientation_coords), 
-                                              self.raw_df)
+    init_df = reduce(lambda result, function: function(result), funcs, self.raw_df)
     ### sets the attribute for the initial data frame
     self.init_df = init_df
     return(self)
-    
-  def import_run(self):
 
+  
+  def feature_categorize(self, df):
+    '''
+    Converts free input field into categorical variable
+    '''
+    locations = ['valve', 'bend', 'tee', 'casing', 'fitting', 'flange', 'metal loss', 'repair', 'stopple', 'support', 'agm', 'tickle', 'deformation'] 
+    df['feature_category'] = df.comments
+    ### update new c
+    for location in locations:
+      df['feature_category'] = df.feature_category.where(~(df.feature_category.str.contains(location, case=False, na=False)), location)
+    return(df)
+  
+  def impute_wt(self, df):
+    '''
+    Backfills wall thickness for pipe sections
+    '''
+    df['wt'] = df['wt'].fillna(method='backfill')
     return(df)
   
   def get_welds(self, df):
@@ -43,14 +60,11 @@ class PigRun(object):
     ids = []
     rows = df.shape[0]
     for i in range(0,rows):
-      if i == 0: 
-        us_weld = df.iloc[widx[widx >= i].min()].id
-        # ds_weld = np.NaN
-      elif i == rows - 1:
+      if i >= widx[-1]:
         us_weld = np.NaN
         # ds_weld = df.iloc[widx[widx <= i].max()].id
       else:
-        us_weld = df.iloc[widx[widx >= i].min()].id
+        us_weld = df.iloc[widx[widx > i].min()].id
         # ds_weld = df.iloc[widx[widx <= i].max()].id
       ids.append(us_weld)
     return(ids)
@@ -60,8 +74,7 @@ class PigRun(object):
     '''
     join weld position and subtract from feature position to get distance from upstream weld
     '''
-    welds = pd.DataFrame(self.get_welds(df), columns=['us_weld_id'])
-    welds = welds.astype('object')
+    welds = pd.DataFrame(self.get_welds(df), columns=['us_weld_id']).astype('object')
     return(df.join(welds, how='left'))
 
   @timed(logger)
@@ -70,11 +83,11 @@ class PigRun(object):
     join weld position and subtract from feature position to get distance from upstream weld
     '''
     us_weld_join = df.merge(df[(df.feature == "WELD")][['id','wc','lat', 'lng']], left_on='us_weld_id', right_on='id', how='left')
-    df['us_weld_dist_coord'] = [self.calculate_haversine_dist(lng1, lat1 , lng2, lat2, 'm') for 
+    df['us_weld_dist_coord_m'] = [self.calculate_haversine_dist(lng1, lat1 , lng2, lat2, 'm') for 
                                 lng1, lat1, lng2, lat2 in 
                                 zip(us_weld_join.lng_x, us_weld_join.lat_x, us_weld_join.lng_y, us_weld_join.lat_y)]
     # ds_weld_join = df.merge(df[(df.feature == "WELD")][['id','wc']], left_on='ds_weld_id', right_on='id', how='left')
-    df['us_weld_dist_wc'] = us_weld_join['wc_y'] - us_weld_join['wc_x']
+    df['us_weld_dist_wc_ft'] = us_weld_join['wc_y'] - us_weld_join['wc_x']
     # df['ds_weld_dist'] = us_weld_join['wc_x'] - ds_weld_join['wc_y']
     return(df)
   
@@ -157,10 +170,10 @@ class PigRun(object):
     '''
     add orientation coordinate
     '''
-    df[['orientation_x', 'orientation_y']] = pd.DataFrame([self.calculate_distance(theta) for theta in df.orientation])
+    df[['orientation_x', 'orientation_y']] = pd.DataFrame([self.calculate_orientation_coords(theta) for theta in df.orientation_deg])
     return(df)
   
-  def calculate_distance(self, theta):
+  def calculate_orientation_coords(self, theta):
     '''
     calculate distance between two orientations
     
@@ -184,7 +197,7 @@ class PigRun(object):
   def add_sort_ids(self, df):
     '''
     Add pipe section and the sequence of each feature in the pipe
-    Sorted by upstream weld - so pipe section terminated by weld, and starts with a feature
+    Sorted by upstream weld - so pipe section starts with a weld, and terminates with a feature
     '''
     ### Set sequences
     seq = df.groupby('us_weld_id').ngroup().to_frame('pipe_section')\

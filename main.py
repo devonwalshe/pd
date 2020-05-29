@@ -4,11 +4,14 @@ import datetime
 
 
 def __main__():
+  ### Import -> map columns -> validate columns -> match mode -> settings / match sensitivity -> match -> assemble
+  
+  ### 
   ### initialise the datasets
-  pr1 = PigRun().init_run('data/case_1_2014.xlsx', "A")
-  pr2 = PigRun().init_run('data/case_1_2019.xlsx', "B")
+  pr1 = PigRun().init_run('data/case_1_2014.xlsx', 'basic_coord', "A")
+  pr2 = PigRun().init_run('data/case_1_2019.xlsx', 'basic_coord', "B")
   ### Match them
-  matcher = PigRunMatcher(pr1, pr2)
+  matcher = PigRunMatcher(pr1, pr2, 'basic_coord')
   matched_runs = matcher.match_runs()
   ### Output
   matched_runs.to_csv('data/output/matched_runs_{}.csv'.format(datetime.datetime.now().strftime("%Y%m%d_%H%M%S")))

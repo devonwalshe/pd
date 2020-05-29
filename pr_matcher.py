@@ -4,22 +4,30 @@ import numpy as np
 from math import sin, cos, atan2, asin, radians, degrees
 from _logging import logger, timed
 
+from conf import mappings
+
 ### Organise the work
 class PigRunMatcher(object):
-  def __init__(self, pr1, pr2):
+  
+  def __init__(self, pr1, pr2, mapping):
     self.pr1 = pr1
     self.pr2 = pr2
     self.df1 = pr1.init_df
     self.df2 = pr2.init_df
+    self.mapping = mappings[mapping]
+    self.coord_match = self.mapping['coordinates']
     self.matched_welds = None
-    
+  
   @timed(logger)
   def match_runs(self):
+    ### Normalise wheel counts
+    self.normalise_wc(self.df1, self.df2)
     ### Step one - match welds and update original dataframes
     matched_welds = self.match_welds()
-    ### Step two - add match information to datasets
+    ### Step two - add match information to datasets, and rematch welds so we have the right ids
     self.map_runs(matched_welds)
-    ### Step three - match features that aren't a weld, dent or mill anomalys
+    matched_welds = self.match_welds()
+    ### Step three - features that aren't a weld, dent or mill anomalys
     matched_features = self.match_features()
     ### Step four - match welds, dents and mill anomaly's
     # self.match_features()
@@ -28,8 +36,10 @@ class PigRunMatcher(object):
     ### Return
     return(runs_joined)
     
+  
+  ### TODO - tear this out into its own class
   @timed(logger)
-  def match_welds(self):
+  def match_welds(self, coords=True):
     ### Subset welds
     w1 = self.df1[self.df1.feature=='WELD']
     w2 = self.df2[self.df2.feature=='WELD']
@@ -47,6 +57,7 @@ class PigRunMatcher(object):
     matched_welds = self.join_from_index(matches.index)
     return(matched_welds)
   
+
   def map_runs(self, matched_welds):
     '''
     generates_mapping columns to fill in new pipe section ids for original dataframes
@@ -71,6 +82,8 @@ class PigRunMatcher(object):
     ### Add sorting ids
     self.df1 = self.pr1.add_sort_ids(self.df1)
     self.df2 = self.pr2.add_sort_ids(self.df2)
+    ### rematch_welds
+    
   
   @timed(logger)
   def match_features(self):
@@ -87,7 +100,7 @@ class PigRunMatcher(object):
     ### Set up comparison
     comp = recordlinkage.Compare()
     comp.numeric('h_dist', 'h_dist', method='squared', missing_value=np.NaN, scale=.000025)
-    comp.numeric('us_weld_dist_coord', 'us_weld_dist_coord', method='gauss', scale=.02)
+    comp.numeric('us_weld_dist_coord_m', 'us_weld_dist_coord_m', method='gauss', scale=.02)
     comp.geo('lat', 'lng', 'lat', 'lng', method='squared', scale = .00005)
     ### Get results
     results = comp.compute(index, f1, f2)
@@ -99,33 +112,45 @@ class PigRunMatcher(object):
     matched_features = self.join_from_index(matches.index)
     ### Return
     return(matched_features)
-    
-  # def normalize_orientation(self):
+
+  ### FIXME - make sure we need this - I don't think we do...
+  # def normalise_wc(self, df1, df2):
   #   '''
-  #   orientation is usually off between the runs by a set amount.
-  #   discover what that is and adjust the first runs to match the second
-  #   Also: find a fixed value that can be compared between the two sides
+  #   Fit a constant for the differential between the two wheel counts and normalise all the wheel counts by a set amount
   #   '''
-  #   pass
-    
-  # def normalize_wheelcount(self):
-  #   '''
-  #   See if we can discover a fixed wheelcount differential between the two runs to determine which is which
-  #   '''
+  #   ### Set up dfs
+  #   dfs, wcs = ([df1, df2],
+  #               [df1.iloc[-1].wc, df2.iloc[-1].wc])
+  #   wcs = [df1[df1.feature=="WELD"].iloc[-1].wc,
+  #          df2[df2.feature=="WELD"].iloc[-1].wc]
+  #   df1, df2 = (dfs[wcs.index(max(wcs))], dfs[wcs.index(min(wcs))])
   #
-  # def load_datasets(self):
-  #   pass
-  #
-  # def validate_datasets(self):
-  #   ### todo check same number of welds and ids
-  #   ### If not - seperate unmached weld sections
-  #   pass
-  #
-  # def match_features(self):
-  #   pass
-    
-  # def gen_index(self):
-  #   pass
+  #   ### Calculate how much its off per foot
+  #   differential = max(wcs) - min(wcs)
+  #   slippage_per_foot = differential / max(wcs)
+  #   # per_reading = per_reading + per_reading*.07
+  #   ### initialise series & generate normalised wc
+  #   wc_series = df1.wc
+  #   wc_normalised = [wc_series[0]]
+  #   for i in range(1, df1.shape[0]):
+  #     delta = wc_series[i] - wc_series[i-1] - ((wc_series[i] - wc_series[i-1]) * slippage_per_foot)
+  #     wc_normalised.append(wc_normalised[i-1] + delta)
+  #   ### Set up
+  #   df1['wc_norm'] = wc_normalised
+  #   df2['wc_norm'] = df2['wc']
+  #   indices = [df.index.name for df in [df1,df2]]
+  #   df1, df2 = ([df1, df2][indices.index('A')], [df1, df2][indices.index('B')])
+  #   self.df1, self.df2 = (df1, df2)
+  #   return(df1, df2)
+  
+  ### TODO
+  def normalize_orientation(self):
+    '''
+    orientation is usually off between the runs by a set amount.
+    discover what that is and adjust the first runs to match the second
+    Also: find a fixed value that can be compared between the two sides
+    '''
+    pass
     
   def join_from_index(self, index):
     '''
@@ -133,9 +158,9 @@ class PigRunMatcher(object):
     '''
     primary_index, secondary_index = [index.names[0], index.names[1]]
     joined = self.df1.loc[index.get_level_values(primary_index)].reset_index().\
-                join(self.df2.loc[index.get_level_values(secondary_index)].reset_index(), 
-                     lsuffix='_{}'.format(primary_index), rsuffix='_{}'.format(secondary_index)
-                     )  
+                      join(self.df2.loc[index.get_level_values(secondary_index)].reset_index(), 
+                           lsuffix='_{}'.format(primary_index), rsuffix='_{}'.format(secondary_index)
+                           )
     return(joined)
 
   @timed(logger)
@@ -144,13 +169,17 @@ class PigRunMatcher(object):
     Takes matched welds and features, subsets the df into unmatched, and matched welds / features
     organises the columns, and joines them together
     '''
-    keep_columns = ['id_A', 'wc_A', 'feature_A', 'us_weld_dist_A', 'wt_A', 'depth_A', 'length_A', 'width_A', 
-                   'orientation_A', 'pressure_1_A', 'pressure_2_A', 'joint_length_A', 'lat_A', 'lng_A', 'comments_A', 
-                   'us_weld_id_A', 'us_weld_dist_coord_A', 'us_weld_dist_wc_A', 'h_dist_A', 'orientation_x_A', 
+    keep_columns = ['id_A', 'wc_A', 'feature_A', 'wt_A', 'depth_in_A', 'length_in_A', 'width_A', 
+                   'pressure_1_A', 'pressure_2_A', 'joint_length_A', 'lat_A', 'lng_A', 'comments_A', 
+                   'us_weld_id_A', 'us_weld_dist_coord_m_A', 'us_weld_dist_wc_ft_A', 'h_dist_A', 'orientation_x_A', 
                    'orientation_y_A', 'id_B', 'wc_B', 'feature_B', 'us_weld_dist_B', 'wt_B', 'depth_B', 
                    'length_B', 'width_B', 'orientation_B', 'pressure_1_B', 'pressure_2_B', 'joint_length_B', 'lat_B', 
                    'lng_B', 'comments_B', 'us_weld_id_B', 'us_weld_dist_coord_B', 'us_weld_dist_wc_B', 'h_dist_B', 
                    'orientation_x_B', 'orientation_y_B', 'pipe_section', 'section_sequence']
+                   
+    ### Try keep with output from mapping 
+    keep_columns = [x + "_A" for x in self.mapping['output_columns']['dup_cols']] + [x + "_B" for x in self.mapping['output_columns']['dup_cols']] + self.mapping['output_columns']['sort_cols']
+    
     ### Organised unmatched
     unmatched_A = self.df1.drop(pd.concat([matched_welds.A, matched_features.A]))
     unmatched_B = self.df2.drop(pd.concat([matched_welds.B, matched_features.B]))
@@ -167,7 +196,7 @@ class PigRunMatcher(object):
     ### Organise matched welds
     matched_welds[['pipe_section', 
                    'section_sequence']] = pd.concat([matched_welds['pipe_section_A'], 
-                                                     pd.Series([200 for i in range(matched_welds.shape[0])])], axis=1)
+                                                     pd.Series([-1 for i in range(matched_welds.shape[0])])], axis=1)
     ### Organise matched features
     matched_features[['pipe_section', 'section_sequence']] = matched_features[['pipe_section_A', 'section_sequence_A']]
     ### Normalise columns
