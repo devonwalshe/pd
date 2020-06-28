@@ -4,8 +4,8 @@ import numpy as np
 from math import sin, cos, atan2, asin, radians, degrees
 from _logging import logger, timed
 
-from conf import mappings
-from weld_matcher import WeldMatcher
+from matcher.conf import mappings
+from matcher.weld_matcher import WeldMatcher
 
 ### Organise the work
 class PigRunMatcher(object):
@@ -26,11 +26,14 @@ class PigRunMatcher(object):
     ### Step one - match welds and update original dataframes
     if self.coord_match:
       matched_welds = WeldMatcher(self.df1, self.df2, True).match_welds()
+      ### Step two - add match information to datasets, and rematch welds so we have the right ids
+      self.map_runs(matched_welds)
+      matched_welds = WeldMatcher(self.df1, self.df2, True).match_welds()
     else:
       matched_welds = WeldMatcher(self.df1, self.df2, False).match_welds()
-    ### Step two - add match information to datasets, and rematch welds so we have the right ids
-    self.map_runs(matched_welds)
-    matched_welds = WeldMatcher(self.df1, self.df2, True).match_welds()
+      ### Step two - add match information to datasets, and rematch welds so we have the right ids
+      self.map_runs(matched_welds)
+      matched_welds = WeldMatcher(self.df1, self.df2, False).match_welds()
     ### Step three - features that aren't a weld, dent or mill anomalys
     matched_features = self.match_features()
     ### Step four - match welds, dents and mill anomaly's
@@ -104,10 +107,14 @@ class PigRunMatcher(object):
     indexer.block(on=['feature', 'pipe_section'])
     index = indexer.index(f1, f2)
     ### Set up comparison
-    comp = recordlinkage.Compare()
-    comp.numeric('h_dist', 'h_dist', method='squared', missing_value=np.NaN, scale=.000025)
-    comp.numeric('us_weld_dist_coord_m', 'us_weld_dist_coord_m', method='gauss', scale=.02)
-    comp.geo('lat', 'lng', 'lat', 'lng', method='squared', scale = .00005)
+    if self.coord_match:
+      comp = recordlinkage.Compare()
+      comp.numeric('h_dist', 'h_dist', method='squared', missing_value=np.NaN, scale=.000025)
+      comp.numeric('us_weld_dist_coord_m', 'us_weld_dist_coord_m', method='gauss', scale=.02)
+      comp.geo('lat', 'lng', 'lat', 'lng', method='squared', scale = .00005)
+    else:
+      comp = recordlinkage.Compare()
+      comp.numeric('us_weld_dist', 'us_weld_dist')
     ### Get results
     results = comp.compute(index, f1, f2)
     results['match_score'] = results.iloc[:,0:results.shape[1]].mean(axis=1)

@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 from math import radians, cos, sin, asin, sqrt, atan2, degrees
 from _logging import timed, logger
-from conf import mappings
+from matcher.conf import mappings
 
 ### Describes a PIG's run through a pipeline on a certain date
 class PigRun(object):
@@ -18,7 +18,7 @@ class PigRun(object):
     sets up the initial dataframe
     '''
     ### Import
-    raw_df = pd.read_excel(path, sheet_name="Original")[mappings[mapping]['input_columns'].keys()]
+    raw_df = pd.read_excel(path, sheet_name="Sheet1")[mappings[mapping]['input_columns'].keys()]
     raw_df.columns = mappings[mapping]['input_columns'].values()
     raw_df.index.name = label
     self.raw_df = raw_df
@@ -82,10 +82,14 @@ class PigRun(object):
     '''
     join weld position and subtract from feature position to get distance from upstream weld
     '''
-    us_weld_join = df.merge(df[(df.feature == "WELD")][['id','wc','lat', 'lng']], left_on='us_weld_id', right_on='id', how='left')
-    df['us_weld_dist_coord_m'] = [self.calculate_haversine_dist(lng1, lat1 , lng2, lat2, 'm') for 
+    if mappings[self.mapping]['coordinates']:
+      us_weld_join = df.merge(df[(df.feature == "WELD")][['id','wc','lat', 'lng']], left_on='us_weld_id', right_on='id', how='left')
+      df['us_weld_dist_coord_m'] = [self.calculate_haversine_dist(lng1, lat1 , lng2, lat2, 'm') for 
                                 lng1, lat1, lng2, lat2 in 
                                 zip(us_weld_join.lng_x, us_weld_join.lat_x, us_weld_join.lng_y, us_weld_join.lat_y)]
+    else:
+      us_weld_join = df.merge(df[(df.feature == "WELD")][['id','wc']], left_on='us_weld_id', right_on='id', how='left')
+
     # ds_weld_join = df.merge(df[(df.feature == "WELD")][['id','wc']], left_on='ds_weld_id', right_on='id', how='left')
     df['us_weld_dist_wc_ft'] = us_weld_join['wc_y'] - us_weld_join['wc_x']
     # df['ds_weld_dist'] = us_weld_join['wc_x'] - ds_weld_join['wc_y']

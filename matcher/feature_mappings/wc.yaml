@@ -1,0 +1,39 @@
+source: unknown
+type: standard
+coordinates: False
+input_columns:
+  ID: id
+  Wheel Count: wc
+  Feature: feature
+  Dist US Weld (ft): us_weld_dist_wc_ft
+  WT: wt
+  Depth: depth_in
+  Length (in): length_in
+  Width (in): width_in
+  Orientation (deg): orientation_deg
+  Pressure 1: pressure_1
+  Pressure 2: pressure_2
+  Joint Length: joint_length
+  Comments: comments
+output_columns:
+  dup_cols:
+    - id
+    - feature
+    - wc
+    - wt
+    - depth_in
+    - length_in
+    - width_in
+    - joint_length
+    - pressure_1
+    - pressure_2
+    - us_weld_dist_wc_ft
+    - orientation_deg
+    - orientation_x
+    - orientation_y
+    - comments
+    - feature_category
+  sort_cols:
+    - pipe_section
+    - section_sequence
+  
