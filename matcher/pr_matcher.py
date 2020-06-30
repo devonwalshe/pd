@@ -30,10 +30,10 @@ class PigRunMatcher(object):
       self.map_runs(matched_welds)
       matched_welds = WeldMatcher(self.df1, self.df2, True).match_welds()
     else:
-      matched_welds = WeldMatcher(self.df1, self.df2, False).match_welds()
+      matched_welds = WeldMatcher(self.df1, self.df2, self.mapping).match_welds()
       ### Step two - add match information to datasets, and rematch welds so we have the right ids
       self.map_runs(matched_welds)
-      matched_welds = WeldMatcher(self.df1, self.df2, False).match_welds()
+      matched_welds = WeldMatcher(self.df1, self.df2, self.mapping).match_welds()
     ### Step three - features that aren't a weld, dent or mill anomalys
     matched_features = self.match_features()
     ### Step four - match welds, dents and mill anomaly's

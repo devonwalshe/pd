@@ -5,11 +5,12 @@ import numpy as np
 
 class WeldMatcher(object):
   
-  def __init__(self, df1, df2, coord_match=False):
+  def __init__(self, df1, df2, mapping):
     # self.matched_welds = self.match_welds(w1, w2, coord_match)
     self.w1 = df1[df1.feature == "WELD"]
     self.w2 = df2[df2.feature == "WELD"]
-    self.coord_match = coord_match
+    self.coord_match = mapping['coordinates']
+    self.conf = mapping['weld_match']
     
   @timed(logger)
   def match_welds(self):
@@ -48,7 +49,7 @@ class WeldMatcher(object):
       ### Set iteration count
       n = w1.shape[0]
       ### match welds sequentially until they don't agree with eachother
-      while matched_welds[0][-1].iat[-1, 0] + 1 <  n:
+      while matched_welds[0][-1].iat[-1, 0] + 1 <  n - self.conf['validation_threshold']:
         ### update matched welds and decide whether to continue
         step, matched_welds = self.step_match(w1, w2, matched_welds)
         print(matched_welds[0][-1].id.values[0], matched_welds[1][-1].id.values[0])
@@ -60,6 +61,9 @@ class WeldMatcher(object):
           step, backtrack_welds = self.backtrack(w1, w2, matched_welds)
           ### Join backtrack welds
           matched_welds = [matched_welds[0] + backtrack_welds[0], matched_welds[1] + backtrack_welds[1]]
+      ### Now match the last few welds backwards:
+      ### Put together last welds
+      last_welds = [[w1.iloc[]], [w2.iloc[]]]
       ### Generate dfs
       matched_welds_a = pd.concat(matched_welds[0])
       matched_welds_b = pd.concat(matched_welds[1])
@@ -84,7 +88,7 @@ class WeldMatcher(object):
         On the basis that the pipe length or upstream weld is roughly equal (check coord match to verify this)
         If right side doesn't match, return None
     '''
-    JL_DIFF = 2
+    JL_DIFF = self.conf['joint_length_diff']
     ### Set up our comparisons
     if reverse:
       a2, b2 = (w1.iloc[[matched_welds[0][0].iat[0, 0] - 1]], 
@@ -112,13 +116,14 @@ class WeldMatcher(object):
     '''
     Alternate matching methodology - find nearest short weld, move backwards, updating matched welds as we go.  
     '''
-    SW_THRESHOLD = 40
-    JL_DIFF = 2
+    SJ = self.conf['short_joint']
+    SJ_VAR = self.conf['short_joint_var']
+    JL_DIFF = self.conf['joint_length_diff']
     ### Set up initial short welds
     last_match_a = matched_welds[0][-1].iat[-1, 0]
     last_match_b = matched_welds[1][-1].iat[-1, 0]
     ### First short weld on A
-    short_weld_a = w1[(w1.index > last_match_a) & (w1.joint_length < SW_THRESHOLD)].iloc[[0]]
+    short_weld_a = w1[(w1.index > last_match_a) & (w1.joint_length < SJ + SJ_VAR) & (w1.joint_length > SJ - SJ_VAR)].iloc[[0]]
     ### Matching short weld on B
     try:
       short_weld_b = w2[(w2.index > last_match_b) & 
@@ -128,8 +133,8 @@ class WeldMatcher(object):
     except IndexError: # likely close to the end - pick the last b
       short_weld_b = w2.iloc[[-6]]
     
-    LOOKAHEAD = 75
-    VALIDATE = 10
+    LOOKAHEAD = self.conf['short_joint_lookahead']
+    VALIDATE = self.conf['validation_lookahead']
     ### Look for proximate short welds that match
     while True:
       ### TODO - need to be smarter about finding short weld - make sure welds ahead are all matching before deciding on it
@@ -146,7 +151,7 @@ class WeldMatcher(object):
                                                     short_weld_a.joint_length.item() + JL_DIFF))].iloc[[0]]
           except IndexError: ### No more b's of similar size to find
             ### Next short weld a
-            short_weld_a = w1[(w1.index > short_weld_a.iat[-1, 0]) & (w1.joint_length < SW_THRESHOLD)].iloc[[0]]
+            short_weld_a = w1[(w1.index > short_weld_a.iat[-1, 0]) & (w1.joint_length < SJ + SJ_VAR) & (w1.joint_length > SJ - SJ_VAR)].iloc[[0]]
             try:
               ### Next matching weld - forward from last weld
               short_weld_b = w2[(w2.index > last_match_b) &
@@ -157,7 +162,7 @@ class WeldMatcher(object):
               short_weld_b = w2.iloc[[-6]]
       else:
         ### Next short weld a
-        short_weld_a = w1[(w1.index > short_weld_a.iat[-1, 0]) & (w1.joint_length < SW_THRESHOLD)].iloc[[0]]
+        short_weld_a = w1[(w1.index > short_weld_a.iat[-1, 0]) & (w1.joint_length < SJ + SJ_VAR) & (w1.joint_length > SJ - SJ_VAR)].iloc[[0]]
         ### Next matching weld - forward from last weld
         try:
           short_weld_b = w2[(w2.index > last_match_b) &
