@@ -114,7 +114,7 @@ class PigRunMatcher(object):
       comp.geo('lat', 'lng', 'lat', 'lng', method='squared', scale = .00005)
     else:
       comp = recordlinkage.Compare()
-      comp.numeric('us_weld_dist', 'us_weld_dist')
+      comp.numeric('us_weld_dist_wc_ft', 'us_weld_dist_wc_ft')
     ### Get results
     results = comp.compute(index, f1, f2)
     results['match_score'] = results.iloc[:,0:results.shape[1]].mean(axis=1)

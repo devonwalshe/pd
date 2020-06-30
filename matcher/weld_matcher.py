@@ -54,7 +54,8 @@ class WeldMatcher(object):
         print(matched_welds[0][-1].id.values[0], matched_welds[1][-1].id.values[0])
         ### Backtrack loop
         if not step:
-          # break
+          # if matched_welds[0][-1].id.item() > 24070:
+          #   break
           ### Backtrack from nearest short weld
           step, backtrack_welds = self.backtrack(w1, w2, matched_welds)
           ### Join backtrack welds
@@ -83,7 +84,7 @@ class WeldMatcher(object):
         On the basis that the pipe length or upstream weld is roughly equal (check coord match to verify this)
         If right side doesn't match, return None
     '''
-    JL_DIFF = .85
+    JL_DIFF = 2
     ### Set up our comparisons
     if reverse:
       a2, b2 = (w1.iloc[[matched_welds[0][0].iat[0, 0] - 1]], 
@@ -112,7 +113,7 @@ class WeldMatcher(object):
     Alternate matching methodology - find nearest short weld, move backwards, updating matched welds as we go.  
     '''
     SW_THRESHOLD = 40
-    JL_DIFF = .85
+    JL_DIFF = 2
     ### Set up initial short welds
     last_match_a = matched_welds[0][-1].iat[-1, 0]
     last_match_b = matched_welds[1][-1].iat[-1, 0]
@@ -128,7 +129,7 @@ class WeldMatcher(object):
       short_weld_b = w2.iloc[[-6]]
     
     LOOKAHEAD = 75
-    VALIDATE = 5
+    VALIDATE = 10
     ### Look for proximate short welds that match
     while True:
       ### TODO - need to be smarter about finding short weld - make sure welds ahead are all matching before deciding on it
@@ -177,15 +178,18 @@ class WeldMatcher(object):
   def validate_short_welds(self, w1, w2, short_weld_a, short_weld_b, VALIDATE):
     short_weld_matches = [[short_weld_a],[short_weld_b]]
     for i in range(VALIDATE):
-      if short_weld_b.iat[-1,0] >= w2.shape[0] - 5:
+      ### If we are at the end of the dataset - validate backwards
+      if short_weld_b.iat[-1,0] >= w2.shape[0] - VALIDATE:
         step, short_weld_matches = self.step_match(w1, w2, short_weld_matches, reverse=True)
         if not step:
           return(False)
+      ### Else validate fowards
       else:
         step, short_weld_matches = self.step_match(w1, w2, short_weld_matches)
-        if not step:
+        if step == False:
           return(False)
-      return(True)
+    return(True)
+      
 
   def join_from_index(self, df1, df2, index):
     '''
