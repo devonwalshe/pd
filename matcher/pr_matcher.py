@@ -104,7 +104,7 @@ class PigRunMatcher(object):
     f2 = self.df2[self.df2.feature!='WELD']
     ### Set up indexer
     indexer = recordlinkage.Index()
-    indexer.block(on=['feature', 'pipe_section'])
+    indexer.block(on=['feature_category', 'pipe_section'])
     index = indexer.index(f1, f2)
     ### Set up comparison
     if self.coord_match:
@@ -115,6 +115,7 @@ class PigRunMatcher(object):
     else:
       comp = recordlinkage.Compare()
       comp.numeric('us_weld_dist_wc_ft', 'us_weld_dist_wc_ft')
+      # comp.geo('orientation_x', 'orientation_y', 'orientation_x', 'orientation_y')÷
     ### Get results
     results = comp.compute(index, f1, f2)
     results['match_score'] = results.iloc[:,0:results.shape[1]].mean(axis=1)
@@ -126,35 +127,18 @@ class PigRunMatcher(object):
     ### Return
     return(matched_features)
 
-  ### FIXME - make sure we need this - I don't think we do...
-  # def normalise_wc(self, df1, df2):
-  #   '''
-  #   Fit a constant for the differential between the two wheel counts and normalise all the wheel counts by a set amount
-  #   '''
-  #   ### Set up dfs
-  #   dfs, wcs = ([df1, df2],
-  #               [df1.iloc[-1].wc, df2.iloc[-1].wc])
-  #   wcs = [df1[df1.feature=="WELD"].iloc[-1].wc,
-  #          df2[df2.feature=="WELD"].iloc[-1].wc]
-  #   df1, df2 = (dfs[wcs.index(max(wcs))], dfs[wcs.index(min(wcs))])
-  #
-  #   ### Calculate how much its off per foot
-  #   differential = max(wcs) - min(wcs)
-  #   slippage_per_foot = differential / max(wcs)
-  #   # per_reading = per_reading + per_reading*.07
-  #   ### initialise series & generate normalised wc
-  #   wc_series = df1.wc
-  #   wc_normalised = [wc_series[0]]
-  #   for i in range(1, df1.shape[0]):
-  #     delta = wc_series[i] - wc_series[i-1] - ((wc_series[i] - wc_series[i-1]) * slippage_per_foot)
-  #     wc_normalised.append(wc_normalised[i-1] + delta)
-  #   ### Set up
-  #   df1['wc_norm'] = wc_normalised
-  #   df2['wc_norm'] = df2['wc']
-  #   indices = [df.index.name for df in [df1,df2]]
-  #   df1, df2 = ([df1, df2][indices.index('A')], [df1, df2][indices.index('B')])
-  #   self.df1, self.df2 = (df1, df2)
-  #   return(df1, df2)
+  def match_fixed_features(self, ff1, ff2):
+    pass
+    
+  def match_metal_loss(self, ml1, ml2):
+    pass
+    
+  ## FIXME - make sure we need this - I don't think we do...
+  def normalise_wc(self, df1, df2):
+    '''
+    Take validated features per pipe section, and normalize wheel count based on fitting those
+    '''
+    pass
   
   ### TODO
   def normalize_orientation(self):

@@ -49,7 +49,7 @@ class WeldMatcher(object):
       ### Set iteration count
       n = w1.shape[0]
       ### match welds sequentially until they don't agree with eachother
-      while matched_welds[0][-1].iat[-1, 0] + 1 <  n - self.conf['validation_threshold']:
+      while matched_welds[0][-1].iat[-1, 0] + 1 <  n:
         ### update matched welds and decide whether to continue
         step, matched_welds = self.step_match(w1, w2, matched_welds)
         print(matched_welds[0][-1].id.values[0], matched_welds[1][-1].id.values[0])
@@ -62,11 +62,21 @@ class WeldMatcher(object):
           ### Join backtrack welds
           matched_welds = [matched_welds[0] + backtrack_welds[0], matched_welds[1] + backtrack_welds[1]]
       ### Now match the last few welds backwards:
-      ### Put together last welds
-      last_welds = [[w1.iloc[]], [w2.iloc[]]]
-      ### Generate dfs
+      # ### Put together last welds
+      last_welds = [[w1.iloc[[-1]]], [w2.iloc[[-1]]]]
+      while last_welds[0][0].iat[-1,0] + 1 > (n - self.conf['validation_lookahead']):
+        step, last_welds = self.step_match(w1,w2, last_welds, True)
+        if not step:
+          break
+      
+      ### Concat datasets
+      last_welds_a = pd.concat(last_welds[0])
+      last_welds_b = pd.concat(last_welds[1])
       matched_welds_a = pd.concat(matched_welds[0])
       matched_welds_b = pd.concat(matched_welds[1])
+      ### Replace ends
+      matched_welds_a = pd.concat([matched_welds_a.iloc[:-(len(last_welds_a))], last_welds_a])
+      matched_welds_b = pd.concat([matched_welds_b.iloc[:-(len(last_welds_b))], last_welds_b])
       ### Build multindex
       idx = pd.MultiIndex.from_frame(pd.concat([matched_welds_a.A.reset_index(drop=True), 
                                                 matched_welds_b.B.reset_index(drop=True)], axis=1))
