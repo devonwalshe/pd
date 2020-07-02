@@ -7,6 +7,9 @@ weld_match:
   short_joint_lookahead: 75
   validation_lookahead: 10
   joint_length_diff: 2
+feature_match:
+  fixed_feature_match: .8
+  metal_loss_match: .6
 input_columns:
   ID: id
   Wheel Count: wc

@@ -42,13 +42,13 @@ class PigRun(object):
     df['feature_category'] = df.comments
     ### update new categories
     for location in locations:
-      df['feature_category'] = df.feature_category.where(~(df.feature_category.str.contains(location, case=False, na=False)), location.tolower())
-    ### compress metal loss and mill anomaly into one
-    df1.loc[df1[df1.feature=="MILL ANOMALY"].index, 'feature_category'] = "mill anomaly"
-    ml_ma_idx = df1[(df1.feature_category == "metal loss") | (df1.feature_category == "mill anomaly")].index
-    df1.loc[ml_ma_idx] = "metal loss / mill anomaly"
+      df['feature_category'] = df.feature_category.where(~(df.feature_category.str.contains(location, case=False, na=False)), location)
+    ## compress metal loss and mill anomaly into one
+    df.loc[df[df.feature=="MILL ANOMALY"].index, 'feature_category'] = "mill anomaly"
+    ml_ma_idx = df[(df.feature_category == "metal loss") | (df.feature_category == "mill anomaly")].index
+    df.loc[ml_ma_idx, "feature_category"] = "metal loss / mill anomaly"
     ### make sure all are lowercase
-    df1.feature_category = df1.feature_category.str.lower()
+    df.feature_category = df.feature_category.str.lower()
     
     return(df)
   
