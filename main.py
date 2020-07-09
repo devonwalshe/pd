@@ -8,8 +8,8 @@ def __main__():
   
   ### 
   ### initialise the datasets
-  pr1 = PigRun(mapping='wc').init_run('data/2014_t.xlsx', 'wc', "A")
-  pr2 = PigRun(mapping='wc').init_run('data/2019_t.xlsx', 'wc', "B")
+  pr1 = PigRun().init_run('data/case_1_2014.xlsx', 'basic_coord', "A", sheet_name='Original')
+  pr2 = PigRun().init_run('data/case_1_2019.xlsx', 'basic_coord', "B", sheet_name='Original')
   ### Match them
   ### coordinate match
   matcher = PigRunMatcher(pr1, pr2, 'basic_coord')

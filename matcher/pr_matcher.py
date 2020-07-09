@@ -25,10 +25,10 @@ class PigRunMatcher(object):
     # self.normalise_wc(self.df1, self.df2)
     ### Step one - match welds and update original dataframes
     if self.coord_match:
-      matched_welds = WeldMatcher(self.df1, self.df2, True).match_welds()
+      matched_welds = WeldMatcher(self.df1, self.df2, self.mapping).match_welds()
       ### Step two - add match information to datasets, and rematch welds so we have the right ids
       self.map_runs(matched_welds)
-      matched_welds = WeldMatcher(self.df1, self.df2, True).match_welds()
+      matched_welds = WeldMatcher(self.df1, self.df2, self.mapping).match_welds()
     else:
       matched_welds = WeldMatcher(self.df1, self.df2, self.mapping).match_welds()
       ### Step two - add match information to datasets, and rematch welds so we have the right ids
@@ -107,7 +107,7 @@ class PigRunMatcher(object):
       ### Match scores
       coord_matches = self.coordinate_match(f1, f2)
       ### Assemble
-      matched_features = self.join_from_index(coord_match.index)
+      matched_features = self.join_from_index(coord_matches.index)
     else:
       ### Get match scores
       fixed_features = self.match_fixed_features(f1, f2)

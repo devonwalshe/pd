@@ -1,52 +1,161 @@
 from peewee import *
-<<<<<<< Local Changes
-
-### 
-=======
+from playhouse.shortcuts import model_to_dict, dict_to_model
+db = PostgresqlDatabase('pd', user='azymuth', host='localhost', port=5432)
 
 
->>>>>>> External Changes
-class Feature(Model):
+
+class FeatureMap(Model):
   '''
-  An observed object from the inspection tool
+  Normalises attributes from a run's dataset for processing
   '''
-  def __init__():
-    
-  pass
+  mapping_name = CharField()
+  source_name = CharField()
   
-class FeaturePair(Model):
+  class Meta:
+    database = db
+
+class FeatureMapping(Model):
   '''
-  A matched pair or set of features between two inspection runs
+  Individual mapping for features
   '''
-  pass
+  feature_map = ForeignKeyField(FeatureMap, backref='mappings')
+  raw_col_name = CharField()
+  processing_col_name = CharField()
+  datatype = CharField
   
-class PigRun(Model):
+  class Meta:
+    database = db
+
+class RawFile(Model):
   '''
-  A single run of an inspection tool
+  Raw uploaded files
   '''
-  pass
+  filename = CharField()
+  file_url = CharField()
+  uploaded_at = DateTimeField()
+  data_mapping = ForeignKeyField(FeatureMap, backref='files')
   
+  ### Meta
+  class Meta:
+    database = db
+
 class Pipeline(Model):
   '''
   A section of pipe that the inspection tool runs through
   '''
-  pass
+  name = CharField()
+  
+  class Meta:
+    database = db
+  
+class InspectionRun(Model):
+  '''
+  A single run of an inspection tool
+  '''
+  raw_file = ForeignKeyField(RawFile, backref='run')
+  run_date = DateTimeField()
+  pipeline = ForeignKeyField(Pipeline, backref='runs')
+
+  class Meta:
+    database = db
+
+class RunMatch(Model):
+  '''
+  Matches two runs
+  '''
+  run_a = ForeignKeyField(InspectionRun, backref='match')
+  run_b = ForeignKeyField(InspectionRun, backref='match')
+  pipeline = ForeignKeyField(Pipeline, backref='match')
+  
+  class Meta:
+    database = db
+    
+    
+class PipeSection(Model):
+  '''
+  A section of pipe
+  '''
+  section_id = CharField(unique=True)
+  run_match = ForeignKeyField(RunMatch, backref='pipe_sections')
+  
+  class Meta:
+    database = db
+
 
 class Weld(Model):
   '''
   Delineates pipe sections
   '''
-  pass
+  weld_id = CharField()
+  pipe_section = ForeignKeyField(PipeSection, field='section_id', backref='weld')
+  section_sequence = IntegerField()
+  run_match = ForeignKeyField(RunMatch, backref = 'welds')
+  side = CharField()
   
-class PipeSection(Model):
+  class Meta:
+    database = db
+   
+class WeldPair(Model):
   '''
-  A section of pipe
+  A matched pair of welds between two inspection runs
   '''
-  pass
+  weld_a = ForeignKeyField(Weld, backref='weld_pair')
+  weld_b = ForeignKeyField(Weld, backref='weld_pair')
+  run_match = ForeignKeyField(RunMatch, backref = 'weld_pairs')
   
-class RawFile(Model):
-  '''
-  Raw uploaded files
-  '''
-  pass
+  class Meta:
+    database = db
   
+class Feature(Model):
+  '''
+  An observed object from the inspection tool
+  '''
+  feature_id = CharField()
+  pipe_section = ForeignKeyField(PipeSection, field='section_id', backref='features')
+  section_sequence = IntegerField()
+  ml_ma = BooleanField() # is it metal loss / mill anomaly?
+  run_match = ForeignKeyField(RunMatch, backref='features')
+  side = CharField()
+  
+  def attrs_serialized(self):
+    attrs = [fa for fa in self.attributes]
+    return(attrs)
+    
+  class Meta:
+    database = db
+  
+class FeatureAttribute(Model):
+  '''
+  An attribute field for each reading - dependent on the tool and supplier
+  '''
+  feature = ForeignKeyField(Feature, backref='attributes')
+  attribute_name = CharField()
+  attribute_datatype = CharField()
+  attribute_data = CharField()
+  
+  class Meta:
+    database = db
+
+class FeaturePair(Model):
+  '''
+  A matched pair or set of features between two inspection runs
+  '''
+  feature_a = ForeignKeyField(Feature, backref='feature_pair')
+  feature_b = ForeignKeyField(Feature, backref='feature_pair')
+  run_match = ForeignKeyField(RunMatch, backref='feature_pairs')
+  class Meta:
+    database = db
+
+class FeatureMatch(Model):
+  '''
+  Performs the feature match
+  '''
+  run_match = ForeignKeyField(RunMatch, backref='feature_match')
+  features_a = ForeignKeyField(Feature)
+  features_b = ForeignKeyField(Feature)
+  
+  class Meta:
+    database = db
+
+
+

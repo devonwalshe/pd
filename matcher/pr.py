@@ -8,17 +8,18 @@ from matcher.conf import mappings
 
 ### Describes a PIG's run through a pipeline on a certain date
 class PigRun(object):
-  def __init__(self, mapping='basic_coord'):
-    self.mapping = mapping
+  def __init__(self):
     self.init_df = None
     self.file_path = None
   
-  def init_run(self, path, mapping, label='A'):
+  def init_run(self, path, mapping, label='A', sheet_name='Sheet1'):
     '''
     sets up the initial dataframe
     '''
+    ### Set up mapping on the class
+    self.mapping = mapping
     ### Import
-    raw_df = pd.read_excel(path, sheet_name="Sheet1")[mappings[mapping]['input_columns'].keys()]
+    raw_df = pd.read_excel(path, sheet_name=sheet_name)[mappings[mapping]['input_columns'].keys()]
     raw_df.columns = mappings[mapping]['input_columns'].values()
     raw_df.index.name = label
     self.raw_df = raw_df

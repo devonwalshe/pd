@@ -10,7 +10,8 @@ class WeldMatcher(object):
     self.w1 = df1[df1.feature == "WELD"]
     self.w2 = df2[df2.feature == "WELD"]
     self.coord_match = mapping['coordinates']
-    self.conf = mapping['weld_match']
+    if not self.coord_match:
+      self.conf = mapping['weld_match']
     
   @timed(logger)
   def match_welds(self):
