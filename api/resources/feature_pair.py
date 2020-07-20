@@ -8,18 +8,18 @@ import datetime, json
 from api.models.models import *
 from api.resources.base_resources import BaseResource, ListResource, NewResource
 
-class WeldPairList(ListResource):
+class FeaturePairList(ListResource):
   
   def __init__(self, **kwargs):
     super().__init__(**kwargs)
   
 
-class WeldPairNew(NewResource):
+class FeaturePairNew(NewResource):
   
   def __init__(self, **kwargs):
     super().__init__(**kwargs)
 
-class WeldPairResource(BaseResource):
+class FeaturePairResource(BaseResource):
   
   def __init__(self, **kwargs):
     super().__init__(**kwargs)
