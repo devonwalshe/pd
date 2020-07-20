@@ -15,9 +15,12 @@ api = Api(app)
 ### Register resources
 
 ### FeatureMaps
-api.add_resource(FeatureMapList, '/feature_maps/')
-api.add_resource(FeatureMapNew, '/feature_map/')
-api.add_resource(FeatureMapResource, '/feature_map/<instance_id>')
+api.add_resource(FeatureMapList, '/feature_maps/',
+                resource_class_kwargs={ 'model': FeatureMap })
+api.add_resource(FeatureMapNew, '/feature_map/',
+                resource_class_kwargs={ 'model': FeatureMap })
+api.add_resource(FeatureMapResource, '/feature_map/<instance_id>',
+                resource_class_kwargs={ 'model': FeatureMap })
 
 ### Pipelines
 api.add_resource(PipelineList, '/pipelines/',

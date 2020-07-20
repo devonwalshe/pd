@@ -90,6 +90,9 @@ fa_test.list()
 ### Feature Pair
 fp_test = ApiResourceTest('feature_pair', 'feature_pairs')
 fp_test.list()
+### Feature Map
+fm_test = ApiResourceTest('feature_map', 'feature_maps')
+fm_test.list()
   ### All methods on all resources
   ### Handles resource not found gracefully
   ### Conforms to a pre specified data model
