@@ -117,9 +117,23 @@ class Feature(Model):
   run_match = ForeignKeyField(RunMatch, backref='features')
   side = CharField()
   
+  def matched(self):
+    if self.side=="A":
+      fp = [fp for fp in FeaturePair.select().where(FeaturePair.feature_a == self.id)]
+    else:
+      fp = [fp for fp in FeaturePair.select().where(FeaturePair.feature_b == self.id)]
+    if fp != []:
+      return(True)
+    else:
+      return(False)
+  
   def attrs_serialized(self):
-    attrs = [fa for fa in self.attributes]
+    attrs = [model_to_dict(fa, recurse=False) for fa in self.attributes]
     return(attrs)
+    
+  def serialize(self):
+    obj = {**model_to_dict(self, recurse=False), **{'matched': self.matched()}, **{'attributes': self.attrs_serialized()}}
+    return(obj)
     
   class Meta:
     database = db
