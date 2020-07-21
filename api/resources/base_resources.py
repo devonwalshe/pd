@@ -40,8 +40,13 @@ class BaseResource(Resource):
     self.model = kwargs['model']
     
   def get(self, instance_id):
-    instance = self.model.get_by_id(instance_id)
-    return(model_to_dict(instance))
+    instances = [model_to_dict(rf, recurse=False) for rf in [self.model.get_by_id(instance_id)]]
+    ### Check for datetime objects and serialize
+    if datetime.datetime in [type(v) for v in instances[0].values()]:
+      instances = [DateUtil.serialize_instance_dates(instance) for instance in instances]
+    return(instances[0])
+    #instance = self.model.get_by_id(instance_id)
+    #return(model_to_dict(instance))
   
   def put(self, instance_id):
     data = request.get_json(force=True)
