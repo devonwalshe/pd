@@ -1,6 +1,6 @@
 ### external imports
 from flask import request
-from flask_restful import Resource, abort, reqparse
+from flask_restful import Resource, abort, reqparse, marshal_with
 from peewee import *
 from playhouse.shortcuts import model_to_dict, dict_to_model
 import datetime
@@ -37,7 +37,9 @@ class NewResource(Resource):
     
 class BaseResource(Resource):
   def __init__(self, **kwargs):
-    self.model = kwargs['model']
+    self.model = kwargs.get('model', None)
+    self.resource_fields = kwargs.get('resource_fields', None)
+    self.only = kwargs.get('only', None)
     
   def get(self, instance_id):
     instances = [model_to_dict(rf, recurse=False) for rf in [self.model.get_by_id(instance_id)]]

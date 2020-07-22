@@ -2,8 +2,6 @@ from peewee import *
 from playhouse.shortcuts import model_to_dict, dict_to_model
 db = PostgresqlDatabase('pd', user='azymuth', host='localhost', port=5432)
 
-
-
 class FeatureMap(Model):
   '''
   Normalises attributes from a run's dataset for processing
@@ -117,9 +115,23 @@ class Feature(Model):
   run_match = ForeignKeyField(RunMatch, backref='features')
   side = CharField()
   
+  def matched(self):
+    if self.side=="A":
+      fp = [fp for fp in FeaturePair.select().where(FeaturePair.feature_a == self.id)]
+    else:
+      fp = [fp for fp in FeaturePair.select().where(FeaturePair.feature_b == self.id)]
+    if fp != []:
+      return(True)
+    else:
+      return(False)
+  
   def attrs_serialized(self):
-    attrs = [fa for fa in self.attributes]
+    attrs = [model_to_dict(fa, recurse=False) for fa in self.attributes]
     return(attrs)
+    
+  def serialize(self):
+    obj = {**model_to_dict(self, recurse=False), **{'matched': self.matched()}, **{'attributes': self.attrs_serialized()}}
+    return(obj)
     
   class Meta:
     database = db
@@ -143,6 +155,7 @@ class FeaturePair(Model):
   feature_a = ForeignKeyField(Feature, backref='feature_pair')
   feature_b = ForeignKeyField(Feature, backref='feature_pair')
   run_match = ForeignKeyField(RunMatch, backref='feature_pairs')
+  pipe_section = ForeignKeyField(PipeSection, backref='feature_pairs')
   class Meta:
     database = db
 
