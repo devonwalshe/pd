@@ -110,7 +110,7 @@ def bootstrap_features(matched_data, rm, mapping):
       feature_b.save()
     ### if both have IDS
     if both:
-        fp = FeaturePair(feature_a = feature_a, feature_b = feature_b, run_match = rm)
+        fp = FeaturePair(feature_a = feature_a, feature_b = feature_b, run_match = rm, pipe_section=feature_a.pipe_section)
         fp.save()
     ### Set up feature attributes
     mapping = {'feature':"str",

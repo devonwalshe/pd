@@ -32,6 +32,8 @@ class PipeSectionResource(BaseResource):
     ### Get welds
     wp = [wp for wp in Weld.get(Weld.pipe_section == ps.section_id).weld_pair][0]
     welds = [model_to_dict(wp.weld_a, recurse=False), model_to_dict(wp.weld_b, recurse=False)]
+    ### Feature pairs
+    fps = [model_to_dict(fp, recurse=False) for fp in ps.feature_pairs]
     ### merge the dicts
-    joined = {**model_to_dict(ps, recurse=False), **{'weld_pair_id':wp.id, 'welds': welds, 'features': features}}
+    joined = {**model_to_dict(ps, recurse=False), **{'weld_pair_id':wp.id, 'feature_pairs': fps, 'welds': welds, 'features': features}}
     return(joined)
