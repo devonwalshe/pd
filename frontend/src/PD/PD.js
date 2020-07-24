@@ -10,7 +10,8 @@ export default class PD extends Component {
 
         this.state = {
 
-            pipe: []
+            id: 0,
+            pipe_section: {}
 
         }
 
@@ -18,43 +19,23 @@ export default class PD extends Component {
 
 
     componentDidMount() {
-        
-        console.log(this.props)
+            
         const url = this.props.proxyURL + '?' + encodeURIComponent(this.props.restURL)
-        console.log(url)
+    
         fetch(url)
             .then(res => res.json())
-            .then((data) => {
-            
-                this.getPipeSection(data)
-            console.log(data)
-            })
+            .then((data) => this.setState({pipe_section: data, id: 5}))
             .catch(console.log)
 
-    }
-
-    getPipeSection = pipe => {
-
-        let out = []
-
-        for (let i = 0, ix = pipe.features.length; i < ix; i += 1) {
-
-            for (let j = 0, jx = pipe.features[i].attributes.length; j < jx; j += 1) {
-
-                out.push(j)
-
-            }
-
-        }
-
-        this.setState({pipe: [0]})
     }
 
     render() {
 
         return (
 
-            <PipeSection pipe={this.state.pipe}/>
+            <div className="pipeline_graph_container" id="pipeline_graph_container">
+                <PipeSection pipe_section={this.state.pipe_section} id={this.state.id}/>
+            </div>
             
         )
 

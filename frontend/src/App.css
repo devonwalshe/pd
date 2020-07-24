@@ -36,3 +36,30 @@
     transform: rotate(360deg);
   }
 }
+
+
+.pipeline_graph_container {
+  background-color: #DDDDDD;
+  display: inline-block;
+  margin: auto;
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  width: 800px;
+  height: 400px;
+}
+
+/*
+card 
+*/
+.card {
+  font-size: 12px;
+}
+.card > .header {
+  width: 100%;
+  border-bottom: 1px solid gray;
+  font-size: 14px;
+  text-align: center;
+}
