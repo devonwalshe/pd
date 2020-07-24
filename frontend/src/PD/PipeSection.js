@@ -8,28 +8,24 @@ export default class PD extends Component {
     constructor(props) {
 
         super(props)
-console.log(props)
+
         this.state = {
+
             isPopoverOpen: false,
             pipe_section: []
 
         }
 
-        
-
     }
 
 
-    componentDidUpdate(previousProps, previousState) {
+    componentDidUpdate(previousProps) {
+
         if (previousProps.id !== this.props.id)
             this.drawPipe()
+
     }
 
-    //componentDidMount() {
-
-      //  this.drawPipe()
-    
-    //}
 
     drawPipe = () => {
 
@@ -40,16 +36,10 @@ console.log(props)
                     key={data.id + 'popup'}
                     trigger={
                         <div
+                            className="shape flange"
                             key={data.id}
                             style={{
-                                backgroundColor:'#888',
-                                border:'1px solid #333',
-                                borderRadius:'50%',
-                                height:'30px',
-                                left: width / w * data.left + 'px',
-                                position: 'absolute',
-                                top:'20px',
-                                width:'20px'
+                                left: width / w * data.left + 'px'
                             }}>
                         </div>
                     }
@@ -64,15 +54,10 @@ console.log(props)
                     key={data.id + 'popup'}
                     trigger={
                         <div
+                            className="shape valve"
                             key={data.id}
                             style={{
-                                backgroundColor:'blue',
-                                border:'2px solid black',
-                                height:'20px',
-                                left: width / w * data.left + 'px',
-                                position: 'absolute',
-                                top:'25px',
-                                width:'20px'
+                                left: width / w * data.left + 'px'
                             }}></div>
                     }
                     keepTooltipInside="#pipeline_graph_container"
@@ -88,7 +73,7 @@ console.log(props)
             w = 0,
             out = []
 
-        const pipe = this.props.pipe_section && this.props.pipe_section.features || []
+        const pipe = (this.props.pipe_section && this.props.pipe_section.features) || []
 
         for (let i = 0, ix = pipe.length; i < ix; i += 1) {
 
