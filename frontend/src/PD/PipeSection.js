@@ -56,9 +56,9 @@ console.log(props)
                     keepTooltipInside="#pipeline_graph_container"
                     on="hover"
                 >
-                    {this.tooltip(data)}
+                    {this.tooltip(data.attributes)}
                 </Popup>),
-                
+
             valve: data => (
                 <Popup
                     key={data.id + 'popup'}
@@ -78,7 +78,7 @@ console.log(props)
                     keepTooltipInside="#pipeline_graph_container"
                     on="hover"
                 >
-                    {this.tooltip(data)}
+                    {this.tooltip(data.attributes)}
                 </Popup>)
 
         }
@@ -94,43 +94,32 @@ console.log(props)
 
             let feature = {
 
-                    feature_category: null,
-                    us_weld_dist_wc_ft: null,
-                    id: null
+                    attributes: {},
+                    id: pipe[i].id
 
                 }
 
             for (let j = 0, jx = pipe[i].attributes.length; j < jx; j += 1) {
 
-                const attr = pipe[i].attributes[j].attribute_name
-                const data = pipe[i].attributes[j].attribute_data
+                const { attribute_data, attribute_name } = pipe[i].attributes[j]
 
-                if (attr in feature) {
+                feature.attributes[attribute_name] = attribute_data
 
-                    feature.id = pipe[i].attributes[j].id
-                    feature[attr] = data
+                if (attribute_name === 'us_weld_dist_wc_ft')
 
-                    if (attr === 'us_weld_dist_wc_ft') {
+                    feature.left = w += Number(attribute_data)
 
-                        w += Number(data)
-                        feature.left = w
-                    }
-
-                }
-                
             }
-            console.log(feature)
-            feature.feature_category && shapes[feature.feature_category] && out.push(feature)
+            
+            feature.attributes.feature_category && shapes[feature.attributes.feature_category] && out.push(feature)
 
         }
 
         for (let i = 0, ix = out.length; i < ix; i +=1 )
-            features.push(shapes[out[i].feature_category](out[i]))
 
-        console.log(out,this.props, width, w)
+            features.push(shapes[out[i].attributes.feature_category](out[i]))
+
         this.setState({pipe_section: features})
-    
-        //return [<div>test</div>]
 
     }
 
@@ -147,9 +136,17 @@ console.log(props)
 
     tooltip = data => (
         <div className="card">
-          <div className="header">{data.feature_category}</div>
           <div className="content">
-            upstream distance: {data.us_weld_dist_wc_ft}
+            {(()=>{
+                let out = []
+                for (let attr in data) {
+                  out.push (<b key={attr + 'b'}>{attr}</b>)
+                  out.push (<span key={attr + 'c'}>:</span>)
+                  out.push (<span key={attr + 'd'}>{data[attr]}</span>)
+                  out.push (<br key={attr + 'e'} />)
+                }
+                return out
+            })()}
           </div>
         </div>
     )
