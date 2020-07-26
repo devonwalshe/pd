@@ -61,9 +61,25 @@ def bootstrap_pipe_sections(matched_data, rm):
 
 def bootstrap_welds(matched_data, rm):
   ### Set up records for Welds
-  welds_a = [Weld(weld_id = int(row['id_A']), pipe_section = "{}_{}".format(rm.id, row['pipe_section']), section_sequence=row['section_sequence'], run_match=rm, side="A") \
+  welds_a = [Weld(weld_id = int(row['id_A']), 
+                  pipe_section = "{}_{}".format(rm.id, row['pipe_section']), 
+                  section_sequence=row['section_sequence'], 
+                  run_match=rm, 
+                  side="A",
+                  us_weld_dist = row['us_weld_dist_wc_ft_A'],
+                  us_weld_unit = 'ft',
+                  joint_length = row['joint_length_A'],
+                  wall_thickness = row['wt_A']) \
              for idx, row in matched_data[(matched_data['feature_A'] == "WELD") & (matched_data['feature_B'] == "WELD")].iterrows()]
-  welds_b = [Weld(weld_id = int(row['id_B']), pipe_section = "{}_{}".format(rm.id, row['pipe_section']), section_sequence=row['section_sequence'], run_match=rm, side="B") \
+  welds_b = [Weld(weld_id = int(row['id_B']), 
+                  pipe_section = "{}_{}".format(rm.id, row['pipe_section']), 
+                  section_sequence=row['section_sequence'], 
+                  run_match=rm, 
+                  side="B",
+                  us_weld_dist = row['us_weld_dist_wc_ft_B'],
+                  us_weld_unit = 'ft',
+                  joint_length = row['joint_length_B'],
+                  wall_thickness = row['wt_B']) \
              for idx, row in matched_data[(matched_data['feature_A'] == "WELD") & (matched_data['feature_B'] == "WELD")].iterrows()]
 
   with db.atomic():

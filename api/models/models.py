@@ -89,6 +89,9 @@ class Weld(Model):
   section_sequence = IntegerField()
   run_match = ForeignKeyField(RunMatch, backref = 'welds')
   side = CharField()
+  us_weld_dist = DoubleField()
+  joint_length = DoubleField()
+  wall_thickness = DoubleField()
   
   class Meta:
     database = db
