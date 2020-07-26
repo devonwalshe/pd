@@ -43,11 +43,11 @@ class BaseResource(Resource):
     
   def get(self, instance_id):
     instance = self.model.get_by_id(instance_id)
-    return(model_to_dict(instance))
+    return(DateUtil.serialize_instance_dates(model_to_dict(instance, recurse=False)))
   
   def put(self, instance_id):
     data = request.get_json(force=True)
-    instance = model_to_dict(Pipeline.get_by_id(instance_id))
+    instance = model_to_dict(self.model.get_by_id(instance_id))
     instance_updated = {**instance, **data[0]}
     self.model.update(**instance_updated).where(self.model.id==instance_id).execute()
     return(model_to_dict(self.model.get_by_id(instance_id)), 201)

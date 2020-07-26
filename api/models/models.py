@@ -64,6 +64,8 @@ class RunMatch(Model):
   run_a = ForeignKeyField(InspectionRun, backref='match')
   run_b = ForeignKeyField(InspectionRun, backref='match')
   pipeline = ForeignKeyField(Pipeline, backref='match')
+  section_count = IntegerField()
+  sections_checked = IntegerField()
   
   class Meta:
     database = db
@@ -75,6 +77,7 @@ class PipeSection(Model):
   '''
   section_id = CharField(unique=True)
   run_match = ForeignKeyField(RunMatch, backref='pipe_sections')
+  manually_checked = BooleanField()
   
   class Meta:
     database = db

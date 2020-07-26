@@ -47,13 +47,13 @@ def bootstrap_run_match(raw_files):
   ### Read match output file
   matched_data = pd.read_csv('data/output/matched_runs_coord_20200707_161051.csv')
   ### Set up record for Run Match
-  rm = RunMatch.create(run_a = inspection_runs[0], run_b = inspection_runs[1], pipeline = pipeline)
+  rm = RunMatch.create(run_a = inspection_runs[0], run_b = inspection_runs[1], pipeline = pipeline, section_count=matched_data.pipe_section.max() + 1, sections_checked=0)
   ### Return
   return(matched_data, rm)
 
 def bootstrap_pipe_sections(matched_data, rm):
   ### Set up pipe sections
-  pipe_sections = [PipeSection(section_id = "{}_{}".format(rm.id, ps), run_match=rm) for ps in set(matched_data.pipe_section)]
+  pipe_sections = [PipeSection(section_id = "{}_{}".format(rm.id, ps), run_match=rm, manually_checked=False) for ps in set(matched_data.pipe_section)]
   with db.atomic():
     PipeSection.bulk_create(pipe_sections, batch_size=100)
   return(pipe_sections)
