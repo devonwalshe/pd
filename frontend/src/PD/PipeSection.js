@@ -11,7 +11,6 @@ export default class PD extends Component {
 
         this.state = {
 
-            isPopoverOpen: false,
             pipe_section: []
 
         }
@@ -28,45 +27,6 @@ export default class PD extends Component {
 
 
     drawPipe = () => {
-
-        const shapes = {
-
-            flange: data => (
-                <Popup
-                    key={data.id + 'popup'}
-                    trigger={
-                        <div
-                            className="shape flange"
-                            key={data.id}
-                            style={{
-                                left: width / w * data.left + 'px'
-                            }}>
-                        </div>
-                    }
-                    keepTooltipInside="#pipeline_graph_container"
-                    on="hover"
-                >
-                    {this.tooltip(data.attributes)}
-                </Popup>),
-
-            valve: data => (
-                <Popup
-                    key={data.id + 'popup'}
-                    trigger={
-                        <div
-                            className="shape valve"
-                            key={data.id}
-                            style={{
-                                left: width / w * data.left + 'px'
-                            }}></div>
-                    }
-                    keepTooltipInside="#pipeline_graph_container"
-                    on="hover"
-                >
-                    {this.tooltip(data.attributes)}
-                </Popup>)
-
-        }
 
         let features = [],
             width = 800,
@@ -96,13 +56,28 @@ export default class PD extends Component {
 
             }
             
-            feature.attributes.feature_category && shapes[feature.attributes.feature_category] && out.push(feature)
+            feature.attributes.feature_category && out.push(feature)
 
         }
 
-        for (let i = 0, ix = out.length; i < ix; i +=1 )
+        for (let i = 0, ix = out.length; i < ix; i +=1)
 
-            features.push(shapes[out[i].attributes.feature_category](out[i]))
+            features.push(<Popup
+                key={out[i].id + 'popup'}
+                trigger={
+                    <div
+                        className={"shape " + out[i].attributes.feature_category}
+                        key={out[i].id}
+                        style={{
+                            left: width / w * out[i].left + 'px'
+                        }}>
+                    </div>
+                }
+                keepTooltipInside="#pipeline_graph_container"
+                on="hover"
+            >
+                {this.tooltip(out[i].attributes)}
+            </Popup>)
 
         this.setState({pipe_section: features})
 
