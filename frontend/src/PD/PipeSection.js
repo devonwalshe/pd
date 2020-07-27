@@ -1,9 +1,9 @@
 import React, { Component } from "react";
 import PropTypes from 'prop-types';
-import PipeSection from './PipeSection.js'
+//import PipeSection from './PipeSection.js'
 import Popup from "reactjs-popup";
 
-export default class PD extends Component {
+export default class PipeSection extends Component {
 
     constructor(props) {
 
@@ -21,6 +21,7 @@ export default class PD extends Component {
     componentDidUpdate(previousProps) {
 
         if (previousProps.id !== this.props.id)
+        
             this.drawPipe()
 
     }
@@ -66,7 +67,7 @@ export default class PD extends Component {
                 key={out[i].id + 'popup'}
                 trigger={
                     <div
-                        className={"shape " + out[i].attributes.feature_category}
+                        className={"shape " + (out[i].attributes.feature_category === 'nan' ? 'valve' : out[i].attributes.feature_category)}
                         key={out[i].id}
                         style={{
                             left: width / w * out[i].left + 'px'
@@ -76,7 +77,21 @@ export default class PD extends Component {
                 keepTooltipInside="#pipeline_graph_container"
                 on="hover"
             >
-                {this.tooltip(out[i].attributes)}
+                <div className="card">
+                    <div className="content">
+                        {(data => {
+                            let out = []
+                            for (let attr in data) {
+                                out.push (<b key={attr + 'b'}>{attr}</b>)
+                                out.push (<span key={attr + 'c'}>:</span>)
+                                out.push (<span key={attr + 'd'}>{data[attr]}</span>)
+                                out.push (<br key={attr + 'e'} />)
+                            }
+                            return out
+                        })(out[i].attributes)}
+                    </div>
+                </div>
+                
             </Popup>)
 
         this.setState({pipe_section: features})
