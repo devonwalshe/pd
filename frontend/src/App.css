@@ -39,15 +39,13 @@
 
 
 .pipeline_graph_container {
-  background-color: #DDDDDD;
   display: inline-block;
-  margin: auto;
-  position: fixed;
+  margin: 0px;
   top: 0;
   bottom: 0;
   left: 0;
   right: 0;
-  width: 800px;
+  width: 100%;
   height: 400px;
 }
 
@@ -67,12 +65,14 @@ card
 /*
 shapes
 */
+.shape {
+  position: relative;
+}
 .shape.flange {
   background-color: #888;
   border: 1px solid #333;
   border-radius: 50%;
   height: 30px;
-  position: absolute;
   top: 20px;
   width: 20px;
 }
@@ -80,7 +80,17 @@ shapes
   background-color: blue;
   border: 2px solid black;
   height: 20px;
-  position: absolute;
   top: 25px;
   width: 20px;
 }
+.shape.unknown {
+  background-color: black;
+  border: 2px solid black;
+  height: 20px;
+  top: 25px;
+  width: 20px;
+}
+
+
+
+

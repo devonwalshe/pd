@@ -1,5 +1,5 @@
 from flask import Flask, jsonify, request
-from flask_restful import Resource, Api
+from flask_restful import Resource, Api, fields
 from peewee import *
 import pandas as pd
 import numpy as np

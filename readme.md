@@ -42,3 +42,14 @@ Pre-requisites:
    - Python application powering the automated data match
 - Tests
 	- application wide tests
+
+## Introspecting application models
+
+The model definitions, including their attributes and relations are found in `api/models/models.py`
+
+These don't necessarily make it clear which data is available on each item in the database, so following is instructions to get json like responses from each model:
+
+1. Start an interactive python session from the project root: `$ python` (Alternatively you can use `ipython` which can be installed with `pip install ipython`)
+2. Load in all the model definitions: `from api.models.models import *`
+3. Get a single instance of any given model: `item = PipeSection.get_by_id(1)` (you can replace `PipeSection` with any model from the `api/models/models.py` file)
+4. Introspect the model relations and associated data: `model_to_dict(item)` or `model_to_dict(item, recurse=False)` if you don't want to include the relations

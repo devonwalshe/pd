@@ -1,0 +1,53 @@
+
+.custom-select-checkbox .custom-select-button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  position: relative;
+  padding: 0.375em 0.75em;
+  font-family: "Roboto", Arial, sans-serif;
+  font-size: 1rem;
+  font-weight: 400;
+  border: 1px solid grey;
+  border-radius: 4px;
+  background-color: #28a745;
+  border-color: #28a745;
+  color: #fff;
+  /*background-color: #fff;*/
+}
+.custom-select-checkbox .custom-select-button:after {
+    
+        display: inline-block;
+        margin-left: .255em;
+        vertical-align: .255em;
+        content: "";
+        border-top: .3em solid;
+        border-right: .3em solid transparent;
+        border-bottom: 0;
+        border-left: .3em solid transparent;
+    }
+.item-list {
+    background-color: #fff;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.19), 0 3px 6px rgba(0, 0, 0, 0.23);
+  max-height: 180px;
+  overflow: scroll;
+  border: 1px solid grey;
+  border-top: none;
+  position: absolute;
+  z-index: 99999;
+}
+
+.custom-select-label {
+  display: block;
+  margin: 0;
+  padding: 0.5em 0.9em;
+}
+
+.custom-select-label:hover {
+  background-color: lightgrey;
+}
+.custom-select-label span:after {
+  top: 0;
+  left: 0.9em;
+}
+
