@@ -6,6 +6,7 @@ const hurl = 'http://localhost:5000'
 
 const requestListener = function (req, res) {
   try {
+    console.log(decodeURIComponent(url.parse(req.url,true).search.replace(/^\?/, '')))
     fetch(decodeURIComponent(url.parse(req.url,true).search.replace(/^\?/, '')), {
         method: "GET",
         crossDomain:true

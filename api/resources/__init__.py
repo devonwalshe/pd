@@ -1,6 +1,6 @@
 from api.resources.feature_map import FeatureMapList, FeatureMapResource, FeatureMapNew
 from api.resources.pipeline import PipelineList, PipelineResource, PipelineNew
-from api.resources.base_resources import ListResource, NewResource
+from api.resources.base_resources import ListResource, NewResource, BaseResource
 from api.resources.raw_file import RawFileList, RawFileNew, RawFileResource
 from api.resources.inspection_run import InspectionRunList, InspectionRunNew, InspectionRunResource
 from api.resources.run_match import RunMatchList, RunMatchNew, RunMatchResource

@@ -1,39 +1,25 @@
-import React, { Component } from 'react';
-import logo from './logo.svg';
+import React, { Component } from 'react'
 import './App.css';
+import PD from './PD/PD.js'
+import 'bootstrap/dist/css/bootstrap.min.css'
+import './bootstrap2-toggle.css'
+import 'react-bootstrap-typeahead/css/Typeahead.css';
+
+//const restURL = 'http://0.0.0.0:8000/pipe_section.json'//
+const restURL = 'http://localhost:5000/'
+const proxyURL =  'http://localhost:3001'
+
 
 export default class App extends Component {
 
   componentDidMount() {
     
-    fetch('http://localhost:3001?' + encodeURIComponent('http://localhost:5000/run_matches/'))
-    .then(res => res.json())
-    .then((data) => {
-     
-      console.log(data)
-    })
-    .catch(console.log)
   }
 
 
   render = () => (
 
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <PD restURL={restURL} proxyURL={proxyURL}/>
 
   )
 
