@@ -62,35 +62,30 @@ card
   text-align: center;
 }
 
-/*
-shapes
-*/
-.shape {
+
+/* Tooltip container */
+.tooltip {
   position: relative;
+  display: inline-block;
+  border-bottom: 1px dotted black; /* If you want dots under the hoverable text */
 }
-.shape.flange {
-  background-color: #888;
-  border: 1px solid #333;
-  border-radius: 50%;
-  height: 30px;
-  top: 20px;
-  width: 20px;
-}
-.shape.valve {
-  background-color: blue;
-  border: 2px solid black;
-  height: 20px;
-  top: 25px;
-  width: 20px;
-}
-.shape.unknown {
+
+/* Tooltip text */
+.tooltip .tooltiptext {
+  visibility: hidden;
+  width: 120px;
   background-color: black;
-  border: 2px solid black;
-  height: 20px;
-  top: 25px;
-  width: 20px;
+  color: #fff;
+  text-align: center;
+  padding: 5px 0;
+  border-radius: 6px;
+ 
+  /* Position the tooltip text - see examples below! */
+  position: absolute;
+  z-index: 1;
 }
 
-
-
-
+/* Show the tooltip text when you mouse over the tooltip container */
+.tooltip:hover .tooltiptext {
+  visibility: visible;
+}
