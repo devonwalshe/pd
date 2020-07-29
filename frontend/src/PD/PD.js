@@ -208,7 +208,7 @@ export default class PD extends Component {
         const pipe = this.pipe_section_raw.features || []
 
         for (let i = 0, ix = pipe.length; i < ix; i += 1) {
-
+console.log(ix)
             let feature = {
 
                     attributes: {},
@@ -223,7 +223,7 @@ export default class PD extends Component {
                 feature.attributes[attribute_name] = attribute_data
 
                 if (attribute_name === 'us_weld_dist_wc_ft')
-
+                
                     feature.left = w += Number(attribute_data)
 
             }
@@ -277,12 +277,12 @@ export default class PD extends Component {
             <div>
                 <div style={{backgroundColor:'#eee', display:'inline-block', padding:10, width:'100%'}}>
                     <div style={{alignItems:'baseline',display:'flex',float:'left'}}>
-                        <Form.Label style={{marginRight:'20px'}}>Run:</Form.Label>
+                        <Form.Label style={{marginRight:'10px'}}>Run:</Form.Label>
                         <Form.Control as="select" onChange={this.selectRunMatch} style={{width:'200px'}}>
                             <option>Run Matches...</option>
                             {this.state.run_matches}
                         </Form.Control>
-                        <Form.Label style={{marginLeft:'20px',marginRight:'20px'}}>Pipe:</Form.Label>
+                        <Form.Label style={{marginLeft:'20px',marginRight:'10px'}}>Pipe:</Form.Label>
                         <Form.Control as="select" onChange={this.selectPipeSection} style={{width:'200px'}}>
                             <option>Pipe Sections...</option>
                             {this.state.pipe_sections}
