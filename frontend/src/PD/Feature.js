@@ -29,6 +29,8 @@ export default class Feature extends Component {
                     <div
                         className={"shape " + (this.supported[a.feature_category] || 'unknown') + ' side_' + i.side}
                         key={i.id}
+                        id={i.id}
+                        onClick={this.props.onClick}
                         style={{
                             left: i.left + 'px',
                             top: (360 - i.top) + 'px'
@@ -36,13 +38,14 @@ export default class Feature extends Component {
                             {i.matched ? '' : 'x'}
                     </div>
                 }
-                keepTooltipInside="#pipeline_graph_container"
+                keepTooltipInside="#root"
                 on="hover"
+                
             >
                 <div className="card">
                     <div className="content">
-                        {(data => {
-                            let out = []
+                        {((item, data) => {
+                            let out = [(<b key="id_info">id:</b>),(<span key="item_info">{item.id}</span>),(<br key="break_info"/>)]
                             for (let attr in data) {
                                 out.push (<b key={attr + 'b'}>{attr}</b>)
                                 out.push (<span key={attr + 'c'}>:</span>)
@@ -50,7 +53,7 @@ export default class Feature extends Component {
                                 out.push (<br key={attr + 'e'} />)
                             }
                             return out
-                        })(a)}
+                        })(i,a)}
                     </div>
                 </div>                
             </Popup>
@@ -61,6 +64,7 @@ export default class Feature extends Component {
 
 Feature.propTypes = {
 
-    feature: PropTypes.object.isRequired
+    feature: PropTypes.object.isRequired,
+    onClick: PropTypes.func.isRequired
 
 }
