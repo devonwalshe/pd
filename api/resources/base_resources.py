@@ -28,11 +28,13 @@ class NewResource(Resource):
   
   def post(self):
     data = request.get_json(force=True)
+    print(data)
     for item in data:
       instance = self.model(**item)
       ### TODO add sensible try except blocks with rollbacks
       instance.save()
-    return(model_to_dict(instance), 201)
+      instance = model_to_dict(instance, recurse=False)
+    return(DateUtil.serialize_instance_dates(instance), 201)
     
     
 class BaseResource(Resource):
