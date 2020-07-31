@@ -9,12 +9,24 @@ export default class Feature extends Component {
 
         super(props)
 
-        this.supported = {
-            flange: 'flange',
-            valve: 'valve',
-            'metal loss / mill anomaly': 'anomaly'
-        }
+        this.icons = {
 
+            agm: 'agm',
+            bend: 'bend',
+            casing: 'casing',
+            fitting: 'fitting',
+            flange: 'flange',
+            metal_loss: 'metal_loss',
+            repair: 'repair',
+            stopple: 'stopple',
+            tee: 'tee',
+            txt: 'txt',
+            valve1: 'valve1',
+            valve2: 'valve2',
+            'metal loss / mill anomaly': 'metal_loss'
+        }
+        
+        
     }
 
 
@@ -23,19 +35,26 @@ export default class Feature extends Component {
         const i = this.props.feature
         const a = i.attributes
 
+        const border = i.side === 'A' ? 'orange' : 'blue'
+
         return (<Popup
                 key={i.id + 'popup'}
                 trigger={
                     <div
-                        className={"shape " + (this.supported[a.feature_category] || 'unknown') + ' side_' + i.side}
+                        className={"shape" + (i.matched ? "" : " unmatched")}
                         key={i.id}
                         id={i.id}
                         onClick={this.props.onClick}
                         style={{
-                            left: i.left + 'px',
-                            top: (360 - i.top) + 'px'
+                            border: "2px solid " + border,
+                            left: i.left,
+                            top: 360 - i.top
                         }}>
-                            {i.matched ? '' : 'x'}
+                        <img
+                            width="20px"
+                            height="20px"
+                            src={"./feature_icons/" + (this.icons[a.feature_category] || "unknown") + ".png"}
+                            />
                     </div>
                 }
                 keepTooltipInside="#root"

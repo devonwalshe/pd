@@ -30,6 +30,7 @@ class PipeSectionResource(BaseResource):
     ### Get features
     features = [f.serialize() for f in ps.features]
     ### Get welds
+    ### TODO - make this a regular expression boolean that looks for 0 (the first weld pair of any given run)
     if ps.id != 1:
       wp = [wp for wp in Weld.get(Weld.pipe_section == ps.section_id).weld_pair][0]
       welds = [model_to_dict(wp.weld_a, recurse=False), model_to_dict(wp.weld_b, recurse=False)]

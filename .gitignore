@@ -1,3 +1,4 @@
-data/output
+frontend/node_modules
 *.pyc
-__pycache__
+matcher/__pycache__
+frontend.package-lock.json

@@ -1,6 +1,6 @@
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
-import { Form, Dropdown, Toast } from 'react-bootstrap'
+import { Form, Toast } from 'react-bootstrap'
 import { Typeahead } from 'react-bootstrap-typeahead'
 import ReactDataGrid from 'react-data-grid'
 import Feature from './Feature.js'
@@ -59,26 +59,25 @@ export default class PD extends Component {
 
     clickFeature = e => {
 
-        const id = e.currentTarget.id
+        const id = Number(e.currentTarget.id)
 
         if (this.state.match_on)
 
             if (this.first_match) {
 
-                const data = {feature_a: this.first_match, feature_b: id, run_match: this.state.run_match_instance, pipe_section:this.state.pipe_section_instance}
-                
-                this.fetchRest('feature_pair&method=POST&data='+JSON.stringify(data), null, ()=>console.log('complete'))
-                /*
-                fetch('http://localhost:5000/feature_pair', {
-                    body: JSON.stringify(data),
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                }).then(res => {
-                    return res;
-                }).catch(console.logs);
-                */
-                
+                this.setState({match_on: false})
+                const data = [{feature_a: this.first_match, feature_b: id, run_match: this.state.run_match_instance, pipe_section:this.state.pipe_section_instance}]
+
+                this.fetchRest('feature_pair%2F&method=POST&data='+JSON.stringify(data), null, (data) => {
+                    console.log('Pair matched',data)
+                    this.fetchRest('pipe_section', this.state.pipe_section_instance, data => {
+                        
+                        this.pipe_section_raw = data
+                        this.displayPipeSection()
+                    
+                    })
+                })
+
                 this.first_match = 0
             }
             else
@@ -115,7 +114,7 @@ export default class PD extends Component {
 
     selectRunMatch = e => {
 
-        const i = e.currentTarget.options[e.currentTarget.selectedIndex].value
+        const i = Number(e.currentTarget.options[e.currentTarget.selectedIndex].value)
 
         this.setState({run_match_instance: i}, () => this.fetchRest('pipe_sections', null, this.setPipeSections))
 
@@ -143,10 +142,11 @@ export default class PD extends Component {
         const i = Number(e[0].key)
         
         this.setState({pipe_section_instance: i},
-        this.fetchRest('pipe_section', i, data => {
+
+            this.fetchRest('pipe_section', i, data => {
             
-            this.pipe_section_raw = data
-            this.displayPipeSection()
+                this.pipe_section_raw = data
+                this.displayPipeSection()
             
         }))
         
@@ -210,9 +210,12 @@ export default class PD extends Component {
                 
                     feature.left = w += Number(attribute_data)
 
-                else if (attribute_name === 'orientation_deg')
+                else if (attribute_name === 'orientation_deg') {
 
-                    feature.top = Number(attribute_data)
+                    let top = Number(attribute_data)
+                    feature.top = !isNaN(top) ? top : 360
+
+                }
 
             }
             
