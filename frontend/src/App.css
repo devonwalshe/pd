@@ -38,16 +38,54 @@
 }
 
 
-.pipeline_graph_container {
-  display: inline-block;
-  margin: 0px;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  width: 100%;
-  height: 400px;
+.graph {
+  margin: 5px;
 }
+
+.graph > div:last-child {
+  background-color: #ddd;
+  display: table;
+  height: 100%;
+  padding: 10px;
+  width: 100%;
+}
+
+.graph > div:last-child > div:first-child {
+  color: white;
+  display: table-cell;
+  font-size: 0.7rem;
+  height: 100%;
+  position: relative;
+}
+
+.graph > div:last-child > div:first-child > div:first-child {
+  padding-top: 7px;
+}
+
+.graph > div:last-child > div:first-child > div:last-child {
+  bottom: 5px;
+  position: absolute;
+  right: 0;
+}
+
+.graph > div:last-child > div:last-child {
+  display: table-cell;
+  height: 390px;
+  position: relative;
+  width: 100%;
+}
+.graph > div:last-child > div:last-child > div:first-child {
+  border-bottom: 1px solid white;
+  border-top: 1px solid white;
+  height: 362px;
+  margin: 14px 0px 14px 2px;
+  position: absolute;
+  width: 100%;
+  width: -moz-available;
+  width: -webkit-fill-available;
+  width: fill-available;
+}
+
 
 /*
 card 
@@ -84,6 +122,7 @@ card
   position: absolute;
   z-index: 1;
 }
+
 
 /* Show the tooltip text when you mouse over the tooltip container */
 .tooltip:hover .tooltiptext {

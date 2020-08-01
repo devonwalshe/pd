@@ -34,7 +34,6 @@ export default class Feature extends Component {
     
         const i = this.props.feature
         const a = i.attributes
-
         const border = i.side === 'A' ? 'orange' : 'blue'
 
         return (<Popup
