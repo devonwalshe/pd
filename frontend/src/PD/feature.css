@@ -1,13 +1,17 @@
-/*
-shapes
-*/
+
 .shape {
+    cursor: pointer;
     padding: 2px;
     line-height: 1;
     position: absolute;
     text-align: center;
     height: 28px;
     width: 28px;
+}
+
+.shape > img {
+    height: 20px;
+    width: 20px;
 }
 
 .unmatched {
