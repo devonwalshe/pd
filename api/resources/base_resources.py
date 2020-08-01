@@ -28,13 +28,15 @@ class NewResource(Resource):
   
   def post(self):
     data = request.get_json(force=True)
-    print(data)
+    instances = []
     for item in data:
       instance = self.model(**item)
       ### TODO add sensible try except blocks with rollbacks
       instance.save()
-      instance = model_to_dict(instance, recurse=False)
-    return(DateUtil.serialize_instance_dates(instance), 201)
+      instances.append(model_to_dict(instance, recurse=False))
+    if datetime.datetime in [type(v) for v in instances[0].values()]:
+      instances = [DateUtil.serialize_instance_dates(instance) for instance in instances] 
+    return(instances, 201)
     
     
 class BaseResource(Resource):
@@ -44,20 +46,15 @@ class BaseResource(Resource):
     self.only = kwargs.get('only', None)
     
   def get(self, instance_id):
-    instances = [model_to_dict(rf, recurse=False) for rf in [self.model.get_by_id(instance_id)]]
-    ### Check for datetime objects and serialize
-    if datetime.datetime in [type(v) for v in instances[0].values()]:
-      instances = [DateUtil.serialize_instance_dates(instance) for instance in instances]
-    return(instances[0])
-    #instance = self.model.get_by_id(instance_id)
-    #return(model_to_dict(instance))
+    instance = self.model.get_by_id(instance_id)
+    return(DateUtil.serialize_instance_dates(model_to_dict(instance, recurse=False)))
   
   def put(self, instance_id):
     data = request.get_json(force=True)
     instance = model_to_dict(self.model.get_by_id(instance_id))
     instance_updated = {**instance, **data[0]}
     self.model.update(**instance_updated).where(self.model.id==instance_id).execute()
-    return(model_to_dict(self.model.get_by_id(instance_id)), 201)
+    return(model_to_dict(self.model.get_by_id(instance_id), recurse=False), 201)
     
   def delete(self, instance_id):
     feature_map = self.model.get_by_id(instance_id)
