@@ -128,3 +128,9 @@ card
 .tooltip:hover .tooltiptext {
   visibility: visible;
 }
+
+
+
+.react-grid-Cell{
+  padding: 0px !important;
+}
