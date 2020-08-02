@@ -9,30 +9,30 @@ const requestListener = function (req, res) {
     
     const temp = decodeURIComponent(url.parse(req.url,true).search.replace(/^\?/, '')).split('&')
 
-    let obj = {method:'GET'}
+    let obj = {
+          method:'GET'
+        },
+        request = {
+          method: obj.method,
+          crossDomain:true
+        }
 
-    for (let i = 0, ix = temp.length; i <ix; i += 1) {
 
-      const kv = temp[i].split('=')
+    temp.map(t => {
+
+      const kv = t.split('=')
       obj[kv[0]] = kv[1]
 
-    }
+    })
 
-   // console.log(obj)
-
-    let request = {
-      method: obj.method,
-      crossDomain:true
-    }
-
-    if (obj.data){
+    if (obj.data) {
       request.headers = {
         'Accept': 'application/json',
-      'Content-Type': 'application/json'
+        'Content-Type': 'application/json'
       }
       request.body = JSON.parse(JSON.stringify(obj.data))
     }
-console.log(request)
+
     fetch(decodeURIComponent(obj.url), request)
         .then(response => response.text())
         .then(data => {
@@ -42,10 +42,9 @@ console.log(request)
           res.setHeader('Access-Control-Allow-Methods', 'OPTIONS, GET, POST');
           res.setHeader('Access-Control-Allow-Headers', '*');
           res.writeHead(200);
-          //console.log(data)
           res.end(data);
       })
   } catch(e) {}
 }
 
-http.createServer(requestListener).listen(port) 
+http.createServer(requestListener).listen(port)

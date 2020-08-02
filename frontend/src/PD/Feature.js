@@ -45,7 +45,7 @@ export default class Feature extends Component {
                         id={i.id}
                         onClick={this.props.onClick}
                         style={{
-                            border: "2px solid " + border,
+                            border: "1px solid " + border,
                             left: i.left,
                             top: 360 - i.top
                         }}>
@@ -57,19 +57,32 @@ export default class Feature extends Component {
                     </div>
                 }
                 keepTooltipInside="#root"
-                on="hover"
-                
+                on="hover"            
             >
                 <div className="card">
                     <div className="content">
                         {((item, data) => {
+
+                            const disp = ['feature_id',
+                            'feature',
+                            'feature_category',
+                            'orientation_deg',
+                            'us_weld_dist_wc_ft',
+                            'us_weld_dist_coord_m',
+                            'length_in',
+                            'width_in',
+                            'depth_in']
+                            
                             let out = [(<b key="id_info">id:</b>),(<span key="item_info">{item.id}</span>),(<br key="break_info"/>)]
-                            for (let attr in data) {
-                                out.push (<b key={attr + 'b'}>{attr}</b>)
-                                out.push (<span key={attr + 'c'}>:</span>)
-                                out.push (<span key={attr + 'd'}>{data[attr]}</span>)
-                                out.push (<br key={attr + 'e'} />)
-                            }
+
+                            disp.map((a, i) => {
+                                out.push(<b key={a + i + 'b'}>{a}</b>)
+                                out.push (<span key={a + i + 'c'}>:</span>)
+                                out.push (<span key={a + i + 'd'}>{data[a]}</span>)
+                                out.push (<br key={a + i + 'e'} />)
+                            })
+
+
                             return out
                         })(i,a)}
                     </div>

@@ -9,6 +9,8 @@ import { faCrosshairs, faFilter, faSpinner, faSearchPlus, faSearchMinus } from '
 import Toggle from 'react-bootstrap-toggle'
 import DataAdapter from './DataAdapter'
 
+ 
+
 fontawesome.library.add(faCrosshairs, faFilter, faSpinner, faSearchPlus, faSearchMinus);
 
 export default class PD extends Component {
@@ -111,7 +113,9 @@ export default class PD extends Component {
     getGraphWidth = () => {
 
         this.pipe_section_graph_width = parseFloat(document.getElementById('pipe_graph_container').offsetWidth) - 20
-        this.setState({screen_width:this.pipe_section_graph_width}, this.displayPipeSection)
+
+        this.setState({table_width:this.pipe_section_graph_width+50})
+        this.graphPipeSection()
         
     }
 
@@ -130,9 +134,10 @@ export default class PD extends Component {
     
             this.fetchRest('pipe_section', this.pipe_section_instance, data => {
             
-                this.pipe_section_raw = data
+                this.pipe_section_raw = data                
                 this.setState({pipe_section_table: data.table})
                 this.graphPipeSection()
+                
             
             })
 
@@ -182,7 +187,7 @@ export default class PD extends Component {
     getGridColumn = item => {
 
         const matched = typeof item.value === 'boolean' && !item.value
-        const style = {color: matched ? 'yellow' : '#212529', backgroundColor: matched ? 'yellow' : 'white'}
+        const style = {color: matched ? 'yellow' : '#212529', backgroundColor: matched ? 'yellow' : 'white', padding:4}
         return (<div style={style}>{ matched ? '_' : item.value  }</div>)
     }
 
@@ -275,9 +280,10 @@ export default class PD extends Component {
                         </div>
                     </div>
                 </div>
-                <div style={{padding:10,maxWidth:(()=>this.state.screen_width&&this.state.screen_width+40+'px'||'auto')()}}>
+                <div style={{padding:10,maxWidth:this.state.table_width}}>
                     <ReactDataGrid
-                        
+                        maxWidth={this.state.table_width}
+                        minColumnWidth={10}
                         columns={[
                             { 
                                 key: "id_A",
@@ -292,6 +298,12 @@ export default class PD extends Component {
                                 editable: false,
                                 sortable: false,
                                 formatter: this.getGridColumn
+                            },
+                            {
+                                name:'  ',
+                                key:'_gutter',
+                                width:17,
+                                formatter:()=>(<div style={{backgroundColor:'gray', padding:4}}>&nbsp;</div>)
                             },
                             { 
                                 key: "id_B",

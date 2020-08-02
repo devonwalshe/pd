@@ -77,7 +77,7 @@ export default class DataAdapter extends Component {
         
                     let feature = {
         
-                            attributes: {},
+                            attributes: {feature_id: pipe[i].feature_id},
                             id: pipe[i].id,
                             side: pipe[i].side,
                             matched: pipe[i].matched,
@@ -122,11 +122,13 @@ export default class DataAdapter extends Component {
         
                             featuresIn.push(temp[i].id)
                             pipeSection.table.push(temp[i].side === 'A' ? {
+                                _gutter:'',
                                 id_A: temp[i].id,
                                 feature_A: temp[i].attributes.feature_category,
                                 id_B: false,
                                 feature_B: false
                             } : {
+                                _gutter:'',
                                 id_A: false,
                                 feature_A: false,
                                 id_B: temp[i].id,
@@ -146,6 +148,7 @@ export default class DataAdapter extends Component {
                                     featuresIn.push(temp[k].id)
                                             
                                         pipeSection.table.push({
+                                            _gutter:'',
                                             id_A: temp[i].id,
                                             feature_A: temp[i].attributes.feature_category,
                                             id_B: temp[k].id,
@@ -158,6 +161,7 @@ export default class DataAdapter extends Component {
                                             featuresIn.push(temp[i].id)
                                     featuresIn.push(temp[k].id)
                                         pipeSection.table.push({
+                                            _gutter:'',
                                             id_A: temp[k].id,
                                             feature_A: temp[k].attributes.feature_category,
                                             id_B: temp[i].id,
