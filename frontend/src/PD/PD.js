@@ -1,13 +1,16 @@
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
-import { Form, Dropdown, Toast } from 'react-bootstrap'
+import { Button, Form, Toast } from 'react-bootstrap'
 import { Typeahead } from 'react-bootstrap-typeahead'
 import ReactDataGrid from 'react-data-grid'
 import Feature from './Feature.js'
 import fontawesome from '@fortawesome/fontawesome'
 import { faCrosshairs, faFilter, faSpinner, faSearchPlus, faSearchMinus } from '@fortawesome/free-solid-svg-icons'
 import Toggle from 'react-bootstrap-toggle'
-
+import DataAdapter from './DataAdapter'
+import Modal from 'react-modal';
+ 
+Modal.setAppElement('#root')        
 fontawesome.library.add(faCrosshairs, faFilter, faSpinner, faSearchPlus, faSearchMinus);
 
 export default class PD extends Component {
@@ -20,6 +23,8 @@ export default class PD extends Component {
 
             features_filter: [],
             match_on: false,
+            modal_on: false,
+            modal_info: [],
             filter: {
                 matched:true,
                 unmatched: true
@@ -29,280 +34,170 @@ export default class PD extends Component {
             pipe_section_graph: [],
             pipe_section_table: [],
             pipe_section_select: [],
-            pipe_section_instance: 0,
             run_matches: [],
-            run_match_instance: 0,
-            screen_width: 0
+            table_width: 0
 
         }
 
+        this.dataAdapter = new DataAdapter({
+            proxyURL: props.proxyURL,
+            restURL: props.restURL,
+            isLoading: this.isLoading,
+            restError: this.restError
+        })
+
+        this.pipe_section_instance = 0
         this.pipe_section_graph_width = 0
         this.pipe_section_raw = {}
+        this.run_match_instance = 0
 
     }
 
+    isLoading = l => this.setState({is_loading: l})
+    restError = () => this.setState({rest_error: true})
 
     componentDidMount() {
 
         this.getGraphWidth()
         this.setPipeSections()
-        this.fetchRest('run_matches', null, (data) => {
+        this.dataAdapter.get('run_matches', null, (data) => {
 
-            this.setRunMatches(data, null, this.setRunMatches)
+            this.setState({run_matches: data})
 
         })
 
         window.addEventListener('resize', () => this.getGraphWidth())
-        
-
+    
     }
 
     clickFeature = e => {
 
-        const id = e.currentTarget.id
+        const id = Number(e.currentTarget.id)
 
         if (this.state.match_on)
 
             if (this.first_match) {
 
-                const data = {feature_a: this.first_match, feature_b: id, run_match: this.state.run_match_instance, pipe_section:this.state.pipe_section_instance}
-                
-                this.fetchRest('feature_pair&method=POST&data='+JSON.stringify(data), null, ()=>console.log('complete'))
-                /*
-                fetch('http://localhost:5000/feature_pair', {
-                    body: JSON.stringify(data),
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                }).then(res => {
-                    return res;
-                }).catch(console.logs);
-                */
-                
-                this.first_match = 0
-            }
-            else
+                const data = [{
+
+                    feature_a: this.first_match,
+                    feature_b: id,
+                    run_match: this.run_match_instance,
+                    pipe_section: this.pipe_section_instance
+
+                }]
+
+            this.setState({modal_on: true, modal_info: [(
+                <table key="confirm_modal" cellPadding={5} style={{margin:10}}>
+                    <tbody>
+                        <tr><td><b>feature_a</b></td><td>{this.first_match}</td></tr>
+                        <tr><td><b>feature_b</b></td><td>{id}</td></tr>
+                        <tr><td><b>run_match</b></td><td>{this.run_match_instance}</td></tr>
+                        <tr><td><b>pipe_section</b></td><td>{this.pipe_section_instance}</td></tr>
+                    </tbody>
+                </table>)
+            
+            ]})
+
+//                this.dataAdapter.post('feature_pair', data, data => {
+                    
+  //                  this.dataAdapter.get('pipe_section', this.pipe_section_instance, data => {
+                        
+    //                    this.pipe_section_raw = data
+                        this.graphPipeSection()
+                        
+      //              })
+  //              })
+//
+                this.setState({match_on: false})
+
+            } else
 
                 this.first_match = id
 
     }
 
-    fetchRest = (rest, instance, cbk) => {
-
-        const url = this.props.proxyURL + '?url=' + encodeURIComponent(this.props.restURL) + rest + (instance ? '/' + instance : '')
-
-        this.setState({is_loading:true}, () => 
-            fetch(url)
-                .then(res => res.json())
-                .then((data) => {
-                    this.setState({is_loading:false})
-                    cbk(data, instance)
-                })
-                .catch(e => {
-                    this.setState({is_loading:false})
-                    this.setState({rest_error: true})
-                })
-        )
-    }
-
 
     getGraphWidth = () => {
 
-        this.pipe_section_graph_width = parseFloat(document.getElementById('pipe_section_graph').offsetWidth) - 20
-        this.setState({screen_width:this.pipe_section_graph_width}, this.displayPipeSection)
+        this.pipe_section_graph_width = parseFloat(document.getElementById('pipe_graph_container').offsetWidth) - 20
+
+        this.setState({table_width:this.pipe_section_graph_width+50})
+        this.graphPipeSection()
         
     }
 
-    selectRunMatch = e => {
 
-        const i = e.currentTarget.options[e.currentTarget.selectedIndex].value
 
-        this.setState({run_match_instance: i}, () => this.fetchRest('pipe_sections', null, this.setPipeSections))
+    setPipeSections = data => this.setState({pipe_section_select: <Typeahead
 
-    }
+        id="basic-typeahead-single"
+        onChange={e => {
 
+            if (!e || !e[0] || !e[0].key)
+
+                return
+            
+            this.pipe_section_instance = Number(e[0].key)
     
-    setRunMatches = data => {
-
-        let options = []
-
-        for (let i = 0, ix = data.length; i < ix; i += 1)
-        
-            options.push(<option key={i} value={data[i].pipeline}>{data[i].id + ':' + data[i].run_a + '_' + data[i].run_a}</option>)
-
-        this.setState({run_matches: options})
-
-    }
-
-    selectPipeSection = e => {
-
-        if (!e || !e[0] || !e[0].key)
-
-            return
-
-        const i = Number(e[0].key)
-        
-        this.setState({pipe_section_instance: i},
-        this.fetchRest('pipe_section', i, data => {
+            this.dataAdapter.get('pipe_section', this.pipe_section_instance, data => {
             
-            this.pipe_section_raw = data
-            this.displayPipeSection()
-            
-        }))
-        
-
-    }
-
-
-    setPipeSections = data => {
-
-        const run_match = Number(this.state.run_match_instance)
-        
-        let options = []
-
-        for (let i = 0, ix = (data || []).length; i < ix; i += 1)
-
-            if (run_match === data[i].run_match) //## this line will need to remove once RESTful supports run_match filter
-          
-                options.push({key: data[i].id, label: data[i].section_id})
-
-        const select = <Typeahead
-                        id="basic-typeahead-single"
-                        onChange={this.selectPipeSection}
-                        options={options}
-                        placeholder="Pipe Section..." />
-
-        this.setState({pipe_section_select: select})
-
-    }
-
-    displayPipeSection = () => {
-
-        let features = [],
-            table = [],
-            w = 0,
-            out = [],
-            width = this.pipe_section_graph_width
-
-        const pipe = this.pipe_section_raw.features || []
-        const pairs = this.pipe_section_raw.feature_pairs || []
-
-        for (let i = 0, ix = pipe.length; i < ix; i += 1) {
-
-            let feature = {
-
-                    attributes: {},
-                    id: pipe[i].id,
-                    side: pipe[i].side,
-                    matched: pipe[i].matched,
-                    left: 0,
-                    top: 0
-
-                }
-
-            for (let j = 0, jx = pipe[i].attributes.length; j < jx; j += 1) {
-
-                const { attribute_data, attribute_name } = pipe[i].attributes[j]
-
-                feature.attributes[attribute_name] = attribute_data
-
-                if (attribute_name === 'us_weld_dist_wc_ft')
+                this.pipe_section_raw = data                
+                this.setState({pipe_section_table: data.table})
+                this.graphPipeSection()
                 
-                    feature.left = w += Number(attribute_data)
-
-                else if (attribute_name === 'orientation_deg')
-
-                    feature.top = Number(attribute_data)
-
-            }
             
-            if ((this.state.filter.matched && feature.matched) || (this.state.filter.unmatched && !feature.matched)) {
+            })
 
-                out.push(feature)
+        }}
+        options={data || []}
+        placeholder="Pipe Section..." />
+
+    })
+
+
+    graphPipeSection = () => {
+
+        const data = this.pipe_section_raw.features
+        const graph_width = this.pipe_section_graph_width
+        const max_width = Math.max(this.pipe_section_raw['weld_a_width'], this.pipe_section_raw['weld_b_width'])
+
+        let features = []
+
+        for (let f in data)
+
+            if ((this.state.filter.matched && data[f].matched) || (this.state.filter.unmatched && !data[f].matched)) {
+
+                let feature = {...data[f]}
+                const top = Number(data[f].attributes.orientation_deg)
+                const h = Number(data[f].attributes.width_in)
+                const w = Number(data[f].attributes.length_in)
+
+                //if (!isNaN(h) && !isNaN(w)) {
+
+                   // feature.width = 10
+                //}
+            
+                feature.top = 360 - (!isNaN(top) ? top : 360)
+                feature.left = graph_width / max_width * Number(data[f].attributes.us_weld_dist_wc_ft)
+                features.push(<Feature key={'feature_' + feature.id} feature={feature} onClick={this.clickFeature}/>)
 
             }
 
-        }
-
-        let features_in = []
-
-        for (let i = 0, ix = out.length; i < ix; i +=1) {
-
-            out[i].left = width / w * out[i].left
-            features.push(<Feature key={'feature_' + i} feature={out[i]} onClick={this.clickFeature}/>)
-
-            if (!~features_in.indexOf(out[i].id))
-                
-                if (!out[i].matched) {
-
-                    features_in.push(out[i].id)
-                    table.push(out[i].side === 'A' ? {
-                        id_A: out[i].id,
-                        feature_A: out[i].attributes.feature_category,
-                        id_B: false,
-                        feature_B: false
-                    } : {
-                        id_A: false,
-                        feature_A: false,
-                        id_B: out[i].id,
-                        feature_B: out[i].attributes.feature_category
-                    })
-
-                } else {
-
-                    for (let j = 0, jx = pairs.length; j < jx; j +=1) {
-
-                        for (let k = 0, kx = out.length; k < kx; k +=1) {
-                            
-                            if (out[i].side === 'A' && out[i].id === pairs[j].feature_a &&
-                                out[k].side === 'B' && out[k].id === pairs[j].feature_b) {
-                                    
-                                    features_in.push(out[i].id)
-                                    features_in.push(out[k].id)
-
-                                    table.push({
-                                        id_A: out[i].id,
-                                        feature_A: out[i].attributes.feature_category,
-                                        id_B: out[k].id,
-                                        feature_B: out[k].attributes.feature_category
-                                    })
-
-                            } else if (out[i].side === 'B' && out[i].id === pairs[j].feature_b &&
-                                out[k].side === 'A' && out[k].id === pairs[j].feature_a) {
-                                
-                                features_in.push(out[i].id)
-                                features_in.push(out[k].id)
-
-                                table.push({
-                                    id_A: out[k].id,
-                                    feature_A: out[k].attributes.feature_category,
-                                    id_B: out[i].id,
-                                    feature_B: out[i].attributes.feature_category
-                                })
-
-                        }
-
-                        }
-
-                    }
-
-                }
-
-        }
-        
-        this.setState({pipe_section_graph: features, pipe_section_table: table})
+        this.setState({pipe_section_graph: features})
 
     }
+
     
     setMatchFilter = e => {
 
         const val = e.target.value
         const filter = {
             matched: val === 'matched' ? !this.state.filter.matched : this.state.filter.matched,
-            unmatched: val === 'unmatched' ? !this.state.filter.unmatched : this.state.filter.unmatched,
+            unmatched: val === 'unmatched' ? !this.state.filter.unmatched : this.state.filter.unmatched
         }
 
-        this.setState({filter: filter}, this.displayPipeSection)
+        this.setState({filter: filter}, this.graphPipeSection)
 
     }
 
@@ -310,7 +205,7 @@ export default class PD extends Component {
     getGridColumn = item => {
 
         const matched = typeof item.value === 'boolean' && !item.value
-        const style = {color: matched ? 'yellow' : '#212529', backgroundColor: matched ? 'yellow' : 'white'}
+        const style = {color: matched ? 'yellow' : '#212529', backgroundColor: matched ? 'yellow' : 'white', padding:4}
         return (<div style={style}>{ matched ? '_' : item.value  }</div>)
     }
 
@@ -318,11 +213,18 @@ export default class PD extends Component {
 
         return (
 
-            <div>
+            <>
                 <div style={{backgroundColor:'#eee', display:'inline-block', padding:10, width:'100%'}}>
                     <div style={{alignItems:'baseline',display:'flex',float:'left'}}>
                         <Form.Label style={{marginRight:'10px'}}>Run:</Form.Label>
-                        <Form.Control as="select" onChange={this.selectRunMatch} style={{width:'200px'}}>
+                        <Form.Control
+                            as="select"
+                            onChange={e =>{
+                                this.run_match_instance = Number(e.currentTarget.options[e.currentTarget.selectedIndex].value)
+                                this.dataAdapter.get('pipe_sections', null, this.setPipeSections)
+                            }}
+                            style={{width:'200px'}}
+                        >
                             <option>Run Matches...</option>
                             {this.state.run_matches}
                         </Form.Control>
@@ -356,7 +258,12 @@ export default class PD extends Component {
                             offstyle='default'
                             width={68}
                             height={30}
-                            onClick={() => this.setState({match_on: !this.state.match_on})}
+                            onClick={() => {
+
+                                this.first_match = 0
+                                this.setState({match_on: !this.state.match_on})
+
+                            }}
                         />
 
                     </div>
@@ -366,25 +273,34 @@ export default class PD extends Component {
                         <i className="fa fa-search-plus" style={{marginLeft:'10px'}}></i>
                     </div>
                 </div>
-                <div className="pipeline_graph_container" id="pipeline_graph_container">
+                <div className="graph">
                     <div style={{position:"absolute"}}>
-                    <Toast onClose={() => this.setState({rest_error: false})} show={this.state.rest_error} animation={false}>
-                        <Toast.Header>
-                        <strong className="mr-auto">Error</strong>
-                            <small></small>
-                        </Toast.Header>
-                        <Toast.Body>Invalid response from server</Toast.Body>
-                    </Toast>
+                        <Toast
+                            onClose={() => this.setState({rest_error: false})}
+                            show={this.state.rest_error}
+                            animation={false}
+                        >
+                            <Toast.Header>
+                                <strong className="mr-auto">Error</strong>
+                                    <small></small>
+                                </Toast.Header>
+                            <Toast.Body>Invalid response from server</Toast.Body>
+                        </Toast>
                     </div>
-                    <div style={{height: '100%',width: '100%',padding:10}}>
-                        <div id="pipe_section_graph" style={{height: '100%',width: '100%', position:'relative', backgroundColor: '#ddd'}}>
+                    <div>
+                        <div>
+                            <div>360</div>
+                            <div>0</div>
+                        </div>
+                        <div id="pipe_graph_container">
+                            <div></div>
                             {this.state.pipe_section_graph}
                         </div>
                     </div>
                 </div>
-                <div style={{padding:10,maxWidth:(()=>this.state.screen_width&&this.state.screen_width+20+'px'||'auto')()}}>
+                <div style={{padding:10,maxWidth:this.state.table_width}}>
                     <ReactDataGrid
-                        maxWidth={(()=>this.state.screen_width&&this.state.screen_width+20+'px'||'auto')()}
+                        maxWidth={this.state.table_width}
                         columns={[
                             { 
                                 key: "id_A",
@@ -399,6 +315,11 @@ export default class PD extends Component {
                                 editable: false,
                                 sortable: false,
                                 formatter: this.getGridColumn
+                            },
+                            {
+                                key:'_gutter',
+                                width:17,
+                                formatter:()=>(<div style={{backgroundColor:'gray', padding:4}}>&nbsp;</div>)
                             },
                             { 
                                 key: "id_B",
@@ -422,7 +343,28 @@ export default class PD extends Component {
                     />
                 </div>
             
-            </div>
+
+                <Modal
+                    isOpen={this.state.modal_on}
+                    onRequestClose={() => this.setState({molal_on: false})}          
+                    contentLabel="Confirm Pair Match"
+                    style={{
+                        content : {
+                          top                   : '50%',
+                          left                  : '50%',
+                          right                 : 'auto',
+                          bottom                : 'auto',
+                          marginRight           : '-50%',
+                          transform             : 'translate(-50%, -50%)'
+                        }}}
+                >
+                    {this.state.modal_info}
+
+                    <Button variant="primary">Save</Button>{' '}
+                    <Button variant="secondary" onClick={() => this.setState({modal_on: false})}>Cancel</Button>
+                </Modal>
+
+            </>
             
         )
 
