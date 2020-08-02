@@ -73,41 +73,23 @@ export default class DataAdapter extends Component {
                 const pairs = res.feature_pairs || []
                 const welds = res.welds || []
     
-                for (let i = 0, ix = pipe.length; i < ix; i += 1) {
+                pipe.map(p => {
         
                     let feature = {
         
-                            attributes: {feature_id: pipe[i].feature_id},
-                            id: pipe[i].id,
-                            side: pipe[i].side,
-                            matched: pipe[i].matched,
-                            left: 0,
-                            top: 0
+                            attributes: {},
+                            id: p.id,
+                            feature_id: p.feature_id,
+                            side: p.side,
+                            matched: p.matched
         
                         }
         
-                    for (let j = 0, jx = pipe[i].attributes.length; j < jx; j += 1) {
-        
-                        const { attribute_data, attribute_name } = pipe[i].attributes[j]
-        
-                        feature.attributes[attribute_name] = attribute_data
-        
-                        if (attribute_name === 'us_weld_dist_wc_ft')
-                        
-                            feature.left = Number(attribute_data)
-                        
-                        else if (attribute_name === 'orientation_deg') {
-        
-                            let top = Number(attribute_data)
-                            feature.top = !isNaN(top) ? top : 360
-        
-                        }
-        
-                    }
+                    p.attributes.map(a => feature.attributes[a.attribute_name] = a.attribute_data)
         
                     temp.push(feature)
         
-                }
+                })
         
                 welds.map(a => pipeSection['weld_'+ a.side.toLowerCase() + '_width'] = Number(a.us_weld_dist))
         

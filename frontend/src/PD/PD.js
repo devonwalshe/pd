@@ -1,6 +1,6 @@
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
-import { Form, Toast } from 'react-bootstrap'
+import { Button, Form, Toast } from 'react-bootstrap'
 import { Typeahead } from 'react-bootstrap-typeahead'
 import ReactDataGrid from 'react-data-grid'
 import Feature from './Feature.js'
@@ -8,9 +8,9 @@ import fontawesome from '@fortawesome/fontawesome'
 import { faCrosshairs, faFilter, faSpinner, faSearchPlus, faSearchMinus } from '@fortawesome/free-solid-svg-icons'
 import Toggle from 'react-bootstrap-toggle'
 import DataAdapter from './DataAdapter'
-
+import Modal from 'react-modal';
  
-
+Modal.setAppElement('#root')        
 fontawesome.library.add(faCrosshairs, faFilter, faSpinner, faSearchPlus, faSearchMinus);
 
 export default class PD extends Component {
@@ -23,6 +23,8 @@ export default class PD extends Component {
 
             features_filter: [],
             match_on: false,
+            modal_on: false,
+            modal_info: [],
             filter: {
                 matched:true,
                 unmatched: true
@@ -33,7 +35,7 @@ export default class PD extends Component {
             pipe_section_table: [],
             pipe_section_select: [],
             run_matches: [],
-            screen_width: 0
+            table_width: 0
 
         }
 
@@ -58,14 +60,14 @@ export default class PD extends Component {
 
         this.getGraphWidth()
         this.setPipeSections()
-        this.fetchRest('run_matches', null, (data) => {
+        this.dataAdapter.get('run_matches', null, (data) => {
 
             this.setState({run_matches: data})
 
         })
 
         window.addEventListener('resize', () => this.getGraphWidth())
-        
+    
     }
 
     clickFeature = e => {
@@ -81,32 +83,38 @@ export default class PD extends Component {
                     feature_a: this.first_match,
                     feature_b: id,
                     run_match: this.run_match_instance,
-                    pipe_section:this.pipe_section_instance
+                    pipe_section: this.pipe_section_instance
 
                 }]
 
+            this.setState({modal_on: true, modal_info: [(
+                <table key="confirm_modal" cellPadding={5} style={{margin:10}}>
+                    <tbody>
+                        <tr><td><b>feature_a</b></td><td>{this.first_match}</td></tr>
+                        <tr><td><b>feature_b</b></td><td>{id}</td></tr>
+                        <tr><td><b>run_match</b></td><td>{this.run_match_instance}</td></tr>
+                        <tr><td><b>pipe_section</b></td><td>{this.pipe_section_instance}</td></tr>
+                    </tbody>
+                </table>)
+            
+            ]})
 
-                this.dataAdapter.post('feature_pair', data, data => {
-                    console.log('Pair matched',data)
-                    this.fetchRest('pipe_section', this.pipe_section_instance, data => {
+//                this.dataAdapter.post('feature_pair', data, data => {
+                    
+  //                  this.dataAdapter.get('pipe_section', this.pipe_section_instance, data => {
                         
-                        this.pipe_section_raw = data
+    //                    this.pipe_section_raw = data
                         this.graphPipeSection()
                         
-                    })
-                })
-
+      //              })
+  //              })
+//
                 this.setState({match_on: false})
 
             } else
 
                 this.first_match = id
 
-    }
-
-    fetchRest = (rest, instance, cbk) => {
-
-        this.dataAdapter.get(rest, instance, cbk)
     }
 
 
@@ -132,7 +140,7 @@ export default class PD extends Component {
             
             this.pipe_section_instance = Number(e[0].key)
     
-            this.fetchRest('pipe_section', this.pipe_section_instance, data => {
+            this.dataAdapter.get('pipe_section', this.pipe_section_instance, data => {
             
                 this.pipe_section_raw = data                
                 this.setState({pipe_section_table: data.table})
@@ -151,7 +159,8 @@ export default class PD extends Component {
     graphPipeSection = () => {
 
         const data = this.pipe_section_raw.features
-        const width = this.pipe_section_graph_width
+        const graph_width = this.pipe_section_graph_width
+        const max_width = Math.max(this.pipe_section_raw['weld_a_width'], this.pipe_section_raw['weld_b_width'])
 
         let features = []
 
@@ -160,8 +169,17 @@ export default class PD extends Component {
             if ((this.state.filter.matched && data[f].matched) || (this.state.filter.unmatched && !data[f].matched)) {
 
                 let feature = {...data[f]}
+                const top = Number(data[f].attributes.orientation_deg)
+                const h = Number(data[f].attributes.width_in)
+                const w = Number(data[f].attributes.length_in)
 
-                feature.left = width / this.pipe_section_raw['weld_' + feature.side.toLowerCase() + '_width'] * data[f].left
+                //if (!isNaN(h) && !isNaN(w)) {
+
+                   // feature.width = 10
+                //}
+            
+                feature.top = 360 - (!isNaN(top) ? top : 360)
+                feature.left = graph_width / max_width * Number(data[f].attributes.us_weld_dist_wc_ft)
                 features.push(<Feature key={'feature_' + feature.id} feature={feature} onClick={this.clickFeature}/>)
 
             }
@@ -195,7 +213,7 @@ export default class PD extends Component {
 
         return (
 
-            <div>
+            <>
                 <div style={{backgroundColor:'#eee', display:'inline-block', padding:10, width:'100%'}}>
                     <div style={{alignItems:'baseline',display:'flex',float:'left'}}>
                         <Form.Label style={{marginRight:'10px'}}>Run:</Form.Label>
@@ -203,7 +221,7 @@ export default class PD extends Component {
                             as="select"
                             onChange={e =>{
                                 this.run_match_instance = Number(e.currentTarget.options[e.currentTarget.selectedIndex].value)
-                                this.fetchRest('pipe_sections', null, this.setPipeSections)
+                                this.dataAdapter.get('pipe_sections', null, this.setPipeSections)
                             }}
                             style={{width:'200px'}}
                         >
@@ -283,7 +301,6 @@ export default class PD extends Component {
                 <div style={{padding:10,maxWidth:this.state.table_width}}>
                     <ReactDataGrid
                         maxWidth={this.state.table_width}
-                        minColumnWidth={10}
                         columns={[
                             { 
                                 key: "id_A",
@@ -300,7 +317,6 @@ export default class PD extends Component {
                                 formatter: this.getGridColumn
                             },
                             {
-                                name:'  ',
                                 key:'_gutter',
                                 width:17,
                                 formatter:()=>(<div style={{backgroundColor:'gray', padding:4}}>&nbsp;</div>)
@@ -327,7 +343,28 @@ export default class PD extends Component {
                     />
                 </div>
             
-            </div>
+
+                <Modal
+                    isOpen={this.state.modal_on}
+                    onRequestClose={() => this.setState({molal_on: false})}          
+                    contentLabel="Confirm Pair Match"
+                    style={{
+                        content : {
+                          top                   : '50%',
+                          left                  : '50%',
+                          right                 : 'auto',
+                          bottom                : 'auto',
+                          marginRight           : '-50%',
+                          transform             : 'translate(-50%, -50%)'
+                        }}}
+                >
+                    {this.state.modal_info}
+
+                    <Button variant="primary">Save</Button>{' '}
+                    <Button variant="secondary" onClick={() => this.setState({modal_on: false})}>Cancel</Button>
+                </Modal>
+
+            </>
             
         )
 

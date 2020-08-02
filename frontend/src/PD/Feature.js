@@ -35,7 +35,7 @@ export default class Feature extends Component {
         const i = this.props.feature
         const a = i.attributes
         const border = i.side === 'A' ? 'orange' : 'blue'
-
+        
         return (<Popup
                 key={i.id + 'popup'}
                 trigger={
@@ -47,7 +47,9 @@ export default class Feature extends Component {
                         style={{
                             border: "1px solid " + border,
                             left: i.left,
-                            top: 360 - i.top
+                            top: i.top,
+                            height: i.height || 28,
+                            width: i.width || 28
                         }}>
                         <img
                             width="20px"
@@ -63,17 +65,18 @@ export default class Feature extends Component {
                     <div className="content">
                         {((item, data) => {
 
-                            const disp = ['feature_id',
-                            'feature',
-                            'feature_category',
-                            'orientation_deg',
-                            'us_weld_dist_wc_ft',
-                            'us_weld_dist_coord_m',
-                            'length_in',
-                            'width_in',
-                            'depth_in']
+                            const disp = [
+                                'feature',
+                                'feature_category',
+                                'orientation_deg',
+                                'us_weld_dist_wc_ft',
+                                'us_weld_dist_coord_m',
+                                'length_in',
+                                'width_in',
+                                'depth_in'
+                            ]
                             
-                            let out = [(<b key="id_info">id:</b>),(<span key="item_info">{item.id}</span>),(<br key="break_info"/>)]
+                            let out = [(<b key="id_info">feature_id:</b>),(<span key="item_info">{item.feature_id}</span>),(<br key="break_info"/>)]
 
                             disp.map((a, i) => {
                                 out.push(<b key={a + i + 'b'}>{a}</b>)
