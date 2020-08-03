@@ -27,7 +27,7 @@ export default class Feature extends Component {
         }
         
         
-    }1_4029
+    }
 
 
     render() {
@@ -71,7 +71,7 @@ export default class Feature extends Component {
                     >
                         <div>
                             <div
-                                onClick={this.props.onClick}
+                                onClick={e => Number(this.props.onClick(e.currentTarget.id))}
                                 id={i.id}
                                 style={{
                                 padding: 1,

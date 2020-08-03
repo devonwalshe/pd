@@ -2,7 +2,7 @@ import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 import { Button, Form, Toast } from 'react-bootstrap'
 import { Typeahead } from 'react-bootstrap-typeahead'
-import ReactDataGrid from 'react-data-grid'
+import CustomGrid from './CustomGrid'
 import Feature from './Feature.js'
 import fontawesome from '@fortawesome/fontawesome'
 import { faCrosshairs, faFilter, faSpinner, faSearchPlus, faSearchMinus } from '@fortawesome/free-solid-svg-icons'
@@ -72,9 +72,9 @@ export default class PD extends Component {
     
     }
 
-    clickFeature = e => {
+    clickFeature = id => {
 
-        const id = Number(e.currentTarget.id)
+        //const id = Number(e.currentTarget.id)
 
         if (!this.state.match_on)
 
@@ -101,7 +101,7 @@ export default class PD extends Component {
 
         } else {
 
-            e.currentTarget.style.backgroundColor = 'white'
+            document.getElementById(id).style.backgroundColor = 'white'
             this.first_match = id
             this.graphPipeSection()
 
@@ -194,19 +194,13 @@ export default class PD extends Component {
     }
 
 
-    getGridColumn = item => {
-
-        const matched = typeof item.value === 'boolean' && !item.value
-        const style = {color: matched ? 'yellow' : '#212529', backgroundColor: matched ? 'yellow' : 'white', padding:4}
-        return (<div style={style}>{ matched ? '_' : item.value  }</div>)
-    }
 
 
     loadPipeSection = () => {
         
         this.dataAdapter.get('pipe_section', this.pipe_section_instance, data => {
         
-            this.pipe_section_raw = data                
+            this.pipe_section_raw = data
             this.setState({pipe_section_table: data.table})
             this.graphPipeSection()
         
@@ -308,53 +302,13 @@ export default class PD extends Component {
                         </div>
                     </div>
                 </div>
-                <div style={{padding:10,maxWidth:this.state.table_width?this.state.table_width+"px":"auto"}}>
-                    <ReactDataGrid
-                        maxWidth={this.state.table_width?this.state.table_width+"px":"auto"}
-                        columns={[
-                            { 
-                                key: "id_A",
-                                name: "id_A",
-                                editable: false,
-                                sortable: false,
-                                formatter: this.getGridColumn
-                            },
-                            {
-                                key: "feature_A",
-                                name: "feature_A",
-                                editable: false,
-                                sortable: false,
-                                formatter: this.getGridColumn
-                            },
-                            {
-                                name:' ',
-                                key:'_gutter',
-                                width:17,
-                                formatter:()=>(<div style={{backgroundColor:'lightgray', padding:4}}>&nbsp;</div>)
-                            },
-                            { 
-                                key: "id_B",
-                                name: "id_B",
-                                editable: false,
-                                sortable: false,
-                                formatter: this.getGridColumn
-                            },
-                            {
-                                key: "feature_B",
-                                name: "feature_B",
-                                editable: false,
-                                sortable: false,
-                                formatter: this.getGridColumn
-                            }
-                        ]}
-                        rowGetter={i => this.state.pipe_section_table[i]}
-                        rowsCount={this.state.pipe_section_table.length}
-                        onGridRowsUpdated={this.onGridRowsUpdated}
-                        enableCellSelect={true}
-                    />
-                </div>
-            
-
+                <CustomGrid
+                    key="data_grid"
+                    rows={this.state.pipe_section_table}
+                    clickFeature={this.clickFeature}
+                    width={this.state.table_width}
+                />
+                
                 <Modal
                     isOpen={this.state.modal_on}
                     onRequestClose={() => this.setState({molal_on: false})}          
@@ -428,3 +382,48 @@ PD.propTypes = {
     restURL: PropTypes.string.isRequired
 
 }
+/**<div style={{padding:10,maxWidth:this.state.table_width?this.state.table_width+"px":"auto"}}>
+                    <ReactDataGrid
+                        maxWidth={this.state.table_width?this.state.table_width+"px":"auto"}
+                        columns={[
+                            { 
+                                key: "id_A",
+                                name: "id_A",
+                                editable: false,
+                                sortable: false,
+                                formatter: this.getGridColumn
+                            },
+                            {
+                                key: "feature_A",
+                                name: "feature_A",
+                                editable: false,
+                                sortable: false,
+                                formatter: this.getGridColumn
+                            },
+                            {
+                                width:17,
+                                formatter:()=>(<div style={{backgroundColor:'lightgray', padding:4}}>&nbsp;</div>)
+                            },
+                            { 
+                                key: "id_B",
+                                name: "id_B",
+                                editable: false,
+                                sortable: false,
+                                formatter: this.getGridColumn
+                            },
+                            {
+                                key: "feature_B",
+                                name: "feature_B",
+                                editable: false,
+                                sortable: false,
+                                formatter: this.getGridColumn
+                            }
+                        ]}
+                        rowGetter={i => this.state.pipe_section_table[i]}
+                        rowsCount={this.state.pipe_section_table.length}
+                        onGridRowsUpdated={this.onGridRowsUpdated}
+                        enableCellSelect={true}
+                    />
+                </div>
+            
+ */
