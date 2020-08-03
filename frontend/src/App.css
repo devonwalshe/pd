@@ -46,7 +46,7 @@
   background-color: #ddd;
   display: table;
   height: 100%;
-  padding: 10px;
+  padding: 30px 10px 10px 10px;
   width: 100%;
 }
 
@@ -72,8 +72,10 @@
   display: table-cell;
   height: 390px;
   position: relative;
+  vertical-align: top;
   width: 100%;
 }
+
 .graph > div:last-child > div:last-child > div:first-child {
   border-bottom: 1px solid white;
   border-top: 1px solid white;
@@ -84,6 +86,7 @@
   width: -moz-available;
   width: -webkit-fill-available;
   width: fill-available;
+  width: -moz-available;
 }
 
 
@@ -131,6 +134,6 @@ card
 
 
 
-.react-grid-Cell{
+.react-grid-Cell {
   padding: 0px !important;
 }

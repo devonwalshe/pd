@@ -27,7 +27,7 @@ export default class Feature extends Component {
         }
         
         
-    }
+    }1_4029
 
 
     render() {
@@ -35,27 +35,58 @@ export default class Feature extends Component {
         const i = this.props.feature
         const a = i.attributes
         const border = i.side === 'A' ? 'orange' : 'blue'
-        
-        return (<Popup
+
+        let left = i.left,
+            top = -20,
+            width = 28,
+            height = 28,
+            lt = false,
+            nodim = true
+
+        if (i.height && i.width) {
+
+            top = i.top
+            height = Math.max(i.height, 12)
+            width = Math.max(i.width, 12)
+            nodim = false
+
+            if (i.height <= 12 || i.width <= 12)
+
+                lt = true
+
+        }
+
+        return (
+            <Popup
                 key={i.id + 'popup'}
                 trigger={
                     <div
-                        className={"shape" + (i.matched ? "" : " unmatched")}
+                        className={"shape " + (i.matched ? "matched" : "unmatched")}
                         key={i.id}
-                        id={i.id}
-                        onClick={this.props.onClick}
                         style={{
-                            border: "1px solid " + border,
-                            left: i.left,
-                            top: i.top,
-                            height: i.height || 28,
-                            width: i.width || 28
-                        }}>
-                        <img
-                            width="20px"
-                            height="20px"
-                            src={"./feature_icons/" + (this.icons[a.feature_category] || "unknown") + ".png"}
-                            />
+                            left: left,
+                            top: top,
+                            height: height+4,
+                            width: width+4}}
+                    >
+                        <div>
+                            <div
+                                onClick={this.props.onClick}
+                                id={i.id}
+                                style={{
+                                padding: 1,
+                                border: "1px solid " + border,
+                                height: height,
+                                width: width}}>
+                                <img
+                                    width={width - 4}
+                                    height={height - 4}
+                                    src={"./feature_icons/" + (this.icons[a.feature_category] || "unknown") + ".png"}
+                                    />
+                            </div>
+                            {lt ? (<div>&lt;</div>) : ''}
+                        </div>
+                        {nodim ? (<div></div>) : ''}
                     </div>
                 }
                 keepTooltipInside="#root"
