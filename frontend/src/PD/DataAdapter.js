@@ -190,7 +190,6 @@ export default class DataAdapter extends Component {
             encodeURIComponent(this.props.restURL) +
             rest +
             '/' +
-            '&method=POST' +
             '&data=' + JSON.stringify(data)
 
         this.fetchRest(rest, url, data, cbk)
