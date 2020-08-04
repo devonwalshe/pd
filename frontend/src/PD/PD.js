@@ -23,7 +23,7 @@ export default class PD extends Component {
 
             features_filter: [],
             match_on: false,
-            modal_on: false,
+            confirm_on: false,
             modal_info: [],
             filter: {
                 matched:true,
@@ -74,7 +74,7 @@ export default class PD extends Component {
 
     clickFeature = id => {
 
-        //const id = Number(e.currentTarget.id)
+        id = Number(id)
 
         if (!this.state.match_on)
 
@@ -82,22 +82,13 @@ export default class PD extends Component {
 
         if (this.first_match) {
 
-            document.getElementById(this.first_match).style.backgroundColor = 'transparent'            
+            document.getElementById(id).style.backgroundColor = 'white'
             this.second_match = id
 
             this.setState({
                 match_on: false,
-                modal_on: true,
-                modal_info: [(
-                    <table key="confirm_modal" cellPadding={5} style={{margin:10}}>
-                        <tbody>
-                            <tr><td><b>feature_a</b></td><td>{this.first_match}</td></tr>
-                            <tr><td><b>feature_b</b></td><td>{this.second_match}</td></tr>
-                            <tr><td><b>run_match</b></td><td>{this.run_match_instance}</td></tr>
-                            <tr><td><b>pipe_section</b></td><td>{this.pipe_section_instance}</td></tr>
-                        </tbody>
-                    </table>
-                )]})
+                confirm_on: true
+            })
 
         } else {
 
@@ -154,9 +145,9 @@ export default class PD extends Component {
         let features = []
 
         for (let f in data) {
-
+ 
             if (((this.state.filter.matched && data[f].matched) || (this.state.filter.unmatched && !data[f].matched)) &&
-                (!this.first_match || (this.first_match == f || this.pipe_section_raw.features[this.first_match].side !== data[f].side))) {
+                (!this.first_match || (this.first_match === Number(f) || this.pipe_section_raw.features[this.first_match].side !== data[f].side))) {
 
                 let feature = {...data[f]}
                 const top = Number(data[f].attributes.orientation_deg)
@@ -263,12 +254,76 @@ export default class PD extends Component {
                             height={30}
                             onClick={() => {
 
-                                this.first_match = 0
-                                this.second_match = 0
+                                if (this.first_match) {
+
+                                    document.getElementById(this.first_match).style.backgroundColor = 'transparent'
+                                    this.first_match = 0
+                                    this.second_match = 0
+                                    this.graphPipeSection()
+
+                                } else {
+
+                                    this.first_match = 0
+                                    this.second_match = 0
+
+                                }
+                                
                                 this.setState({match_on: !this.state.match_on})
 
                             }}
                         />
+                        <div style={{display: this.state.confirm_on ? 'block' : 'none'}}>
+                                
+
+                            <Button
+                                variant="primary"
+                                onClick={() => {
+
+                                    
+                                    const data = [{
+
+                                        feature_a: this.first_match,
+                                        feature_b: this.second_match,
+                                        run_match: this.run_match_instance,
+                                        pipe_section: this.pipe_section_instance
+
+                                    }]
+
+                                    document.getElementById(this.first_match).style.backgroundColor = 'transparent'
+                                    document.getElementById(this.second_match).style.backgroundColor = 'transparent'
+                                    
+                                    this.first_match = 0
+                                    this.second_match = 0
+                                    this.setState({
+
+                                        match_on: false,
+                                        confirm_on: false
+
+                                    })
+
+                                    this.dataAdapter.post('feature_pair', data, data => {
+                                            
+                                        this.loadPipeSection()
+
+                                    })
+
+                                }}>Save</Button>{' '}
+                            <Button
+                                variant="secondary"
+                                onClick={() => {
+                                    document.getElementById(this.first_match).style.backgroundColor = 'transparent'
+                                    document.getElementById(this.second_match).style.backgroundColor = 'transparent'
+                                    this.first_match = 0
+                                    this.second_match = 0
+                                    this.setState({
+                                        match_on: false,
+                                        confirm_on: false
+                                    }, this.graphPipeSection)
+
+                                }}>Cancel</Button>
+                        </div>
+
+
 
                     </div>
                     <div style={{display:'flex', direction:'row', alignItems:"center", float:"right"}}>
@@ -309,63 +364,6 @@ export default class PD extends Component {
                     width={this.state.table_width}
                 />
                 
-                <Modal
-                    isOpen={this.state.modal_on}
-                    onRequestClose={() => this.setState({molal_on: false})}          
-                    contentLabel="Confirm Pair Match"
-                    style={{
-                        content : {
-                          top                   : '50%',
-                          left                  : '50%',
-                          right                 : 'auto',
-                          bottom                : 'auto',
-                          marginRight           : '-50%',
-                          transform             : 'translate(-50%, -50%)'
-                        }}}
-                >
-                    {this.state.modal_info}
-
-                    <Button
-                        variant="primary"
-                        onClick={() => {
-
-                            
-                            const data = [{
-
-                                feature_a: this.first_match,
-                                feature_b: this.second_match,
-                                run_match: this.run_match_instance,
-                                pipe_section: this.pipe_section_instance
-
-                            }]
-
-                            this.first_match = 0
-                            this.second_match = 0
-                            this.setState({
-                                match_on: false,
-                                modal_on: false
-                            })
-
-                            this.dataAdapter.post('feature_pair', data, data => {
-                                    
-                                this.loadPipeSection()
-
-                            })
-
-                        }}>Save</Button>{' '}
-                    <Button
-                        variant="secondary"
-                        onClick={() => {
-
-                            this.first_match = 0
-                            this.second_match = 0
-                            this.setState({
-                                match_on: false,
-                                modal_on: false
-                            }, this.graphPipeSection)
-
-                        }}>Cancel</Button>
-                </Modal>
 
             </>
             

@@ -56,6 +56,8 @@ export default class Feature extends Component {
 
         }
 
+        const icowh = Math.round(Math.min(height, width) - 4)
+
         return (
             <Popup
                 key={i.id + 'popup'}
@@ -66,8 +68,8 @@ export default class Feature extends Component {
                         style={{
                             left: left,
                             top: top,
-                            height: height+4,
-                            width: width+4}}
+                            height: height  + 4,
+                            width: width + 4}}
                     >
                         <div>
                             <div
@@ -79,8 +81,9 @@ export default class Feature extends Component {
                                 height: height,
                                 width: width}}>
                                 <img
-                                    width={width - 4}
-                                    height={height - 4}
+                                    alt={a.feature_category}
+                                    width={icowh}
+                                    height={icowh}
                                     src={"./feature_icons/" + (this.icons[a.feature_category] || "unknown") + ".png"}
                                     />
                             </div>
@@ -107,13 +110,17 @@ export default class Feature extends Component {
                                 'depth_in'
                             ]
                             
-                            let out = [(<b key="id_info">feature_id:</b>),(<span key="item_info">{item.feature_id}</span>),(<br key="break_info"/>)]
+                            let out = [
+                                (<b key="id_info">id:</b>),(<span key="item_info">{item.id}</span>),(<br key="break_info"/>),
+                                (<b key="f_id_info">feature_id:</b>),(<span key="f_item_info">{item.feature_id}</span>),(<br key="f_break_info"/>),
+                                (<b key="side_info">side:</b>),(<span key="side_info_val">{item.side}</span>),(<br key="side_info_br"/>)
+                            ]
 
                             disp.map((a, i) => {
                                 out.push(<b key={a + i + 'b'}>{a}</b>)
-                                out.push (<span key={a + i + 'c'}>:</span>)
-                                out.push (<span key={a + i + 'd'}>{data[a]}</span>)
-                                out.push (<br key={a + i + 'e'} />)
+                                out.push(<span key={a + i + 'c'}>:</span>)
+                                out.push(<span key={a + i + 'd'}>{data[a]}</span>)
+                                out.push(<br key={a + i + 'e'} />)
                             })
 
 
