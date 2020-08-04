@@ -85,8 +85,8 @@
   width: 100%;
   width: -moz-available;
   width: -webkit-fill-available;
-  width: fill-available;
   width: -moz-available;
+  width: stretch;
 }
 
 
@@ -138,12 +138,19 @@ card
   padding: 0px !important;
 }
 
+.react-grid-HeaderRow > div > div {
+  font-size: 0.7rem;
+  padding: 5px 2px 3px 2px !important;
+}
+
 .react-grid-HeaderRow > div > div:nth-child(-n+9) {
-  border-top: 3px solid yellow;
-  padding-top: 5px;
+  border-top: 3px solid orange;
 }
 
 .react-grid-HeaderRow > div > div:nth-child(n+11) {
   border-top: 3px solid blue;
-  padding-top: 5px;
 }
+/*
+.react-grid-HeaderRow > div > div:nth-child(1) {
+  width:1% !important;
+}*/

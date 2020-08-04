@@ -23,6 +23,7 @@ export default class DataAdapter extends Component {
             })
             .catch(e => {
                 this.props.isLoading(false)
+                console.log(e)
                 this.props.restError(e)
             })
 
@@ -73,7 +74,7 @@ export default class DataAdapter extends Component {
                 const pairs = res.feature_pairs || []
                 const welds = res.welds || []
     
-                pipe.map(p => {
+                pipe.forEach(p => {
         
                     let feature = {
         
@@ -152,33 +153,30 @@ export default class DataAdapter extends Component {
 
     getTableRow = (a, b) => {
 
+        const rnd = num => Number(num).toFixed(4)
+        const side = (o, s) => {
+            return {
+                ['id_' + s]: (o && o.id) || false,
+                ['feature_id_' + s]: (o && o.feature_id) || false,
+                ['feature_' + s]: (o && o.attributes.feature) || false,
+                ['feature_category_' + s]: (o && o.attributes.feature_category) || false,
+                ['orientation_deg_' + s]: (o && rnd(o.attributes.orientation_deg)) || false,
+                ['us_weld_dist_wc_ft_' + s]: (o && rnd(o.attributes.us_weld_dist_wc_ft)) || false,
+                ['us_weld_dist_coord_m_' + s]: (o && rnd(o.attributes.us_weld_dist_coord_m)) || false,
+                ['length_in_' + s]: (o && rnd(o.attributes.length_in)) || false,
+                ['width_in_' + s]: (o && rnd(o.attributes.width_in)) || false,
+                ['depth_in_' + s]: (o && rnd(o.attributes.depth_in)) || false,
+            }
+        }
 
         return{
 
-            id_A: (a && a.id) || false,
-            feature_id_A: (a && a.feature_id) || false,
-            feature_A: (a && a.attributes.feature) || false,
-            feature_category_A: (a && a.attributes.feature_category) || false,
-            orientation_deg_A: (a && a.attributes.orientation_deg) || false,
-            us_weld_dist_wc_ft_A: (a && a.attributes.us_weld_dist_wc_ft) || false,
-            us_weld_dist_coord_m_A: (a && a.attributes.us_weld_dist_coord_m) || false,
-            length_in_A: (a && a.attributes.length_in) || false,
-            width_in_A: (a && a.attributes.width_in) || false,
-            depth_in_A: (a && a.attributes.depth_in) || false,
-
+            ...side(a, 'A'),
             _gutter:'',
+            ...side(b, 'B'),
 
-            id_B: (b && b.id) || false,
-            feature_id_B: (b && b.feature_id) || false,
-            feature_B: (b && b.attributes.feature) || false,
-            feature_category_B: (b && b.attributes.feature_category) || false,
-            orientation_deg_B: (b && b.attributes.orientation_deg) || false,
-            us_weld_dist_wc_ft_B: (b && b.attributes.us_weld_dist_wc_ft) || false,
-            us_weld_dist_coord_m_B: (b && b.attributes.us_weld_dist_coord_m) || false,
-            length_in_B: (b && b.attributes.length_in) || false,
-            width_in_B: (b && b.attributes.width_in) || false,
-            depth_in_B: (b && b.attributes.depth_in) || false,
         }
+
     }
 
     get = (rest, data, cbk) => {
