@@ -137,3 +137,13 @@ card
 .react-grid-Cell {
   padding: 0px !important;
 }
+
+.react-grid-HeaderRow > div > div:nth-child(-n+9) {
+  border-top: 3px solid yellow;
+  padding-top: 5px;
+}
+
+.react-grid-HeaderRow > div > div:nth-child(n+11) {
+  border-top: 3px solid blue;
+  padding-top: 5px;
+}
