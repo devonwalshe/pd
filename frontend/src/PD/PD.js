@@ -5,13 +5,13 @@ import { Typeahead } from 'react-bootstrap-typeahead'
 import CustomGrid from './CustomGrid'
 import Feature from './Feature.js'
 import fontawesome from '@fortawesome/fontawesome'
-import { faCrosshairs, faFilter, faSpinner, faSearchPlus, faSearchMinus } from '@fortawesome/free-solid-svg-icons'
+import { faLink, faFilter, faSpinner, faSearchPlus, faSearchMinus } from '@fortawesome/free-solid-svg-icons'
 import Toggle from 'react-bootstrap-toggle'
 import DataAdapter from './DataAdapter'
 import Modal from 'react-modal';
  
 Modal.setAppElement('#root')        
-fontawesome.library.add(faCrosshairs, faFilter, faSpinner, faSearchPlus, faSearchMinus);
+fontawesome.library.add(faLink, faFilter, faSpinner, faSearchPlus, faSearchMinus);
 
 export default class PD extends Component {
 
@@ -24,7 +24,8 @@ export default class PD extends Component {
             features_filter: [],
             match_on: false,
             confirm_on: false,
-            modal_info: [],
+            hover_graph: 0,
+            hover_table: 0,
             filter: {
                 matched:true,
                 unmatched: true
@@ -42,8 +43,8 @@ export default class PD extends Component {
         this.dataAdapter = new DataAdapter({
             proxyURL: props.proxyURL,
             restURL: props.restURL,
-            isLoading: this.isLoading,
-            restError: this.restError
+            isLoading: l => this.setState({is_loading: l}),
+            restError: () => this.setState({rest_error: true})
         })
 
         this.pipe_section_instance = 0
@@ -54,9 +55,6 @@ export default class PD extends Component {
         this.second_match = 0
 
     }
-
-    isLoading = l => this.setState({is_loading: l})
-    restError = () => this.setState({rest_error: true})
 
     componentDidMount() {
 
@@ -82,7 +80,11 @@ export default class PD extends Component {
 
         if (this.first_match) {
 
-            document.getElementById(id).style.backgroundColor = 'white'
+            if (this.pipe_section_raw.features[this.first_match].side === this.pipe_section_raw.features[id].side)
+
+                return
+
+            this.hltDom(id, 'white')
             this.second_match = id
 
             this.setState({
@@ -92,7 +94,7 @@ export default class PD extends Component {
 
         } else {
 
-            document.getElementById(id).style.backgroundColor = 'white'
+            this.hltDom(id, 'white')
             this.first_match = id
             this.graphPipeSection()
 
@@ -111,6 +113,12 @@ export default class PD extends Component {
     }
 
 
+    hltDom = (id, color) => {
+
+        const doc = document.getElementById(id)
+        doc && (doc.style.backgroundColor = color)
+
+    }
 
     setPipeSections = data => this.setState({pipe_section_select: <Typeahead
 
@@ -163,7 +171,12 @@ export default class PD extends Component {
             
                 feature.top = 360 - (!isNaN(top) ? top : 360)
                 feature.left = graph_width / max_width * Number(data[f].attributes.us_weld_dist_wc_ft)
-                features.push(<Feature key={'feature_' + feature.id} feature={feature} onClick={this.clickFeature}/>)
+                features.push(<Feature
+                    key={'feature_' + feature.id}
+                    feature={feature}
+                    onClick={this.clickFeature}
+                    onHover={this.hoverOnGraph}
+                />)
 
             }
         }
@@ -184,7 +197,42 @@ export default class PD extends Component {
 
     }
 
+    hoverOnGraph = id => {
 
+        const hlt = (id, color) => {
+
+            const docs = document.getElementsByName(id)
+
+            for (let i = 0, ix = docs.length; i < ix; i += 1)
+
+                docs[i].style.backgroundColor = color
+
+        }
+
+        this.state.hover_table && hlt(this.state.hover_table, 'transparent')
+        this.setState({hover_table: id})
+        this.state.hover_table && hlt(id, 'lightblue')
+
+    }
+
+    hoverOnTable = id => {
+        
+        if (!id)
+
+            return
+
+        if (this.state.hover_graph && 
+            this.first_match !== this.state.hover_graph &&
+            this.second_match !== this.state.hover_graph) {
+        
+            this.hltDom(this.state.hover_graph, 'transparent')
+
+        }
+
+        this.setState({hover_graph: id})
+        this.hltDom(id, 'white')
+
+    }
 
 
     loadPipeSection = () => {
@@ -241,7 +289,7 @@ export default class PD extends Component {
                         <Form.Check type="checkbox" value="unmatched" label="Unmatched" onChange={this.setMatchFilter} checked={this.state.filter.unmatched} />
                         <div style={{borderRight:'1px solid #444',marginLeft: 20, marginRight: 25, height: 30}}></div>
                         <div style={{backgroundColor:'#DDD',marginRight:'10px', paddingBottom:5, paddingLeft: 10, paddingRight: 10, paddingTop: 5}} title="Feature Matching ON/OFF">
-                            <i className="fa fa-crosshairs"></i>
+                            <i className="fa fa-link"></i>
                         </div>
                         <Toggle
                             active={this.state.match_on}
@@ -256,15 +304,12 @@ export default class PD extends Component {
 
                                 if (this.first_match) {
 
-                                    document.getElementById(this.first_match).style.backgroundColor = 'transparent'
+
+                                    this.hltDom(this.first_match, 'transparent')
+                                    this.hltDom(this.second_match, 'transparent')
                                     this.first_match = 0
                                     this.second_match = 0
                                     this.graphPipeSection()
-
-                                } else {
-
-                                    this.first_match = 0
-                                    this.second_match = 0
 
                                 }
                                 
@@ -273,25 +318,26 @@ export default class PD extends Component {
                             }}
                         />
                         <div style={{display: this.state.confirm_on ? 'block' : 'none'}}>
-                                
-
                             <Button
                                 variant="primary"
                                 onClick={() => {
 
+                                    const feature_a = this.pipe_section_raw.features[this.first_match] === 'A' ? this.first_match : this.second_match
+                                    const feature_b = this.pipe_section_raw.features[this.second_match] === 'B' ? this.second_match : this.first_match
+
                                     
                                     const data = [{
 
-                                        feature_a: this.first_match,
-                                        feature_b: this.second_match,
+                                        feature_a: feature_a,
+                                        feature_b: feature_b,
                                         run_match: this.run_match_instance,
                                         pipe_section: this.pipe_section_instance
 
                                     }]
 
-                                    document.getElementById(this.first_match).style.backgroundColor = 'transparent'
-                                    document.getElementById(this.second_match).style.backgroundColor = 'transparent'
-                                    
+                                    this.hltDom(this.first_match, 'transparent')
+                                    this.hltDom(this.second_match, 'transparent')
+
                                     this.first_match = 0
                                     this.second_match = 0
                                     this.setState({
@@ -311,8 +357,8 @@ export default class PD extends Component {
                             <Button
                                 variant="secondary"
                                 onClick={() => {
-                                    document.getElementById(this.first_match).style.backgroundColor = 'transparent'
-                                    document.getElementById(this.second_match).style.backgroundColor = 'transparent'
+                                    this.hltDom(this.first_match, 'transparent')
+                                    this.hltDom(this.second_match, 'transparent')
                                     this.first_match = 0
                                     this.second_match = 0
                                     this.setState({
@@ -322,9 +368,6 @@ export default class PD extends Component {
 
                                 }}>Cancel</Button>
                         </div>
-
-
-
                     </div>
                     <div style={{display:'flex', direction:'row', alignItems:"center", float:"right"}}>
                         <i className="fa fa-search-minus" style={{marginRight:'10px'}}></i>
@@ -361,6 +404,7 @@ export default class PD extends Component {
                     key="data_grid"
                     rows={this.state.pipe_section_table}
                     clickFeature={this.clickFeature}
+                    hoverFeature={this.hoverOnTable}
                     width={this.state.table_width}
                 />
                 
@@ -380,48 +424,3 @@ PD.propTypes = {
     restURL: PropTypes.string.isRequired
 
 }
-/**<div style={{padding:10,maxWidth:this.state.table_width?this.state.table_width+"px":"auto"}}>
-                    <ReactDataGrid
-                        maxWidth={this.state.table_width?this.state.table_width+"px":"auto"}
-                        columns={[
-                            { 
-                                key: "id_A",
-                                name: "id_A",
-                                editable: false,
-                                sortable: false,
-                                formatter: this.getGridColumn
-                            },
-                            {
-                                key: "feature_A",
-                                name: "feature_A",
-                                editable: false,
-                                sortable: false,
-                                formatter: this.getGridColumn
-                            },
-                            {
-                                width:17,
-                                formatter:()=>(<div style={{backgroundColor:'lightgray', padding:4}}>&nbsp;</div>)
-                            },
-                            { 
-                                key: "id_B",
-                                name: "id_B",
-                                editable: false,
-                                sortable: false,
-                                formatter: this.getGridColumn
-                            },
-                            {
-                                key: "feature_B",
-                                name: "feature_B",
-                                editable: false,
-                                sortable: false,
-                                formatter: this.getGridColumn
-                            }
-                        ]}
-                        rowGetter={i => this.state.pipe_section_table[i]}
-                        rowsCount={this.state.pipe_section_table.length}
-                        onGridRowsUpdated={this.onGridRowsUpdated}
-                        enableCellSelect={true}
-                    />
-                </div>
-            
- */

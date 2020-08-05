@@ -35,6 +35,7 @@ export default class Feature extends Component {
         const i = this.props.feature
         const a = i.attributes
         const border = i.side === 'A' ? 'orange' : 'blue'
+        const minsize = 18
 
         let left = i.left,
             top = -20,
@@ -46,11 +47,11 @@ export default class Feature extends Component {
         if (i.height && i.width) {
 
             top = i.top
-            height = Math.max(i.height, 12)
-            width = Math.max(i.width, 12)
+            height = Math.max(i.height, minsize)
+            width = Math.max(i.width, minsize)
             nodim = false
 
-            if (i.height <= 12 || i.width <= 12)
+            if (i.height <= minsize || i.width <= minsize)
 
                 lt = true
 
@@ -73,7 +74,8 @@ export default class Feature extends Component {
                     >
                         <div>
                             <div
-                                onClick={e => Number(this.props.onClick(e.currentTarget.id))}
+                                onMouseOver={e =>this.props.onHover(e.currentTarget.id)}
+                                onClick={e => this.props.onClick(e.currentTarget.id)}
                                 id={i.id}
                                 style={{
                                 padding: 1,
@@ -85,7 +87,7 @@ export default class Feature extends Component {
                                     width={icowh}
                                     height={icowh}
                                     src={"./feature_icons/" + (this.icons[a.feature_category] || "unknown") + ".png"}
-                                    />
+                                />
                             </div>
                             {lt ? (<div>&lt;</div>) : ''}
                         </div>
@@ -116,7 +118,7 @@ export default class Feature extends Component {
                                 (<b key="side_info">side:</b>),(<span key="side_info_val">{item.side}</span>),(<br key="side_info_br"/>)
                             ]
 
-                            disp.map((a, i) => {
+                            disp.forEach((a, i) => {
                                 out.push(<b key={a + i + 'b'}>{a}</b>)
                                 out.push(<span key={a + i + 'c'}>:</span>)
                                 out.push(<span key={a + i + 'd'}>{data[a]}</span>)
@@ -137,6 +139,7 @@ export default class Feature extends Component {
 Feature.propTypes = {
 
     feature: PropTypes.object.isRequired,
-    onClick: PropTypes.func.isRequired
+    onClick: PropTypes.func.isRequired,
+    onHover: PropTypes.func.isRequired
 
 }

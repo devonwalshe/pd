@@ -2,7 +2,6 @@ const fetch = require("node-fetch");
 const http = require('http');
 const url = require('url')
 const port = 3001
-const hurl = 'http://localhost:5000'
 
 const requestListener = function (req, res) {
   try {
@@ -41,6 +40,7 @@ const requestListener = function (req, res) {
           res.setHeader('Access-Control-Allow-Methods', 'OPTIONS, GET, POST');
           res.setHeader('Access-Control-Allow-Headers', '*');
           res.writeHead(200);
+          console.log(data)
           res.end(data);
       })
   } catch(e) {}

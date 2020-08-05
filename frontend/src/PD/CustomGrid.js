@@ -5,55 +5,44 @@ import ReactDataGrid from 'react-data-grid'
 
 export default class CustomGrid extends Component {
 
-    constructor(props) {
-
-        super(props)
-    
-    }
 
     getColumns = () => {
 
         let out = []
 
         const cols = [
-            'feature_id',
-            'feature',
-            'feature_category',
-            'orientation_deg',
-            'us_weld_dist_wc_ft',
-            'us_weld_dist_coord_m',
-            'length_in',
-            'width_in',
-            'depth_in'
+            {width: 10, col: 'feature_id'},
+            {width: 10, col: 'feature'},
+            {width: 10, col: 'feature_category'},
+            {width: 10, col: 'orientation_deg'},
+            {width: 10, col: 'us_weld_dist_wc_ft'},
+            {width: 10, col: 'us_weld_dist_coord_m'},
+            {width: 10, col: 'length_in'},
+            {width: 10, col: 'width_in'},
+            {width: 10, col: 'depth_in'}
         ]
 
-        cols.map(col => out.push({
+        const side = s => cols.map(col => out.push({
 
-            key: col + '_A',
-            name: col + '_A',
+            key: col.col + '_' + s,
+            name: col.col + '_' + s,
+            //width: col.width,
             editable: false,
             sortable: false,
-            formatter: cell =>this.getGridColumn('A', cell)
+            resizable: true,
+            formatter: cell =>this.getGridColumn(s, cell)
 
         }))
 
+        side('A')
         out.push({
 
             key: '_gutter',
-            width:17,
-            formatter:()=>(<div style={{backgroundColor:'lightgray', padding:4}}>&nbsp;</div>)
+            width: 17,
+            formatter: () => (<div style={{backgroundColor:'lightgray', padding:4}}>&nbsp;</div>)
 
         })
-
-        cols.map(col => out.push({
-
-            key: col + '_B',
-            name: col + '_B',
-            editable: false,
-            sortable: false,
-            formatter: cell =>this.getGridColumn('B', cell)
-
-        }))
+        side('B')
 
         return out
 
@@ -62,10 +51,13 @@ export default class CustomGrid extends Component {
     getGridColumn = (side,item) => {
 
         const matched = typeof item.value === 'boolean' && !item.value
-        const style = {color: matched ? 'yellow' : '#212529', backgroundColor: matched ? 'yellow' : 'white', padding:4}
+        
+        const style = {color: matched ? 'yellow' : '#212529', backgroundColor: matched ? 'yellow' : 'white', padding:4, fontSize:'0.7rem'}
         return (
             <div
-                onClick={() => Number(this.props.clickFeature(item.row['id_' + side]))}
+                name={!matched ? item.row['id_' + side] : 'not_matched'}
+                onClick={() => this.props.clickFeature(item.row['id_' + side])}
+                onMouseOver={() => this.props.hoverFeature(item.row['id_' + side])}
                 style={style}
             >
                 {matched ? '_' : item.value}
@@ -97,6 +89,7 @@ CustomGrid.propTypes = {
 
     rows: PropTypes.array.isRequired,
     clickFeature: PropTypes.func.isRequired,
+    hoverFeature: PropTypes.func.isRequired,
     width: PropTypes.number.isRequired
 
 }
