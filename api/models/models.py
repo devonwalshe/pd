@@ -61,6 +61,7 @@ class RunMatch(Model):
   '''
   Matches two runs
   '''
+  name = CharField()
   run_a = ForeignKeyField(InspectionRun, backref='match')
   run_b = ForeignKeyField(InspectionRun, backref='match')
   pipeline = ForeignKeyField(Pipeline, backref='match')
