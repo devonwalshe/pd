@@ -1,13 +1,59 @@
 const fetch = require("node-fetch");
 const http = require('http');
 const url = require('url')
+const formidable = require('formidable');
+const fs = require('fs');
 const port = 3001
+const { uploadPath } = require('./src/config')
+console.log(uploadPath)
 
 const requestListener = function (req, res) {
   try {
-    
-    const temp = decodeURIComponent(url.parse(req.url,true).search.replace(/^\?/, '')).split('&')
+    const uri = decodeURIComponent(url.parse(req.url,true).search.replace(/^\?/, ''))
 
+    if (uri === 'upload') {
+
+      const form = new formidable.IncomingForm({multiples:true});
+
+      form.parse(req, function (err, fields, files) {
+console.log(files)
+        for (let i = 0, ix = files.file.length; i < ix; i += 1) {
+
+          const file = files.file[i]
+
+          const oldpath = file.path
+          const newpath = uploadPath + '/' + file.name
+
+          fs.renameSync(oldpath, newpath, function (err) {
+            if (err) throw err;
+            res.write('File uploaded and moved!')
+                
+          })
+          
+        }
+        res.setHeader('Content-Type', 'application/json'),
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Access-Control-Request-Method', '*');
+        res.setHeader('Access-Control-Allow-Methods', 'OPTIONS, GET, POST');
+        res.setHeader('Access-Control-Allow-Headers', '*');
+        res.writeHead(200);
+        res.end();
+
+        return
+        var oldpath = files.filetoupload.path;
+        var newpath = 'C:/Users/Your Name/' + files.filetoupload.name;
+        fs.rename(oldpath, newpath, function (err) {
+          if (err) throw err;
+          res.write('File uploaded and moved!');
+          res.end();
+        })
+      })
+      return
+    }
+
+    const temp = uri.split('&')
+
+    
     let obj = {},
         request = {
           method: 'GET',

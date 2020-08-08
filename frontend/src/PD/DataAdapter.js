@@ -206,6 +206,34 @@ export default class DataAdapter extends Component {
     }
 
 
+    upload = (data, cbk) => {
+
+        this.props.isLoading(true)
+
+
+
+
+        fetch(this.props.proxyURL + '?upload',{
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json'
+            },
+            body: data
+        })
+            //.then(res => res.json())
+            .then(res => {
+                console.log(res)
+                this.props.isLoading(false)
+                cbk(res)
+            })
+            .catch(e => {
+                this.props.isLoading(false)
+                console.log(e)
+                this.props.restError(e)
+            })
+        
+    }
+
 }
 
 

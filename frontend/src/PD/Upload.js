@@ -1,5 +1,6 @@
 import React, { Component } from 'react'
 import { Form, Button } from 'react-bootstrap'
+import DataAdapter from './DataAdapter'
 
 export default class Upload extends Component {
 
@@ -11,6 +12,14 @@ export default class Upload extends Component {
             step: null
         }
 
+
+        this.dataAdapter = new DataAdapter({
+            proxyURL: 'http://localhost:3001',
+            restURL: 'http://localhost:5000/',
+            isLoading: l => this.setState({is_loading: l}),
+            restError: () => this.setState({rest_error: true})
+        })
+
     }
 
 
@@ -18,6 +27,31 @@ export default class Upload extends Component {
         this.getStep()}
 
     clickNext = () => {
+console.log(this.state.current)
+
+        if (this.state.current === 0) {
+
+            const file_a = document.getElementById('file_a').files[0]
+            const file_b = document.getElementById('file_b').files[0]
+
+            if (!file_a || !file_b)
+
+                return
+
+
+            const data = new FormData() 
+            data.append('file', file_a)
+            data.append('file', file_b)
+
+            this.dataAdapter.upload(data, (dat)=>{console.log('DONE',dat)})            
+
+        }
+
+        else if (this.state.current === 1) {
+
+            console.log(document.getElementById('feature_mapping'))
+
+        }
 
         this.setState({current: this.state.current + 1}, this.getStep)
 
@@ -25,7 +59,7 @@ export default class Upload extends Component {
 
     clickBack = () => {
 
-        this.setState({current: this.state.current + 1}, this.getStep)
+        this.setState({current: this.state.current - 1}, this.getStep)
 
     }
 
@@ -38,8 +72,8 @@ export default class Upload extends Component {
                         <td>Raw file side A:</td>
                         <td>
                             <Form.File 
-                                id="file-a"
-                                label="Side B file"
+                                id="file_a"
+                                label="Side A file"
                                 custom
                             />
                         </td>
@@ -48,8 +82,8 @@ export default class Upload extends Component {
                         <td>Raw file side B:</td>
                         <td>
                             <Form.File 
-                                id="file-b"
-                                label="Side A file"
+                                id="file_b"
+                                label="Side B file"
                                 custom
                             />
                         </td>
@@ -61,7 +95,7 @@ export default class Upload extends Component {
                     <tr>
                         <td>feature mapping:</td>
                         <td>
-                            <Form.Control as="select" custom>
+                            <Form.Control as="select" id="feature_mapping" custom>
                             
                             <option>1</option>
                             <option>2</option>
