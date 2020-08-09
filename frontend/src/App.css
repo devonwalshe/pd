@@ -164,9 +164,13 @@ card
 }
 .menu > div:first-child {
   font-size: 1.2rem;
-  font-weight: bold;
-  
+  font-weight: bold;  
   float: left;
+  padding: 4px 0px 0px 0px;
+}
+.menu > div:first-child > div {
+  display: none;
+  padding-left: 20px;
 }
 .menu > div:last-child {
   float: right;
@@ -185,3 +189,15 @@ card
   text-align: left;
 }
 
+.toaster {
+  display: none;
+  position: absolute;
+  background-color: wheat;
+  padding: 10px;
+}
+.toaster > div {
+  display: inline;
+  font-weight: bolder;
+  cursor: pointer;
+  padding-left: 30px;
+}

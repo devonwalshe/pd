@@ -1,5 +1,5 @@
 import React, { Component } from 'react'
-import PropTypes from 'prop-types'
+import { proxyURL, restURL } from '../config'
 
 export default class DataAdapter extends Component {
 
@@ -8,23 +8,26 @@ export default class DataAdapter extends Component {
         super(props)
         this.state = {}
 
+        this.spinner = document.getElementById('spinner')
+        this.toast = document.getElementById('toast')
+
     }
 
 
     fetchRest = (rest, url, data, cbk) => {
 
-        this.props.isLoading(true)
+        this.spin(true)
 
         fetch(url)
             .then(res => res.json())
             .then(res => {
-                this.props.isLoading(false)
+                this.spin(false)
                 cbk(this.adapt(rest, data, res), data)
             })
             .catch(e => {
-                this.props.isLoading(false)
+                this.spin(false)
                 console.log(e)
-                this.props.restError(e)
+                this.toast.style.display = 'block'
             })
 
     }
@@ -181,9 +184,9 @@ export default class DataAdapter extends Component {
 
     get = (rest, data, cbk) => {
 
-        const url = this.props.proxyURL +
+        const url = proxyURL +
             '?url=' +
-            encodeURIComponent(this.props.restURL) +
+            encodeURIComponent(restURL) +
             rest +
             (data ? '/' + data : '')
 
@@ -194,9 +197,9 @@ export default class DataAdapter extends Component {
 
     post = (rest, data, cbk) => {
         
-        const url = this.props.proxyURL +
+        const url = proxyURL +
             '?url=' +
-            encodeURIComponent(this.props.restURL) +
+            encodeURIComponent(restURL) +
             rest +
             '/' +
             '&data=' + JSON.stringify(data)
@@ -208,41 +211,27 @@ export default class DataAdapter extends Component {
 
     upload = (data, cbk) => {
 
-        this.props.isLoading(true)
+        this.spin(true)
 
-
-
-
-        fetch(this.props.proxyURL + '?upload',{
+        fetch(this.props.proxyURL + '?upload', {
             method: 'POST',
             headers: {
                 'Accept': 'application/json'
             },
             body: data
         })
-            //.then(res => res.json())
             .then(res => {
-                console.log(res)
-                this.props.isLoading(false)
+                this.spin(false)
                 cbk(res)
             })
             .catch(e => {
-                this.props.isLoading(false)
+                this.spin(false)
                 console.log(e)
-                this.props.restError(e)
+                this.toast.style.display = 'block'
             })
         
     }
 
-}
-
-
-
-DataAdapter.propTypes = {
-
-    proxyURL: PropTypes.string.isRequired,
-    restURL: PropTypes.string.isRequired,
-    isLoading: PropTypes.func.isRequired,
-    restError: PropTypes.func.isRequired
+    spin = s => this.spinner.style.display = s ? 'inline' : 'none'
 
 }

@@ -1,5 +1,5 @@
 import React, { Component } from 'react'
-import './App.css';
+import './App.css'
 import PD from './PD/PD.js'
 import Dashboard from './PD/Dashboard.js'
 import Pipelines from './PD/Pipelines.js'
@@ -8,12 +8,7 @@ import FeatureMap from './PD/FeatureMap.js'
 import { Button } from 'react-bootstrap'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import './bootstrap2-toggle.css'
-import 'react-bootstrap-typeahead/css/Typeahead.css';
-
-
-const restURL = 'http://localhost:5000/'
-const proxyURL =  'http://localhost:3001'
-
+import 'react-bootstrap-typeahead/css/Typeahead.css'
 
 export default class App extends Component {
 
@@ -53,7 +48,7 @@ export default class App extends Component {
       (<Dashboard/>),
       (<Pipelines/>),
       (<Upload/>),
-      (<PD restURL={restURL} proxyURL={proxyURL}/>),
+      (<PD/>),
       (<FeatureMap/>)
     ]
 
@@ -65,8 +60,16 @@ export default class App extends Component {
   render = () => (
 
     <>
+      <div id="toast" className="toaster">
+        Server returned invalid response
+        <div onClick={e => e.currentTarget.parentElement.style.display = 'none'}>x</div>    
+      </div>
       <div className="menu">
-        <div>AKD Data Matching Tool</div>
+        <div>AKD Data Matching Tool
+          <div id="spinner">
+            <i className="fa fa-spinner fa-spin" />
+          </div>
+        </div>
         <div>
           {this.buttons.map((b, i) => (
             <Button id={b} key={b} variant={this.state.current === i ? 'outline-primary' : 'link'} onClick={() => this.clickMenu(b)}>{b}</Button>
