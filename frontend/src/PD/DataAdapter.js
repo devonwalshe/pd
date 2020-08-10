@@ -23,6 +23,7 @@ export default class DataAdapter extends Component {
             })
             .catch(e => {
                 this.props.isLoading(false)
+                console.log(e)
                 this.props.restError(e)
             })
 
@@ -73,7 +74,7 @@ export default class DataAdapter extends Component {
                 const pairs = res.feature_pairs || []
                 const welds = res.welds || []
     
-                pipe.map(p => {
+                pipe.forEach(p => {
         
                     let feature = {
         
@@ -103,19 +104,7 @@ export default class DataAdapter extends Component {
                         if (!temp[i].matched) {
         
                             featuresIn.push(temp[i].id)
-                            pipeSection.table.push(temp[i].side === 'A' ? {
-                                _gutter:'',
-                                id_A: temp[i].id,
-                                feature_A: temp[i].attributes.feature_category,
-                                id_B: false,
-                                feature_B: false
-                            } : {
-                                _gutter:'',
-                                id_A: false,
-                                feature_A: false,
-                                id_B: temp[i].id,
-                                feature_B: temp[i].attributes.feature_category
-                            })
+                            pipeSection.table.push(temp[i].side === 'A' ? this.getTableRow(temp[i], null) : this.getTableRow(null, temp[i]))
         
                         } else {
         
@@ -123,34 +112,25 @@ export default class DataAdapter extends Component {
         
                                 for (let k = 0, kx = temp.length; k < kx; k +=1) {
 
-                                    if (temp[i].side === 'A' && temp[i].id === pairs[j].feature_a &&
-                                        temp[k].side === 'B' && temp[k].id === pairs[j].feature_b) {
-                                    
-                                            featuresIn.push(temp[i].id)
-                                    featuresIn.push(temp[k].id)
-                                            
-                                        pipeSection.table.push({
-                                            _gutter:'',
-                                            id_A: temp[i].id,
-                                            feature_A: temp[i].attributes.feature_category,
-                                            id_B: temp[k].id,
-                                            feature_B: temp[k].attributes.feature_category
-                                        })
-        
-                                    } else if (temp[i].side === 'B' && temp[i].id === pairs[j].feature_b &&
-                                        temp[k].side === 'A' && temp[k].id === pairs[j].feature_a) {
+                                    if (!~featuresIn.indexOf(temp[i].id) && !~featuresIn.indexOf(temp[k].id))
+
+                                        if (temp[i].side === 'A' && temp[i].id === pairs[j].feature_a &&
+                                            temp[k].side === 'B' && temp[k].id === pairs[j].feature_b) {
                                         
                                             featuresIn.push(temp[i].id)
-                                    featuresIn.push(temp[k].id)
-                                        pipeSection.table.push({
-                                            _gutter:'',
-                                            id_A: temp[k].id,
-                                            feature_A: temp[k].attributes.feature_category,
-                                            id_B: temp[i].id,
-                                            feature_B: temp[i].attributes.feature_category
-                                        })
-        
-                                    }
+                                            featuresIn.push(temp[k].id)
+                                                
+                                            pipeSection.table.push(this.getTableRow(temp[i], temp[k]))
+            
+                                        } else if
+                                            (temp[i].side === 'B' && temp[i].id === pairs[j].feature_b &&
+                                             temp[k].side === 'A' && temp[k].id === pairs[j].feature_a) {
+                                            
+                                            featuresIn.push(temp[i].id)
+                                            featuresIn.push(temp[k].id)
+                                            pipeSection.table.push(this.getTableRow(temp[k], temp[i]))
+            
+                                        }
         
                                 }
         
@@ -167,6 +147,35 @@ export default class DataAdapter extends Component {
         }
 
         return (points[rest] && points[rest]()) || res
+
+    }
+
+
+    getTableRow = (a, b) => {
+
+        const rnd = num => Number(num).toFixed(4)
+        const side = (o, s) => {
+            return {
+                ['id_' + s]: (o && o.id) || false,
+                ['feature_id_' + s]: (o && o.feature_id) || false,
+                ['feature_' + s]: (o && o.attributes.feature) || false,
+                ['feature_category_' + s]: (o && o.attributes.feature_category) || false,
+                ['orientation_deg_' + s]: (o && rnd(o.attributes.orientation_deg)) || false,
+                ['us_weld_dist_wc_ft_' + s]: (o && rnd(o.attributes.us_weld_dist_wc_ft)) || false,
+                ['us_weld_dist_coord_m_' + s]: (o && rnd(o.attributes.us_weld_dist_coord_m)) || false,
+                ['length_in_' + s]: (o && rnd(o.attributes.length_in)) || false,
+                ['width_in_' + s]: (o && rnd(o.attributes.width_in)) || false,
+                ['depth_in_' + s]: (o && rnd(o.attributes.depth_in)) || false,
+            }
+        }
+
+        return{
+
+            ...side(a, 'A'),
+            _gutter:'',
+            ...side(b, 'B'),
+
+        }
 
     }
 
@@ -190,7 +199,6 @@ export default class DataAdapter extends Component {
             encodeURIComponent(this.props.restURL) +
             rest +
             '/' +
-            '&method=POST' +
             '&data=' + JSON.stringify(data)
 
         this.fetchRest(rest, url, data, cbk)

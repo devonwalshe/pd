@@ -35,27 +35,63 @@ export default class Feature extends Component {
         const i = this.props.feature
         const a = i.attributes
         const border = i.side === 'A' ? 'orange' : 'blue'
-        
-        return (<Popup
+        const minsize = 18
+
+        let left = i.left,
+            top = -20,
+            width = 28,
+            height = 28,
+            lt = false,
+            nodim = true
+
+        if (i.height && i.width) {
+
+            top = i.top
+            height = Math.max(i.height, minsize)
+            width = Math.max(i.width, minsize)
+            nodim = false
+
+            if (i.height <= minsize || i.width <= minsize)
+
+                lt = true
+
+        }
+
+        const icowh = Math.round(Math.min(height, width) - 4)
+
+        return (
+            <Popup
                 key={i.id + 'popup'}
                 trigger={
                     <div
-                        className={"shape" + (i.matched ? "" : " unmatched")}
+                        className={"shape " + (i.matched ? "matched" : "unmatched")}
                         key={i.id}
-                        id={i.id}
-                        onClick={this.props.onClick}
                         style={{
-                            border: "1px solid " + border,
-                            left: i.left,
-                            top: i.top,
-                            height: i.height || 28,
-                            width: i.width || 28
-                        }}>
-                        <img
-                            width="20px"
-                            height="20px"
-                            src={"./feature_icons/" + (this.icons[a.feature_category] || "unknown") + ".png"}
-                            />
+                            left: left,
+                            top: top,
+                            height: height  + 4,
+                            width: width + 4}}
+                    >
+                        <div>
+                            <div
+                                onMouseOver={e =>this.props.onHover(e.currentTarget.id)}
+                                onClick={e => this.props.onClick(e.currentTarget.id)}
+                                id={i.id}
+                                style={{
+                                padding: 1,
+                                border: "1px solid " + border,
+                                height: height,
+                                width: width}}>
+                                <img
+                                    alt={a.feature_category}
+                                    width={icowh}
+                                    height={icowh}
+                                    src={"./feature_icons/" + (this.icons[a.feature_category] || "unknown") + ".png"}
+                                />
+                            </div>
+                            {lt ? (<div>&lt;</div>) : ''}
+                        </div>
+                        {nodim ? (<div></div>) : ''}
                     </div>
                 }
                 keepTooltipInside="#root"
@@ -76,13 +112,17 @@ export default class Feature extends Component {
                                 'depth_in'
                             ]
                             
-                            let out = [(<b key="id_info">feature_id:</b>),(<span key="item_info">{item.feature_id}</span>),(<br key="break_info"/>)]
+                            let out = [
+                                (<b key="id_info">id:</b>),(<span key="item_info">{item.id}</span>),(<br key="break_info"/>),
+                                (<b key="f_id_info">feature_id:</b>),(<span key="f_item_info">{item.feature_id}</span>),(<br key="f_break_info"/>),
+                                (<b key="side_info">side:</b>),(<span key="side_info_val">{item.side}</span>),(<br key="side_info_br"/>)
+                            ]
 
-                            disp.map((a, i) => {
+                            disp.forEach((a, i) => {
                                 out.push(<b key={a + i + 'b'}>{a}</b>)
-                                out.push (<span key={a + i + 'c'}>:</span>)
-                                out.push (<span key={a + i + 'd'}>{data[a]}</span>)
-                                out.push (<br key={a + i + 'e'} />)
+                                out.push(<span key={a + i + 'c'}>:</span>)
+                                out.push(<span key={a + i + 'd'}>{data[a]}</span>)
+                                out.push(<br key={a + i + 'e'} />)
                             })
 
 
@@ -99,6 +139,7 @@ export default class Feature extends Component {
 Feature.propTypes = {
 
     feature: PropTypes.object.isRequired,
-    onClick: PropTypes.func.isRequired
+    onClick: PropTypes.func.isRequired,
+    onHover: PropTypes.func.isRequired
 
 }

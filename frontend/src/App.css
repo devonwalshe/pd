@@ -46,7 +46,7 @@
   background-color: #ddd;
   display: table;
   height: 100%;
-  padding: 10px;
+  padding: 30px 10px 10px 10px;
   width: 100%;
 }
 
@@ -72,8 +72,10 @@
   display: table-cell;
   height: 390px;
   position: relative;
+  vertical-align: top;
   width: 100%;
 }
+
 .graph > div:last-child > div:last-child > div:first-child {
   border-bottom: 1px solid white;
   border-top: 1px solid white;
@@ -83,7 +85,8 @@
   width: 100%;
   width: -moz-available;
   width: -webkit-fill-available;
-  width: fill-available;
+  width: -moz-available;
+  width: stretch;
 }
 
 
@@ -131,6 +134,23 @@ card
 
 
 
-.react-grid-Cell{
+.react-grid-Cell {
   padding: 0px !important;
 }
+
+.react-grid-HeaderRow > div > div {
+  font-size: 0.7rem;
+  padding: 5px 2px 3px 2px !important;
+}
+
+.react-grid-HeaderRow > div > div:nth-child(-n+9) {
+  border-top: 3px solid orange;
+}
+
+.react-grid-HeaderRow > div > div:nth-child(n+11) {
+  border-top: 3px solid blue;
+}
+/*
+.react-grid-HeaderRow > div > div:nth-child(1) {
+  width:1% !important;
+}*/

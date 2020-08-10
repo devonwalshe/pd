@@ -2,18 +2,15 @@ const fetch = require("node-fetch");
 const http = require('http');
 const url = require('url')
 const port = 3001
-const hurl = 'http://localhost:5000'
 
 const requestListener = function (req, res) {
   try {
     
     const temp = decodeURIComponent(url.parse(req.url,true).search.replace(/^\?/, '')).split('&')
 
-    let obj = {
-          method:'GET'
-        },
+    let obj = {},
         request = {
-          method: obj.method,
+          method: 'GET',
           crossDomain:true
         }
 
@@ -26,6 +23,7 @@ const requestListener = function (req, res) {
     })
 
     if (obj.data) {
+      request.method = 'POST'
       request.headers = {
         'Accept': 'application/json',
         'Content-Type': 'application/json'
@@ -42,6 +40,7 @@ const requestListener = function (req, res) {
           res.setHeader('Access-Control-Allow-Methods', 'OPTIONS, GET, POST');
           res.setHeader('Access-Control-Allow-Headers', '*');
           res.writeHead(200);
+          console.log(data)
           res.end(data);
       })
   } catch(e) {}
