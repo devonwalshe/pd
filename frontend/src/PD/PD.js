@@ -41,9 +41,6 @@ export default class PD extends Component {
         }
 
         this.dataAdapter = new DataAdapter({
-            proxyURL: props.proxyURL,
-            restURL: props.restURL,
-            isLoading: l => this.setState({is_loading: l}),
             restError: () => this.setState({rest_error: true})
         })
 
@@ -105,7 +102,13 @@ export default class PD extends Component {
 
     getGraphWidth = () => {
 
-        this.pipe_section_graph_width = parseFloat(document.getElementById('pipe_graph_container').offsetWidth) - 20
+        const doc = document.getElementById('pipe_graph_container')
+
+        if (!doc)
+
+            return
+
+        this.pipe_section_graph_width = parseFloat(doc.offsetWidth) - 20
 
         this.setState({table_width:this.pipe_section_graph_width+50})
         this.graphPipeSection()
@@ -275,9 +278,6 @@ export default class PD extends Component {
                         {this.state.pipe_section_select}
 
                     </div>
-                    {this.state.is_loading && (<div style={{float:'right'}}>
-                        <i className="fa fa-spinner fa-spin" />
-                    </div>)}
                 </div>
                 <div style={{backgroundColor:'#fff', display:'inline-block', padding:10, width:'100%'}}>
                     <div style={{alignItems:'center', display:"flex", float:"left"}}>
@@ -414,13 +414,5 @@ export default class PD extends Component {
         )
 
     }
-
-}
-
-
-PD.propTypes = {
-
-    proxyURL: PropTypes.string.isRequired,
-    restURL: PropTypes.string.isRequired
 
 }

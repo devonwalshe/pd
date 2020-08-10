@@ -154,3 +154,50 @@ card
 .react-grid-HeaderRow > div > div:nth-child(1) {
   width:1% !important;
 }*/
+
+
+.menu {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0px 0px 10px;
+  width: 100%;
+}
+.menu > div:first-child {
+  font-size: 1.2rem;
+  font-weight: bold;  
+  float: left;
+  padding: 4px 0px 0px 0px;
+}
+.menu > div:first-child > div {
+  display: none;
+  padding-left: 20px;
+}
+.menu > div:last-child {
+  float: right;
+}
+
+
+.upload {
+  height: 100%;
+  text-align: center;
+  width: 100%;
+}
+
+.upload > table {
+  margin: 0 auto;
+  padding: 20px 0px 20px 0px;
+  text-align: left;
+}
+
+.toaster {
+  display: none;
+  position: absolute;
+  background-color: wheat;
+  padding: 10px;
+}
+.toaster > div {
+  display: inline;
+  font-weight: bolder;
+  cursor: pointer;
+  padding-left: 30px;
+}
