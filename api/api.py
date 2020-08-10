@@ -55,6 +55,7 @@ api.add_resource(RunMatchNew, '/run_match/',
                 resource_class_kwargs={ 'model': RunMatch })
 api.add_resource(RunMatchResource, '/run_match/<instance_id>',
                 resource_class_kwargs={ 'model': RunMatch })
+api.add_resource(RunMatchPipelines, '/run_match/<instance_id>/pipelines')
 
 ### PipeSections
 api.add_resource(PipeSectionList, '/pipe_sections/',
@@ -103,6 +104,10 @@ api.add_resource(FeatureAttributeNew, '/feature_attribute/',
                 resource_class_kwargs={ 'model': FeatureAttribute })
 api.add_resource(FeatureAttributeResource, '/feature_attribute/<instance_id>',
                 resource_class_kwargs={ 'model': FeatureAttribute })
+                
+### Launch Run Match
+api.add_resource(MatchRunner, '/matchrunner/<runmatch_id>')
+
 
 if __name__ == '__main__':
     app.run(debug=True)
