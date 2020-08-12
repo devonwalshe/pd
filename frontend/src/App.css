@@ -201,3 +201,27 @@ card
   cursor: pointer;
   padding-left: 30px;
 }
+
+.welds_table {
+  border-top: 1px solid gray;
+  display: table;
+  font-size: smaller;
+  padding:5px;
+  width: 100%;
+}
+.welds_table > div{
+  display: table-cell;
+}
+.welds_table > div > div {
+  border: 1px solid gray;
+  display: inline-block;
+  width: 100%
+}
+.welds_table > div:nth-child(-n+5) > div:first-child {
+  border-top: 3px solid orange;
+  border-bottom: none;
+}
+.welds_table > div:nth-child(n+6) > div:first-child {
+  border-top: 3px solid blue;
+  border-bottom: none;
+}

@@ -67,7 +67,8 @@ export default class DataAdapter extends Component {
                         features: {},
                         table: [],
                         weld_a_width: 0,
-                        weld_b_width: 0
+                        weld_b_width: 0,
+                        welds: []
 
                     },
                     temp = [],
@@ -95,9 +96,32 @@ export default class DataAdapter extends Component {
         
                 })
         
-                welds.map(a => pipeSection['weld_'+ a.side.toLowerCase() + '_width'] = Number(a.us_weld_dist))
+                let weldsTemp = {}
+                welds.map(a => {
+                 
+
+                    weldsTemp[a.side] = a
+                    
+                    pipeSection['weld_'+ a.side.toLowerCase() + '_width'] = Number(a.us_weld_dist)
+                    
+                })
         
         
+
+                ;(['A','B']).forEach(side => {
+                    //side: A, weld id: 12321, upstream weld distance: 26.2343, j joint length: 15.51, wall thickness: 0.1]
+
+                    const fields = [
+                        'side',
+                        'weld_id',
+                        'us_weld_dist',
+                        'joint_length',
+                        'wall_thickness']
+
+                    weldsTemp[side] && fields.forEach(field => pipeSection.welds.push((<div key={side + field}><div>{field}</div><div>{weldsTemp[side][field]}</div></div>)))
+                })
+
+
                 for (let i = 0, ix = temp.length; i < ix; i +=1) {
                     
                     pipeSection.features[temp[i].id] = temp[i]
@@ -123,7 +147,7 @@ export default class DataAdapter extends Component {
                                             featuresIn.push(temp[i].id)
                                             featuresIn.push(temp[k].id)
                                                 
-                                            pipeSection.table.push(this.getTableRow(temp[i], temp[k]))
+                                            pipeSection.table.push(this.getTableRow(temp[i], temp[k], pairs[j].id))
             
                                         } else if
                                             (temp[i].side === 'B' && temp[i].id === pairs[j].feature_b &&
@@ -131,7 +155,7 @@ export default class DataAdapter extends Component {
                                             
                                             featuresIn.push(temp[i].id)
                                             featuresIn.push(temp[k].id)
-                                            pipeSection.table.push(this.getTableRow(temp[k], temp[i]))
+                                            pipeSection.table.push(this.getTableRow(temp[k], temp[i], pairs[j].id))
             
                                         }
         
@@ -154,7 +178,7 @@ export default class DataAdapter extends Component {
     }
 
 
-    getTableRow = (a, b) => {
+    getTableRow = (a, b, f) => {
 
         const rnd = num => Number(num).toFixed(4)
         const side = (o, s) => {
@@ -172,10 +196,12 @@ export default class DataAdapter extends Component {
             }
         }
 
+        
+
         return{
 
             ...side(a, 'A'),
-            _gutter:'',
+            _gutter: f ? f : false,
             ...side(b, 'B'),
 
         }
@@ -190,6 +216,18 @@ export default class DataAdapter extends Component {
             rest +
             (data ? '/' + data : '')
 
+        this.fetchRest(rest, url, data, cbk)
+
+    }
+
+    delete = (rest, data, cbk) => {
+
+        const url = proxyURL +
+            '?method=DELETE&url=' +
+            encodeURIComponent(restURL) +
+            rest +
+            (data ? '/' + data : '')
+console.log(url)
         this.fetchRest(rest, url, data, cbk)
 
     }
