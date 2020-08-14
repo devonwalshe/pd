@@ -102,6 +102,13 @@ class Weld(Model):
   joint_length = DoubleField()
   wall_thickness = DoubleField()
   
+  def weld_pair(self):
+    ### code to return the weld pair
+    weld_pair_a = [wp for wp in self.weld_pair_a]
+    weld_pair_b = [wp for wp in self.weld_pair_b]
+    weld_pair = weld_pair_a + weld_pair_b
+    return(weld_pair[0])
+  
   class Meta:
     database = db
    
@@ -109,12 +116,16 @@ class WeldPair(Model):
   '''
   A matched pair of welds between two inspection runs
   '''
-  weld_a = ForeignKeyField(Weld, backref='weld_pair')
-  weld_b = ForeignKeyField(Weld, backref='weld_pair')
+  weld_a = ForeignKeyField(Weld, backref='weld_pair_a')
+  weld_b = ForeignKeyField(Weld, backref='weld_pair_b')
   run_match = ForeignKeyField(RunMatch, backref = 'weld_pairs')
-  
+    
   class Meta:
     database = db
+    indexes = (
+      ### multiple on all three
+      (('weld_a', 'weld_b', 'run_match'), True),
+    )
   
 class Feature(Model):
   '''

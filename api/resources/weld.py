@@ -22,8 +22,9 @@ class WeldList(ListResource):
     args = parser.parse_args()
     rm,wi = (args.get('run_match', None), args.get('weld_id', None))
     if rm is not None and wi is not None:
-      welds = [model_to_dict(w, recurse=False) for w in Weld.select().where(Weld.weld_id == args['weld_id'], Weld.run_match == args['run_match'])]
-      return(welds)
+      welds = [w for w in Weld.select().where(Weld.weld_id == args['weld_id'], Weld.run_match == args['run_match'])]
+      welds_serialized = [{**model_to_dict(weld, recurse=False), **{"pipe_section_id": weld.pipe_section.id}} for weld in welds]
+      return(welds_serialized)
     else:
       instances = instances = [model_to_dict(rf, recurse=False) for rf in Weld.select()]
       return(instances)

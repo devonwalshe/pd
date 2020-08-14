@@ -53,7 +53,7 @@ export default class PD extends Component {
         this.pipe_section_instance = 0
         this.pipe_section_graph_width = 0
         this.pipe_section_raw = {}
-        this.run_match_instance = 0
+        //this.run_match_instance = 0
         this.first_match = 0
         this.second_match = 0
         
@@ -371,6 +371,32 @@ export default class PD extends Component {
                         Jump to Weld:
                         <Form.Control
                             type="text"
+                            onKeyPress={e => {
+                                
+                                if (e.key === 'Enter') {
+
+                                    const param = escape('?weld_id=' + e.target.value + '&run_match=1')
+
+                                    this.dataAdapter.get('welds', param, data => {
+
+                                        
+                                        data.forEach(weld => {
+
+                                            if ((weld.side === 'A' && this.state.weld_side_a) ||
+                                                (weld.side === 'B' && !this.state.weld_side_a)) {
+
+                                                    this.pipe_section_instance = weld.pipe_section_id
+                                                    this.loadPipeSection()
+                                                    
+
+                                                }
+
+                                        })
+
+                                    })
+
+                                }
+                            }}
                             style={{width:'100px'}}></Form.Control>
                         <Toggle
                             active={this.state.weld_side_a}
@@ -390,7 +416,6 @@ export default class PD extends Component {
                     <div style={{alignItems:'baseline',float:'right'}}>
                         <Toggle
                             active={this.state.manually_checked}
-                            id='match_toggle'
                             on='Complete'
                             off='Uncomplete'
                             onstyle='success'
@@ -406,7 +431,9 @@ export default class PD extends Component {
                                     run_match: r.run_match,
                                     manually_checked: !this.state.manually_checked
                                 }]
-                                this.dataAdapter.put('pipe_section', r.id, data, () => this.setState({manually_checked: !this.state.manually_checked}))
+                                this.dataAdapter.put('pipe_section', r.id, data, data => {
+                                    this.setState({manually_checked: data.manually_checked})
+                                })
 
                             }}
                         />
@@ -426,7 +453,6 @@ export default class PD extends Component {
                         </div>
                         <Toggle
                             active={this.state.match_on}
-                            id='match_toggle'
                             on='ON'
                             off='OFF'
                             onstyle='primary'
@@ -463,7 +489,7 @@ export default class PD extends Component {
 
                                         feature_a: feature_a,
                                         feature_b: feature_b,
-                                        run_match: this.run_match_instance,
+                                        run_match: this.state.run_match_instance,
                                         pipe_section: this.pipe_section_instance
 
                                     }]

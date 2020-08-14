@@ -17,7 +17,7 @@ export default class DataAdapter extends Component {
     fetchRest = (rest, url, data, cbk) => {
 
         this.spin(true)
-
+        
         fetch(url)
             .then(res => res.json())
             .then(res => {
@@ -27,6 +27,7 @@ export default class DataAdapter extends Component {
             .catch(e => {
                 this.spin(false)
                 console.log(e)
+                
                 this.toast.style.display = 'block'
             })
 
@@ -217,7 +218,7 @@ export default class DataAdapter extends Component {
             '?url=' +
             encodeURIComponent(restURL) +
             rest +
-            (data ? '/' + data : '')
+            (data ? '/' + escape(data) : '')
 
         this.fetchRest(rest, url, data, cbk)
 
