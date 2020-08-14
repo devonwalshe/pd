@@ -50,3 +50,22 @@
     background-image: url(./unlink.png);
 }
 
+
+.feature_filter {
+    padding: 0px 10px 0px 10px;
+}
+
+.feature_filter > div {
+    display: block;
+    font-size: smaller;
+}
+.feature_filter > div:last-child {
+    background: white;
+}
+
+.btn-side_a {
+    background-color: orange !important;
+}
+.btn-side_b {
+    background-color: blue !important;
+}

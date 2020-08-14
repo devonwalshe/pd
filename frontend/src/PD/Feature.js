@@ -37,7 +37,7 @@ export default class Feature extends Component {
         const border = i.side === 'A' ? 'orange' : 'blue'
         const minsize = 18
 
-        let left = i.left,
+        let left = isFinite(i.left) ? i.left : 0,
             top = -20,
             width = 28,
             height = 28,

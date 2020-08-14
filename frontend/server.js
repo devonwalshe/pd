@@ -54,7 +54,7 @@ const requestListener = function (req, res) {
           }
 
 
-      temp.map(t => {
+      temp.forEach(t => {
 
         const kv = t.split('=')
         obj[kv[0]] = kv[1]
@@ -64,7 +64,7 @@ const requestListener = function (req, res) {
       request.method = obj.method || 'GET'
 
       if (obj.data) {
-        request.method = 'POST'
+
         request.headers = {
           'Accept': 'application/json',
           'Content-Type': 'application/json'
@@ -75,14 +75,14 @@ const requestListener = function (req, res) {
       fetch(decodeURIComponent(obj.url), request)
           .then(response => response.text())
           .then(data => {
-            obj.data && (request.method != 'GET') && res.setHeader('Content-Type', 'application/json'),
-            res.setHeader('Access-Control-Allow-Origin', '*');
-            res.setHeader('Access-Control-Request-Method', '*');
-            res.setHeader('Access-Control-Allow-Methods', 'OPTIONS, GET, POST');
-            res.setHeader('Access-Control-Allow-Headers', '*');
-            res.writeHead(200);
             //console.log(data)
-            res.end(request.method === 'GET' ? data : JSON.stringify({}));
+            obj.data && (request.method != 'GET') && res.setHeader('Content-Type', 'application/json')
+            res.setHeader('Access-Control-Allow-Origin', '*')
+            res.setHeader('Access-Control-Request-Method', '*')
+            res.setHeader('Access-Control-Allow-Methods', 'OPTIONS, GET, POST, PUT')
+            res.setHeader('Access-Control-Allow-Headers', '*')
+            res.writeHead(200)
+            res.end(data || JSON.stringify({}))
         })
     }
 
