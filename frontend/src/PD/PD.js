@@ -1,5 +1,5 @@
 import React, { Component } from 'react'
-import PropTypes from 'prop-types'
+import { Chart } from 'react-charts'
 import { Button, Form, Toast } from 'react-bootstrap'
 import { Typeahead } from 'react-bootstrap-typeahead'
 import CustomGrid from './CustomGrid'
@@ -36,7 +36,8 @@ export default class PD extends Component {
             pipe_section_table: [],
             pipe_section_select: [],
             run_matches: [],
-            table_width: 0
+            table_width: 0,
+            welds: []
 
         }
 
@@ -50,6 +51,7 @@ export default class PD extends Component {
         this.run_match_instance = 0
         this.first_match = 0
         this.second_match = 0
+        
 
     }
 
@@ -243,13 +245,17 @@ export default class PD extends Component {
         this.dataAdapter.get('pipe_section', this.pipe_section_instance, data => {
         
             this.pipe_section_raw = data
-            this.setState({pipe_section_table: data.table})
+            console.log(this.pipe_section_raw)
+            this.setState({pipe_section_table: data.table, welds: data.welds})
             this.graphPipeSection()
         
         })
 
     }
 
+    unlink = id => window.confirm('Confirm unlinking the feature?') && this.dataAdapter.delete('feature_pair', id, () => this.loadPipeSection())
+
+    
 
     render() {
 
@@ -375,6 +381,19 @@ export default class PD extends Component {
                         <i className="fa fa-search-plus" style={{marginLeft:'10px'}}></i>
                     </div>
                 </div>
+                <div className="welds_table">{this.state.welds}</div>
+       <div style={{height:'400px',width:'400px'}}>         <Chart data={[{
+         label: 'Series 1',
+         data: [
+           { x: 1, y: 10 },
+           { x: 2, y: 10 },
+           { x: 3, y: 10 },
+         ],
+       }]} axes={[
+        { primary: true, type: 'linear', position: 'bottom' },
+        { type: 'linear', position: 'left' },
+      ]} tooltip />
+      </div>
                 <div className="graph">
                     <div style={{position:"absolute"}}>
                         <Toast
@@ -405,6 +424,7 @@ export default class PD extends Component {
                     rows={this.state.pipe_section_table}
                     clickFeature={this.clickFeature}
                     hoverFeature={this.hoverOnTable}
+                    unlink={this.unlink}
                     width={this.state.table_width}
                 />
                 

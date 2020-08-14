@@ -1,8 +1,8 @@
-const fetch = require("node-fetch");
-const http = require('http');
+const fetch = require("node-fetch")
+const http = require('http')
 const url = require('url')
-const formidable = require('formidable');
-const fs = require('fs');
+const formidable = require('formidable')
+const fs = require('fs')
 const port = 3001
 const { uploadPath } = require('./src/config')
 
@@ -48,8 +48,9 @@ const requestListener = function (req, res) {
       
       let obj = {},
           request = {
-            method: 'GET',
+
             crossDomain:true
+            
           }
 
 
@@ -59,6 +60,8 @@ const requestListener = function (req, res) {
         obj[kv[0]] = kv[1]
 
       })
+
+      request.method = obj.method || 'GET'
 
       if (obj.data) {
         request.method = 'POST'
@@ -72,14 +75,14 @@ const requestListener = function (req, res) {
       fetch(decodeURIComponent(obj.url), request)
           .then(response => response.text())
           .then(data => {
-            obj.data && res.setHeader('Content-Type', 'application/json'),
+            obj.data && (request.method != 'GET') && res.setHeader('Content-Type', 'application/json'),
             res.setHeader('Access-Control-Allow-Origin', '*');
             res.setHeader('Access-Control-Request-Method', '*');
             res.setHeader('Access-Control-Allow-Methods', 'OPTIONS, GET, POST');
             res.setHeader('Access-Control-Allow-Headers', '*');
             res.writeHead(200);
-            console.log(data)
-            res.end(data);
+            //console.log(data)
+            res.end(request.method === 'GET' ? data : JSON.stringify({}));
         })
     }
 

@@ -39,7 +39,11 @@ export default class CustomGrid extends Component {
 
             key: '_gutter',
             width: 17,
-            formatter: () => (<div style={{backgroundColor:'lightgray', padding:4}}>&nbsp;</div>)
+            formatter: cell => {
+                return (
+                    <div style={{cursor: cell.value ? 'pointer' : 'arrow', color: cell.value ? 'inherit' : 'lightgray', backgroundColor:'lightgray', padding:4}}
+                        onClick={() => cell.value && this.props.unlink(Number(cell.value))}
+                    >X</div>)} 
 
         })
         side('B')
@@ -90,6 +94,7 @@ CustomGrid.propTypes = {
     rows: PropTypes.array.isRequired,
     clickFeature: PropTypes.func.isRequired,
     hoverFeature: PropTypes.func.isRequired,
+    unlink: PropTypes.func.isRequired,
     width: PropTypes.number.isRequired
 
 }
