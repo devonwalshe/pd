@@ -76,7 +76,13 @@ rm_test = ApiResourceTest('run_match', 'run_matches')
 rm_test.list()
 ### Pipe Section
 ps_test = ApiResourceTest('pipe_section', 'pipe_sections')
-ps_test.list()
+ps_put_data = [{ "id": 8,
+             "section_id": "1_7", 
+             "run_match": 1, 
+             "manually_checked": False, 
+             "weld_pair_id": 7}]
+ps_test.put(ps_put_data, 8)
+             
 ### Weld
 weld_test = ApiResourceTest('weld', 'welds')
 weld_test.list()
