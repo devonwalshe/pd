@@ -1,7 +1,7 @@
-import React, { Component } from "react";
-import PropTypes from 'prop-types';
-import Popup from "reactjs-popup";
-import './feature.css';
+import React, { Component } from "react"
+import PropTypes from 'prop-types'
+import Popup from "reactjs-popup"
+import './feature.css'
 
 export default class Feature extends Component {
 
@@ -32,6 +32,7 @@ export default class Feature extends Component {
 
     render() {
     
+        const offsetTop = 30
         const i = this.props.feature
         const a = i.attributes
         const border = i.side === 'A' ? 'orange' : 'blue'
@@ -68,7 +69,7 @@ export default class Feature extends Component {
                         key={i.id}
                         style={{
                             left: left,
-                            top: top,
+                            top: top + offsetTop,
                             height: height  + 4,
                             width: width + 4}}
                     >

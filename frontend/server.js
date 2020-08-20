@@ -43,7 +43,7 @@ const requestListener = function (req, res) {
       })
       
     } else {
-
+console.log(uri)
       const temp = uri.split('&')
       
       let obj = {},
@@ -75,7 +75,7 @@ const requestListener = function (req, res) {
       fetch(decodeURIComponent(obj.url), request)
           .then(response => response.text())
           .then(data => {
-            //console.log(data)
+//            console.log(data)
             obj.data && (request.method != 'GET') && res.setHeader('Content-Type', 'application/json')
             res.setHeader('Access-Control-Allow-Origin', '*')
             res.setHeader('Access-Control-Request-Method', '*')

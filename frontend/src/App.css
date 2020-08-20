@@ -39,54 +39,54 @@
 
 
 .graph {
-  margin: 5px;
+  margin: 0px 5px 40px 5px;
+}
+
+.graph > div {
+  position: absolute;
 }
 
 .graph > div:last-child {
-  background-color: #ddd;
-  display: table;
-  height: 100%;
-  padding: 30px 10px 10px 10px;
-  width: 100%;
+  width: 0px;
 }
 
-.graph > div:last-child > div:first-child {
-  color: white;
-  display: table-cell;
+.axes {
+  color: black;
   font-size: 0.7rem;
   height: 100%;
-  position: relative;
+  padding-left: 30px;
 }
 
-.graph > div:last-child > div:first-child > div:first-child {
-  padding-top: 7px;
-}
-
-.graph > div:last-child > div:first-child > div:last-child {
-  bottom: 5px;
+.axes > div {
   position: absolute;
-  right: 0;
 }
 
-.graph > div:last-child > div:last-child {
-  display: table-cell;
-  height: 390px;
-  position: relative;
-  vertical-align: top;
-  width: 100%;
+.axes > div:first-child {
+  margin-top: 6px;
+  left: 0;
 }
 
-.graph > div:last-child > div:last-child > div:first-child {
-  border-bottom: 1px solid white;
-  border-top: 1px solid white;
-  height: 362px;
-  margin: 14px 0px 14px 2px;
+.axes > div:nth-child(2) {
+  background-color: #eee;
+  top: 43px;
+  left: 50px;
+  height: 361px;
+}
+
+.axes > div:last-child {
+  top: 425px;
+  left: 50px;
+  width: 500px;
+}
+
+.axes > div > div {
   position: absolute;
-  width: 100%;
-  width: -moz-available;
-  width: -webkit-fill-available;
-  width: -moz-available;
-  width: stretch;
+}
+
+.graph > div:last-child {
+  height: 420px;
+  left: 50px;
+  position: relative;
 }
 
 
@@ -206,10 +206,10 @@ card
   border-top: 1px solid gray;
   display: table;
   font-size: smaller;
-  padding:5px;
+  padding: 5px;
   width: 100%;
 }
-.welds_table > div{
+.welds_table > div {
   display: table-cell;
 }
 .welds_table > div > div {

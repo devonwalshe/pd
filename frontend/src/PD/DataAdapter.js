@@ -240,7 +240,7 @@ export default class DataAdapter extends Component {
     post = (rest, data, cbk) => {
         
         const url = proxyURL +
-            '?url=' +
+            '?method=POST&url=' +
             encodeURIComponent(restURL) +
             rest +
             '/' +

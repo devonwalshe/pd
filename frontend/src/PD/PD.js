@@ -8,7 +8,8 @@ import { faLink, faFilter, faSpinner, faSearchPlus, faSearchMinus } from '@forta
 import Toggle from 'react-bootstrap-toggle'
 import DataAdapter from './DataAdapter'
 import Modal from 'react-modal';
- 
+import Axes from './Axes'
+
 Modal.setAppElement('#root')        
 fontawesome.library.add(faLink, faFilter, faSpinner, faSearchPlus, faSearchMinus);
 
@@ -37,10 +38,11 @@ export default class PD extends Component {
             pipe_section_select: [],
             run_matches: [],
             run_match_instance: 1,
-            table_width: 0,
+            screen_width: 0,
             welds: [],
             manually_checked: false,
-            weld_side_a: true
+            weld_side_a: true,
+            max_weld_width: 0
 
         }
 
@@ -51,11 +53,10 @@ export default class PD extends Component {
         this.pipe_section_index = 0
         this.pipe_sections = []
         this.pipe_section_instance = 0
-        this.pipe_section_graph_width = 0
         this.pipe_section_raw = {}
-        //this.run_match_instance = 0
         this.first_match = 0
         this.second_match = 0
+        this.y_offset = 90
         
 
     }
@@ -74,7 +75,7 @@ export default class PD extends Component {
 
         })
 
-        window.addEventListener('resize', () => this.getGraphWidth())
+        window.addEventListener('resize', this.getGraphWidth)
         
     }
 
@@ -113,15 +114,15 @@ export default class PD extends Component {
 
     getGraphWidth = () => {
 
-        const doc = document.getElementById('pipe_graph_container')
+        //const doc = document.getElementById('pipe_graph_container')
 
-        if (!doc)
+        //if (!doc)
 
-            return
+          //  return
+console.log(window.innerWidth)
+        
 
-        this.pipe_section_graph_width = parseFloat(doc.offsetWidth) - 20
-
-        this.setState({table_width:this.pipe_section_graph_width+50})
+        this.setState({screen_width: parseFloat(window.innerWidth)})
         this.graphPipeSection()
         
     }
@@ -214,8 +215,8 @@ export default class PD extends Component {
     graphPipeSection = () => {
 
         const data = this.pipe_section_raw.features
-        const graph_width = this.pipe_section_graph_width
-        const max_width = Math.max(this.pipe_section_raw['weld_a_width'], this.pipe_section_raw['weld_b_width'])
+        const graph_width = this.state.screen_width - this.y_offset
+        const max_width = this.state.max_weld_width
 
         let features = []
 
@@ -308,7 +309,12 @@ export default class PD extends Component {
         
             this.pipe_section_raw = data
             
-            this.setState({pipe_section_table: data.table, welds: data.welds, manually_checked: data.manually_checked})
+            this.setState({
+                pipe_section_table: data.table,
+                welds: data.welds,
+                manually_checked: data.manually_checked,
+                max_weld_width: Math.max(data['weld_a_width'], data['weld_b_width'])
+            })
             this.graphPipeSection()
         
         })
@@ -317,26 +323,25 @@ export default class PD extends Component {
 
     unlink = id => window.confirm('Confirm unlinking the feature?') && this.dataAdapter.delete('feature_pair', id, () => this.loadPipeSection())
 
-    /**<Form.Control
-                            as="text"
-                            onChange={e =>{
-                                this.first_match = 0
-                                this.second_match = 0
-                                this.setState({match_on: false})
-                                this.run_match_instance = Number(e.currentTarget.options[e.currentTarget.selectedIndex].value)
-                                 this.dataAdapter.get('pipe_sections', null, this.setPipeSections)
-                            }}
-                            style={{width:'200px'}}
-                        >
-                            <option>Run Matches...</option>
-                            {this.state.run_matches}
-                        </Form.Control> */
 
     render() {
 
         return (
 
             <>
+                <div style={{position:"absolute"}}>
+                        <Toast
+                            onClose={() => this.setState({rest_error: false})}
+                            show={this.state.rest_error}
+                            animation={false}
+                        >
+                            <Toast.Header>
+                                <strong className="mr-auto">Error</strong>
+                                    <small></small>
+                                </Toast.Header>
+                            <Toast.Body>Invalid response from server</Toast.Body>
+                        </Toast>
+                </div>
                 <div style={{backgroundColor:'#eee', display:'inline-block', padding:10, width:'100%', whiteSpace:'nowrap'}}>
                     <div style={{alignItems:'center',display:'flex',float:'left'}}>
                         <Form.Label style={{marginRight:'10px'}}>Run ID:</Form.Label>
@@ -536,28 +541,13 @@ export default class PD extends Component {
                 </div>
                 <div className="welds_table">{this.state.welds}</div>
                 <div className="graph">
-                    <div style={{position:"absolute"}}>
-                        <Toast
-                            onClose={() => this.setState({rest_error: false})}
-                            show={this.state.rest_error}
-                            animation={false}
-                        >
-                            <Toast.Header>
-                                <strong className="mr-auto">Error</strong>
-                                    <small></small>
-                                </Toast.Header>
-                            <Toast.Body>Invalid response from server</Toast.Body>
-                        </Toast>
-                    </div>
-                    <div>
-                        <div>
-                            <div>360</div>
-                            <div>0</div>
-                        </div>
-                        <div id="pipe_graph_container">
-                            <div></div>
-                            {this.state.pipe_section_graph}
-                        </div>
+                    <Axes
+                        graphWidth={this.state.screen_width}
+                        weldWidth={this.state.max_weld_width}
+                        yOffset={this.y_offset}
+                    />
+                    <div id="pipe_graph_container">
+                        {this.state.pipe_section_graph}
                     </div>
                 </div>
                 <CustomGrid
@@ -566,7 +556,7 @@ export default class PD extends Component {
                     clickFeature={this.clickFeature}
                     hoverFeature={this.hoverOnTable}
                     unlink={this.unlink}
-                    width={this.state.table_width}
+                    width={this.state.screen_width - 40}
                 />
                 
 
