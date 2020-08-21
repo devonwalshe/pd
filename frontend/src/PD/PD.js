@@ -334,7 +334,6 @@ export default class PD extends Component {
 
                                         this.dataAdapter.get('welds', param, data => {
 
-                                            
                                             data.forEach(weld => {
 
                                                 if ((weld.side === 'A' && this.state.weld_side_a) ||
