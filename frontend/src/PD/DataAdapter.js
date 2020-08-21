@@ -1,12 +1,16 @@
 import React, { Component } from 'react'
 import { proxyURL, restURL } from '../config'
+import { Toast } from 'react-bootstrap'
+
 
 export default class DataAdapter extends Component {
 
     constructor(props) {
 
         super(props)
-        this.state = {}
+        this.state = {
+            rest_error: false
+        }
 
         this.spinner = document.getElementById('spinner')
         this.toast = document.getElementById('toast')
@@ -27,7 +31,6 @@ export default class DataAdapter extends Component {
             .catch(e => {
                 this.spin(false)
                 console.log(e)
-                
                 this.toast.style.display = 'block'
             })
 
@@ -113,7 +116,6 @@ export default class DataAdapter extends Component {
         
 
                 ;(['A','B']).forEach(side => {
-                    //side: A, weld id: 12321, upstream weld distance: 26.2343, j joint length: 15.51, wall thickness: 0.1]
 
                     const fields = [
                         'side',
@@ -286,5 +288,26 @@ export default class DataAdapter extends Component {
     }
 
     spin = s => this.spinner.style.display = s ? 'inline' : 'none'
+
+
+    render () {
+
+        return (
+            <div style={{position:"absolute"}}>
+                <Toast
+                    onClose={() => this.setState({rest_error: false})}
+                    show={this.state.rest_error}
+                    animation={false}
+                >
+                    <Toast.Header>
+                        <strong className="mr-auto">Error</strong>
+                            <small></small>
+                        </Toast.Header>
+                    <Toast.Body>Invalid response from server</Toast.Body>
+                </Toast>
+            </div>
+        )
+
+    }
 
 }

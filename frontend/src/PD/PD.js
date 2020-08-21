@@ -1,5 +1,5 @@
 import React, { Component } from 'react'
-import { Button, Form, Toast } from 'react-bootstrap'
+import { Button, Form } from 'react-bootstrap'
 import { Typeahead } from 'react-bootstrap-typeahead'
 import CustomGrid from './CustomGrid'
 import Feature from './Feature.js'
@@ -7,10 +7,8 @@ import fontawesome from '@fortawesome/fontawesome'
 import { faLink, faFilter, faSpinner, faSearchPlus, faSearchMinus } from '@fortawesome/free-solid-svg-icons'
 import Toggle from 'react-bootstrap-toggle'
 import DataAdapter from './DataAdapter'
-import Modal from 'react-modal';
 import Axes from './Axes'
 
-Modal.setAppElement('#root')        
 fontawesome.library.add(faLink, faFilter, faSpinner, faSearchPlus, faSearchMinus);
 
 export default class PD extends Component {
@@ -30,12 +28,9 @@ export default class PD extends Component {
                 matched:true,
                 unmatched: true
             },
-            is_loading: false,
-            rest_error: false,
             pipe_section_current: '',
             pipe_section_graph: [],
             pipe_section_table: [],
-            pipe_section_select: [],
             run_matches: [],
             run_match_instance: 1,
             screen_width: 0,
@@ -46,9 +41,7 @@ export default class PD extends Component {
 
         }
 
-        this.dataAdapter = new DataAdapter({
-            restError: () => this.setState({rest_error: true})
-        })
+        this.dataAdapter = new DataAdapter()
 
         this.pipe_section_index = 0
         this.pipe_sections = []
@@ -56,7 +49,10 @@ export default class PD extends Component {
         this.pipe_section_raw = {}
         this.first_match = 0
         this.second_match = 0
-        this.y_offset = 90
+        this.offset = {
+            x: 30,
+            y: 90
+        }
         
 
     }
@@ -64,13 +60,14 @@ export default class PD extends Component {
     componentDidMount() {
 
         this.getGraphWidth()
-        this.setPipeSections()
+        //this.setPipeSections()
         
         this.dataAdapter.get('run_match', '/1/pipe_sections', (data) => {
 
             this.pipe_sections = data
             this.pipe_section_index = 0
-            this.sectionLoad()
+            this.pipe_section_instance = this.pipe_sections[this.pipe_section_index].id
+            this.loadPipeSection()
             
 
         })
@@ -112,20 +109,7 @@ export default class PD extends Component {
     }
 
 
-    getGraphWidth = () => {
-
-        //const doc = document.getElementById('pipe_graph_container')
-
-        //if (!doc)
-
-          //  return
-console.log(window.innerWidth)
-        
-
-        this.setState({screen_width: parseFloat(window.innerWidth)})
-        this.graphPipeSection()
-        
-    }
+    getGraphWidth = () => this.setState({screen_width: parseFloat(window.innerWidth)}, this.graphPipeSection)
 
 
     hltDom = (id, color) => {
@@ -181,41 +165,11 @@ console.log(window.innerWidth)
 
     }
 
-    sectionLoad = () => {
-
-        this.pipe_section_instance = this.pipe_sections[this.pipe_section_index].id
-        this.loadPipeSection()
-
-    }
-
-    setPipeSections = data => this.setState({pipe_section_select: <Typeahead
-
-        id="basic-typeahead-single"
-        onChange={e => {
-
-            this.first_match = 0
-            this.second_match = 0
-            this.setState({match_on: false})
-
-            if (!e || !e[0] || !e[0].key)
-
-                return
-            
-            this.pipe_section_instance = Number(e[0].key)
-    
-            this.loadPipeSection()
-
-        }}
-        options={data || []}
-        placeholder="Pipe Section..." />
-
-    })
-
 
     graphPipeSection = () => {
 
         const data = this.pipe_section_raw.features
-        const graph_width = this.state.screen_width - this.y_offset
+        const graph_width = this.state.screen_width - this.offset.y
         const max_width = this.state.max_weld_width
 
         let features = []
@@ -237,8 +191,8 @@ console.log(window.innerWidth)
 
                 }
             
-                feature.top = 360 - (!isNaN(top) ? top : 360)
-                feature.left = graph_width / max_width * Number(data[f].attributes.us_weld_dist_wc_ft)
+                feature.top = 360 - (!isNaN(top) ? top : 360) + this.offset.x
+                feature.left = graph_width / max_width * Number(data[f].attributes.us_weld_dist_wc_ft) + this.offset.y
                 features.push(<Feature
                     key={'feature_' + feature.id}
                     feature={feature}
@@ -329,23 +283,20 @@ console.log(window.innerWidth)
         return (
 
             <>
-                <div style={{position:"absolute"}}>
-                        <Toast
-                            onClose={() => this.setState({rest_error: false})}
-                            show={this.state.rest_error}
-                            animation={false}
-                        >
-                            <Toast.Header>
-                                <strong className="mr-auto">Error</strong>
-                                    <small></small>
-                                </Toast.Header>
-                            <Toast.Body>Invalid response from server</Toast.Body>
-                        </Toast>
-                </div>
                 <div style={{backgroundColor:'#eee', display:'inline-block', padding:10, width:'100%', whiteSpace:'nowrap'}}>
                     <div style={{alignItems:'center',display:'flex',float:'left'}}>
-                        <Form.Label style={{marginRight:'10px'}}>Run ID:</Form.Label>
-                        <Form.Label style={{fontWeight: 'bold', marginRight:'10px'}}>{this.state.run_match_instance}</Form.Label>
+                        <div className="info">
+                            <div>
+                                <div>Run</div>
+                                <div>{this.state.run_match_instance}</div>
+                            </div>
+                            <div>
+                                <div>Section</div>
+                                <div>{this.state.pipe_section_current}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div style={{alignItems:'center',display:'flex',float:'left'}}>
                         <Button variant="outline-primary" onClick={() => this.sectionGo(-1,true)} >&lt;&lt;</Button>
                         <Button variant="outline-primary" onClick={() => this.sectionGo(-1,false)}>&lt;</Button>
                         <div className="feature_filter">
@@ -359,7 +310,7 @@ console.log(window.innerWidth)
                                     onstyle='default'
                                     offstyle='default'
                                     width={60}
-                                    height={20}
+                                    height={38}
                                     onClick={() => {
 
                                         this.setState({features_filter: !this.state.features_filter})
@@ -370,55 +321,55 @@ console.log(window.innerWidth)
                         </div>
                         <Button variant="outline-primary" onClick={() => this.sectionGo(1,false)}>&gt;</Button>
                         <Button variant="outline-primary" onClick={() => this.sectionGo(1,true)}>&gt;&gt;</Button>
-
-                        Section: <b>{this.state.pipe_section_current}</b>
                         &nbsp;
-                        Jump to Weld:
-                        <Form.Control
-                            type="text"
-                            onKeyPress={e => {
-                                
-                                if (e.key === 'Enter') {
+                        <div style={{display:'inherit', position:'relative'}}>
+                            <Form.Control
+                                type="text"
+                                placeholder="Weld #"
+                                onKeyPress={e => {
+                                    
+                                    if (e.key === 'Enter') {
 
-                                    const param = escape('?weld_id=' + e.target.value + '&run_match=1')
+                                        const param = escape('?weld_id=' + e.target.value + '&run_match=1')
 
-                                    this.dataAdapter.get('welds', param, data => {
+                                        this.dataAdapter.get('welds', param, data => {
 
-                                        
-                                        data.forEach(weld => {
+                                            
+                                            data.forEach(weld => {
 
-                                            if ((weld.side === 'A' && this.state.weld_side_a) ||
-                                                (weld.side === 'B' && !this.state.weld_side_a)) {
+                                                if ((weld.side === 'A' && this.state.weld_side_a) ||
+                                                    (weld.side === 'B' && !this.state.weld_side_a)) {
 
-                                                    this.pipe_section_instance = weld.pipe_section_id
-                                                    this.loadPipeSection()
-                                                    
+                                                        this.pipe_section_instance = weld.pipe_section_id
+                                                        this.loadPipeSection()
+                                                        
 
-                                                }
+                                                    }
+
+                                            })
 
                                         })
 
-                                    })
-
-                                }
-                            }}
-                            style={{width:'100px'}}></Form.Control>
-                        <Toggle
-                            active={this.state.weld_side_a}
-                            id='match_toggle'
-                            on='A'
-                            off='B'
-                            onstyle='side_a'
-                            offstyle='side_b'
-                            width={50}
-                            height={38}
-                            onClick={() => {
-                                this.setState({weld_side_a: !this.state.weld_side_a})
-                            }}
-                        />
-
+                                    }
+                                }}
+                                style={{width:'100px'}}></Form.Control>
+                            <Toggle
+                                style={{left:'95px',position:'absolute'}}
+                                active={this.state.weld_side_a}
+                                id='match_toggle'
+                                on='A'
+                                off='B'
+                                onstyle='side_a'
+                                offstyle='side_b'
+                                width={50}
+                                height={38}
+                                onClick={() => {
+                                    this.setState({weld_side_a: !this.state.weld_side_a})
+                                }}
+                            />
+                        </div>
                     </div>
-                    <div style={{alignItems:'baseline',float:'right'}}>
+                    <div style={{float:'right'}}>
                         <Toggle
                             active={this.state.manually_checked}
                             on='Complete'
@@ -544,11 +495,11 @@ console.log(window.innerWidth)
                     <Axes
                         graphWidth={this.state.screen_width}
                         weldWidth={this.state.max_weld_width}
-                        yOffset={this.y_offset}
+                        offset={this.offset}
                     />
-                    <div id="pipe_graph_container">
+
                         {this.state.pipe_section_graph}
-                    </div>
+
                 </div>
                 <CustomGrid
                     key="data_grid"

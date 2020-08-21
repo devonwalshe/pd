@@ -7,7 +7,6 @@ export default class Axes extends Component {
 
         super(props)
 
-        console.log(props)
         this.state = {
 
             weld_width: props.weldWidth,
@@ -15,7 +14,7 @@ export default class Axes extends Component {
 
         }
 
-        this.y_offset = props.yOffset
+        this.offset = props.offset
         this.graph_width = props.graphWidth
 
     }
@@ -34,11 +33,8 @@ export default class Axes extends Component {
 
     xAxis = () => {
 
-       // console.log(this.graph_width, this.weld_width)
-
-       document.getElementById('x_axis').style.width = this.graph_width - this.y_offset + 'px'
-       document.getElementById('plot_area').style.width = this.graph_width - this.y_offset + 'px'
-        //console.log(this.state.weld_width)
+        document.getElementById('x_axis').style.width = this.graph_width - this.offset.y + 'px'
+        document.getElementById('plot_area').style.width = this.graph_width - this.offset.y + 'px'
 
         const w = Math.round(this.state.weld_width * 100) / 100
         const w1 = Math.round(this.state.weld_width / 2 * 100) / 100
@@ -46,17 +42,15 @@ export default class Axes extends Component {
         this.setState({x_axis: [
             <div key="x_0" style={{backgroundColor:'black', left:0, top: 0, width:1, height: 10}}></div>,
             <div key="x_0_1" style={{left:-2, top: 10}}>0</div>,
-            <div key="x_1" style={{backgroundColor:'black', left: (this.graph_width - this.y_offset) / 2, top: 0, width:1, height: 10}}></div>,
-            <div key="x_1_1" style={{left:(this.graph_width - this.y_offset) / 2 - (String(w1).length * 5 / 2), top: 10}}>{w1}</div>,
-            <div key="x_n" style={{backgroundColor:'black', left:this.graph_width - this.y_offset, top: 0, width:1, height: 10}}></div>,
-            <div key="x_n_1" style={{left:this.graph_width - this.y_offset - (String(w).length * 5 / 2), top: 10}}>{w}</div>
+            <div key="x_1" style={{backgroundColor:'black', left: (this.graph_width - this.offset.y) / 2, top: 0, width:1, height: 10}}></div>,
+            <div key="x_1_1" style={{left:(this.graph_width - this.offset.y) / 2 - (String(w1).length * 5 / 2), top: 10}}>{w1}</div>,
+            <div key="x_n" style={{backgroundColor:'black', left:this.graph_width - this.offset.y, top: 0, width:1, height: 10}}></div>,
+            <div key="x_n_1" style={{left:this.graph_width - this.offset.y - (String(w).length * 5 / 2), top: 10}}>{w}</div>
         ]})
 
     }
 
     render () {
-
-        const offsetTop = 30
 
         return (
             
@@ -68,7 +62,7 @@ export default class Axes extends Component {
 
                         for (let i = 0; i <= 12; i += 1) {
 
-                            out.push(<div key={'y_axis_' + i} style={{top:i * 30 + offsetTop}}>
+                            out.push(<div key={'y_axis_' + i} style={{top:i * 30 + this.offset.x}}>
                                 <div style={{display:'table', textAlign:'right', width:35}}>
                                     <div style={{display:'table-cell', width:'50%'}}>{360 - i * 30}</div>
                                     <div style={{display:'table-cell', paddingLeft:2, width:'50%'}}>
@@ -102,6 +96,6 @@ Axes.propTypes = {
 
     graphWidth: PropTypes.number.isRequired,
     weldWidth: PropTypes.number.isRequired,
-    yOffset: PropTypes.number.isRequired
+    offset: PropTypes.object.isRequired
 
 }

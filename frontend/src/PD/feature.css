@@ -1,6 +1,4 @@
 .shape {
-    padding: 2px;
-    line-height: 1;
     position: absolute;
     text-align: center;
 }
@@ -38,8 +36,13 @@
     top: -5px;
     background-repeat: no-repeat;
     background-position-x: center;
-
 }
+
+.isloss:before {
+    right: -5px;
+    top: -15px;
+}
+
 .shape > div > div > img {
     display: block;
 }
@@ -56,11 +59,12 @@
 }
 
 .feature_filter > div {
-    display: block;
+    display: inline-block;
     font-size: smaller;
 }
 .feature_filter > div:last-child {
     background: white;
+    margin-left: 10px;
 }
 
 .btn-side_a {

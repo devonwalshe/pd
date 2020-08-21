@@ -38,17 +38,6 @@
 }
 
 
-.graph {
-  margin: 0px 5px 40px 5px;
-}
-
-.graph > div {
-  position: absolute;
-}
-
-.graph > div:last-child {
-  width: 0px;
-}
 
 .axes {
   color: black;
@@ -83,11 +72,6 @@
   position: absolute;
 }
 
-.graph > div:last-child {
-  height: 420px;
-  left: 50px;
-  position: relative;
-}
 
 
 /*
@@ -96,12 +80,86 @@ card
 .card {
   font-size: 12px;
 }
+
 .card > .header {
   width: 100%;
   border-bottom: 1px solid gray;
   font-size: 14px;
   text-align: center;
 }
+
+
+.graph {
+  margin: 0px 5px 40px 5px;
+  height: 420px;
+  position: relative;
+}
+
+.graph > div {
+  position: absolute;
+}
+
+
+.info > div {
+  display: inline-block;
+}
+
+.info > div:first-child {
+  border-right: 1px solid lightgray;
+  padding: 0px 10px 0px
+}
+
+.info > div > div:first-child {
+  border-bottom: 1px solid lightgray;
+}
+
+
+.info > div:last-child {
+  padding: 0px 30px 0px 10px
+}
+
+.info > div > div:last-child {
+  font-weight: bold;
+}
+
+.menu {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0px 0px 10px;
+  width: 100%;
+}
+.menu > div:first-child {
+  font-size: 1.2rem;
+  font-weight: bold;  
+  float: left;
+  padding: 4px 0px 0px 0px;
+}
+.menu > div:first-child > div {
+  display: none;
+  padding-left: 20px;
+}
+.menu > div:last-child {
+  float: right;
+}
+
+
+.react-grid-Cell {
+  padding: 0px !important;
+}
+
+.react-grid-HeaderRow > div > div {
+  font-size: 0.7rem;
+  padding: 5px 2px 3px 2px !important;
+}
+
+.react-grid-HeaderRow > div > div:nth-child(-n+9) {
+  border-top: 3px solid orange;
+}
+
+.react-grid-HeaderRow > div > div:nth-child(n+11) {
+  border-top: 3px solid blue;
+}
+
 
 
 /* Tooltip container */
@@ -133,48 +191,6 @@ card
 }
 
 
-
-.react-grid-Cell {
-  padding: 0px !important;
-}
-
-.react-grid-HeaderRow > div > div {
-  font-size: 0.7rem;
-  padding: 5px 2px 3px 2px !important;
-}
-
-.react-grid-HeaderRow > div > div:nth-child(-n+9) {
-  border-top: 3px solid orange;
-}
-
-.react-grid-HeaderRow > div > div:nth-child(n+11) {
-  border-top: 3px solid blue;
-}
-/*
-.react-grid-HeaderRow > div > div:nth-child(1) {
-  width:1% !important;
-}*/
-
-
-.menu {
-  display: flex;
-  justify-content: space-between;
-  padding: 10px 0px 0px 10px;
-  width: 100%;
-}
-.menu > div:first-child {
-  font-size: 1.2rem;
-  font-weight: bold;  
-  float: left;
-  padding: 4px 0px 0px 0px;
-}
-.menu > div:first-child > div {
-  display: none;
-  padding-left: 20px;
-}
-.menu > div:last-child {
-  float: right;
-}
 
 
 .upload {
