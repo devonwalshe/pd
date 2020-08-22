@@ -33,19 +33,19 @@ export default class Axes extends Component {
 
     xAxis = () => {
 
-        document.getElementById('x_axis').style.width = this.graph_width - this.offset.y + 'px'
-        document.getElementById('plot_area').style.width = this.graph_width - this.offset.y + 'px'
+        document.getElementById('x_axis').style.width = this.graph_width - this.offset.y - this.offset.margin + 'px'
+        document.getElementById('plot_area').style.width = this.graph_width - this.offset.y - this.offset.margin + 'px'
 
-        const w = Math.round(this.state.weld_width * 100) / 100
-        const w1 = Math.round(this.state.weld_width / 2 * 100) / 100
+        const w = Math.round(this.state.weld_width * 10) / 10
+        const w1 = Math.round(this.state.weld_width / 2 * 10) / 10
 
         this.setState({x_axis: [
             <div key="x_0" style={{backgroundColor:'black', left:0, top: 0, width:1, height: 10}}></div>,
             <div key="x_0_1" style={{left:-2, top: 10}}>0</div>,
-            <div key="x_1" style={{backgroundColor:'black', left: (this.graph_width - this.offset.y) / 2, top: 0, width:1, height: 10}}></div>,
-            <div key="x_1_1" style={{left:(this.graph_width - this.offset.y) / 2 - (String(w1).length * 5 / 2), top: 10}}>{w1}</div>,
-            <div key="x_n" style={{backgroundColor:'black', left:this.graph_width - this.offset.y, top: 0, width:1, height: 10}}></div>,
-            <div key="x_n_1" style={{left:this.graph_width - this.offset.y - (String(w).length * 5 / 2), top: 10}}>{w}</div>
+            <div key="x_1" style={{backgroundColor:'black', left: (this.graph_width - this.offset.y - this.offset.margin) / 2, top: 0, width:1, height: 10}}></div>,
+            <div key="x_1_1" style={{left:(this.graph_width - this.offset.y - this.offset.margin) / 2 - (String(w1).length * 5 / 2), top: 10}}>{w1}</div>,
+            <div key="x_n" style={{backgroundColor:'black', left:this.graph_width - this.offset.y - this.offset.margin, top: 0, width:1, height: 10}}></div>,
+            <div key="x_n_1" style={{left:this.graph_width - this.offset.y - this.offset.margin - (String(w).length * 5 / 2), top: 10}}>{w}</div>
         ]})
 
     }

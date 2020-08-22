@@ -38,7 +38,7 @@ export default class Feature extends Component {
         const minsize = 18
         const offset = {
             x: -17,
-            y: -40
+            y: -5
         }
 
         let left = isFinite(i.left) ? i.left : 0,

@@ -1,5 +1,5 @@
 import React, { Component } from 'react'
-import { proxyURL, restURL } from '../config'
+import { proxyURL, restURL, weldsTableColumns } from '../config'
 import { Toast } from 'react-bootstrap'
 
 
@@ -76,7 +76,7 @@ export default class DataAdapter extends Component {
                         table: [],
                         weld_a_width: 0,
                         weld_b_width: 0,
-                        welds: []
+                        welds: {}
 
                     },
                     temp = [],
@@ -117,15 +117,13 @@ export default class DataAdapter extends Component {
 
                 ;(['A','B']).forEach(side => {
 
-                    const fields = [
-                        'side',
-                        'weld_id',
-                        'us_weld_dist',
-                        'joint_length',
-                        'wall_thickness']
+                    pipeSection.welds[side] = {}
 
-                    weldsTemp[side] && fields.forEach(field => pipeSection.welds.push((<div key={side + field}><div>{field}</div><div>{weldsTemp[side][field]}</div></div>)))
+                        weldsTemp[side] && weldsTableColumns.map(f => pipeSection.welds[side][f] = weldsTemp[side][f])
+
+//                    weldsTemp[side] && weldsTableColumns.forEach(field => pipeSection.welds.push((<div key={side + field}><div>{field}</div><div>{weldsTemp[side][field]}</div></div>)))
                 })
+
 
 
                 for (let i = 0, ix = temp.length; i < ix; i +=1) {
