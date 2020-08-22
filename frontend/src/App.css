@@ -231,7 +231,8 @@ card
 .welds_table > div > div {
   border: 1px solid gray;
   display: inline-block;
-  width: 100%
+  padding: 0px 3px 0px 3px;
+  width: 100%;
 }
 .welds_table > div:nth-child(-n+5) > div:first-child {
   border-top: 3px solid orange;

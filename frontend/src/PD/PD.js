@@ -90,7 +90,7 @@ export default class PD extends Component {
             this.setState({
                 match_on: false,
                 confirm_on: true
-            })
+            }, ()=> this.setState({...this.state}))
 
         } else {
 
