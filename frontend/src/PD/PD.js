@@ -304,7 +304,7 @@ export default class PD extends Component {
                         data[0].id && this.dataAdapter.put('pipe_section', r.id, data, data => {
 
                             this.setState({manually_checked: data.manually_checked}, ()=>this.setState({...this.state}))
-                            this.pipe_sections[this.pipe_section_index].manually_checked = data.manually_checked
+                            this.pipe_sections.data[this.pipe_sections.index].manually_checked = data.manually_checked
 
                         })
                     }}
@@ -318,10 +318,8 @@ export default class PD extends Component {
                             match_on  : false,
                             confirm_on: false
                         }, this.graphPipeSection)
-
                     }}
                     onConfirm={() => {
-                        console.log(this.pipe_section_raw.features[this.first_match],this.first_match)
                         const feature_a = this.pipe_section_raw.features[this.first_match].side === 'A' ? this.first_match : this.second_match
                         const feature_b = this.pipe_section_raw.features[this.second_match].side === 'B' ? this.second_match : this.first_match   
                         const data = [{
@@ -339,9 +337,7 @@ export default class PD extends Component {
                             match_on: false,
                             confirm_on: false
                         })
-                        console.log(data)
                         this.dataAdapter.post('feature_pair', data, () => this.loadPipeSection())
-
                     }}
                     onMatch={() => {
                         if (this.first_match) {

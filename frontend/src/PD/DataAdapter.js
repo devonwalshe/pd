@@ -29,7 +29,6 @@ export default class DataAdapter extends Component {
             })
             .catch(e => {
                 this.spin(false)
-                console.log(e)
                 this.toast.style.display = 'block'
             })
 
