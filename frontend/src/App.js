@@ -1,6 +1,8 @@
 import React, { Component } from 'react'
 import './App.css'
 import PD from './PD/PD.js'
+import Upload from './PD/Upload.js'
+import Runs from './PD/Runs.js'
 import Dashboard from './PD/Dashboard.js'
 import Pipelines from './PD/Pipelines.js'
 import FeatureMap from './PD/FeatureMap.js'
@@ -46,7 +48,10 @@ export default class App extends Component {
     let pages = [
       (<Dashboard/>),
       (<Pipelines/>),
-      (<PD/>),
+      (<Runs
+        goRun={id => this.setState({page: (<PD id={id}/>)})}
+        newRun={() => this.setState({page: (<Upload/>)})} 
+      />),
       (<FeatureMap/>)
     ]
 

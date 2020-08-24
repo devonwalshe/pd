@@ -40,7 +40,7 @@ export default class Axes extends Component {
         const w1 = Math.round(this.state.weld_width / 2 * 10) / 10
 
         this.setState({x_axis: [
-            <div key="x_0" style={{backgroundColor:'black', left:0, top: 0, width:1, height: 10}}></div>,
+            <div key="x_0" style={{backgroundColor:'black', left:0, top: 0, width:1, height: 8}}></div>,
             <div key="x_0_1" style={{left:-2, top: 10}}>0</div>,
             <div key="x_1" style={{backgroundColor:'black', left: (this.graph_width - this.offset.y - this.offset.margin) / 2, top: 0, width:1, height: 10}}></div>,
             <div key="x_1_1" style={{left:(this.graph_width - this.offset.y - this.offset.margin) / 2 - (String(w1).length * 5 / 2), top: 10}}>{w1}</div>,
@@ -55,21 +55,24 @@ export default class Axes extends Component {
         return (
             
             <div className="axes">
+                
                 <div style={{marginRight: 10}}>
+                <div style={{backgroundColor:'black', top:this.offset.x + 7, left:this.offset.y - 21.5, height:360, width: 0.8}}></div>
                     {(() => {
 
                         let out = []
 
                         for (let i = 0; i <= 12; i += 1) {
 
-                            out.push(<div key={'y_axis_' + i} style={{top:i * 30 + this.offset.x}}>
-                                <div style={{display:'table', textAlign:'right', width:35}}>
-                                    <div style={{display:'table-cell', width:'50%'}}>{360 - i * 30}</div>
-                                    <div style={{display:'table-cell', paddingLeft:2, width:'50%'}}>
-                                        <div style={{backgroundColor: 'black', marginBottom:3, height: 1, width: 10}}></div>
-                                    </div>
+                            out.push(
+                                <div key={'y_axis_num_' + i} style={{top:i * 30 + this.offset.x, textAlign:'right', width: 20}}>
+                                    {360 - i * 30}
+                                </div>)
+                            out.push(
+                                <div key={'y_axis_notch_' + i} style={{backgroundColor: 'black', left:26, top:i * 30 + this.offset.x + 7 , height: 1, width: 8}}>
+                                    
                                 </div>
-                            </div>)
+                            )
 
                         }
 
@@ -79,7 +82,7 @@ export default class Axes extends Component {
 
                 <div id="plot_area"></div>
 
-                <div id="x_axis">
+                <div id="x_axis" style={{backgroundColor:'black', height:0.8}}>
                     {this.state.x_axis}
                 </div>
 

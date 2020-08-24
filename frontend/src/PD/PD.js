@@ -36,9 +36,13 @@ export default class PD extends Component {
             matched:true,
             unmatched: true
         }
-        this.pipe_section_index = 0
-        this.pipe_sections = []
-        this.pipe_section_instance = 0
+        
+        this.pipe_sections = {
+            data: [],
+            index: 0,
+            id: 0
+        }
+        
         this.pipe_section_raw = {}
         this.run_match = 1
         this.first_match = 0
@@ -48,6 +52,7 @@ export default class PD extends Component {
             x: 30,
             y: 55
         }
+        this.bgHi = 'yellow'
         
 
     }
@@ -56,13 +61,15 @@ export default class PD extends Component {
 
         this.getGraphWidth()
         
-        this.dataAdapter.get('run_match', '/' + this.run_match + '/pipe_sections', (data) => {
+        this.dataAdapter.get('run_match', '/' + this.run_match + '/pipe_sections', data => {
 
-            this.pipe_sections = data
-            this.pipe_section_index = 0
-            this.pipe_section_instance = this.pipe_sections[this.pipe_section_index].id
+            this.pipe_sections = {
+                data: data,
+                id: data[0].id,
+                index: 0
+            }
+
             this.loadPipeSection()
-            
 
         })
 
@@ -84,7 +91,7 @@ export default class PD extends Component {
 
                 return
 
-            this.highligtDom(id, 'white')
+            this.highlightDom(id, this.bgHi)
             this.second_match = id
 
             this.setState({
@@ -94,7 +101,7 @@ export default class PD extends Component {
 
         } else {
 
-            this.highligtDom(id, 'white')
+            this.highlightDom(id, this.bgHi)
             this.first_match = id
             this.graphPipeSection()
 
@@ -106,18 +113,25 @@ export default class PD extends Component {
     getGraphWidth = () => this.setState({screen_width: parseFloat(window.innerWidth)}, this.graphPipeSection)
 
 
-    highligtDom = (id, color) => {
+    highlightDom = (id, color) => {
 
         const doc = document.getElementById(id)
-        doc && (doc.style.backgroundColor = color)
+
+        if (doc && !doc.childNodes.length && color === 'transparent')
+
+            doc.style.backgroundColor = doc.style.borderColor
+        
+        else if (doc)
+
+            doc.style.backgroundColor = color
 
     }
 
     sectionGo = (dir, chk, filter) => {
 
-        const ps = this.pipe_sections
+        const ps = this.pipe_sections.data
         const ix = ps.length
-        const p = this.pipe_section_index
+        const p = this.pipe_sections.index
         const test = p => (((chk && p.manually_checked) || (!chk && !p.manually_checked)) &&
                         ((filter && p.feature_count) || !filter))
 
@@ -130,7 +144,7 @@ export default class PD extends Component {
                 if (test(ps[i])) {
 
                     idx = ps[i].id
-                    this.pipe_section_index = i
+                    this.pipe_sections.index = i
                     i = -1
 
                 }
@@ -142,7 +156,7 @@ export default class PD extends Component {
                 if (test(ps[i])) {
 
                     idx = ps[i].id
-                    this.pipe_section_index = i
+                    this.pipe_sections.index = i
                     i = ix
 
                 }
@@ -151,7 +165,7 @@ export default class PD extends Component {
 
         if (~idx) {
 
-            this.pipe_section_instance = idx
+            this.pipe_sections.id = idx
             this.loadPipeSection()
 
         }
@@ -240,19 +254,19 @@ export default class PD extends Component {
             this.first_match !== this.state.hover_graph &&
             this.second_match !== this.state.hover_graph) {
         
-            this.highligtDom(this.state.hover_graph, 'transparent')
+            this.highlightDom(this.state.hover_graph, 'transparent')
 
         }
 
         this.setState({hover_graph: id})
-        this.highligtDom(id, 'white')
+        this.highlightDom(id, this.bgHi)
 
     }
 
 
     loadPipeSection = () => {
         
-        this.dataAdapter.get('pipe_section', this.pipe_section_instance, data => {
+        this.dataAdapter.get('pipe_section', this.pipe_sections.id, data => {
         
             this.pipe_section_raw = data
             
@@ -264,6 +278,7 @@ export default class PD extends Component {
                 max_weld_width: Math.max(data['weld_a_width'], data['weld_b_width']),
                 section_id: data.section_id
             })
+
             this.graphPipeSection()
         
         })
@@ -295,8 +310,8 @@ export default class PD extends Component {
                     }}
                     match_on={this.state.match_on}
                     onCancel={() => {
-                        this.highligtDom(this.first_match, 'transparent')
-                        this.highligtDom(this.second_match, 'transparent')
+                        this.highlightDom(this.first_match, 'transparent')
+                        this.highlightDom(this.second_match, 'transparent')
                         this.first_match = 0
                         this.second_match = 0
                         this.setState({
@@ -312,11 +327,11 @@ export default class PD extends Component {
                             feature_a: feature_a,
                             feature_b: feature_b,
                             run_match: this.run_match,
-                            pipe_section: this.pipe_section_instance
+                            pipe_section: this.pipe_sections.id
                         }]
 
-                        this.highligtDom(this.first_match, 'transparent')
-                        this.highligtDom(this.second_match, 'transparent')
+                        this.highlightDom(this.first_match, 'transparent')
+                        this.highlightDom(this.second_match, 'transparent')
                         this.first_match = 0
                         this.second_match = 0
                         this.setState({
@@ -328,8 +343,8 @@ export default class PD extends Component {
                     }}
                     onMatch={() => {
                         if (this.first_match) {
-                            this.highligtDom(this.first_match, 'transparent')
-                            this.highligtDom(this.second_match, 'transparent')
+                            this.highlightDom(this.first_match, 'transparent')
+                            this.highlightDom(this.second_match, 'transparent')
                             this.first_match = 0
                             this.second_match = 0
                             this.graphPipeSection()
@@ -342,7 +357,7 @@ export default class PD extends Component {
                     setMatchFilter={this.setMatchFilter}
                     weldGo={id => {
 
-                        this.pipe_section_instance = id
+                        this.pipe_sections.id = id
                         this.loadPipeSection()
 
                     }}

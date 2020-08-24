@@ -18,7 +18,7 @@ const requestListener = function (req, res) {
 
       form.parse(req, function (err, fields, files) {
 
-        for (let i = 0, ix = files.file.length; i < ix; i += 1) {
+        for (let i = 0, ix = (files.file || []).length; i < ix; i += 1) {
 
           const file = files.file[i]
 
@@ -43,7 +43,7 @@ const requestListener = function (req, res) {
       })
       
     } else {
-console.log(uri)
+//console.log(uri)
       const temp = uri.split('&')
       
       let obj = {},

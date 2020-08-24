@@ -10,7 +10,6 @@ export default class WeldsTable extends Component {
 
         this.state = {}
 
-        console.log(props)
         this.section_id = ''
 
     }

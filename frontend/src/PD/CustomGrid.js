@@ -26,7 +26,6 @@ export default class CustomGrid extends Component {
 
             key: col.col + '_' + s,
             name: col.col + '_' + s,
-            //width: col.width,
             editable: false,
             sortable: false,
             resizable: true,
@@ -39,11 +38,17 @@ export default class CustomGrid extends Component {
 
             key: '_gutter',
             width: 17,
-            formatter: cell => {
-                return (
-                    <div style={{cursor: cell.value ? 'pointer' : 'arrow', color: cell.value ? 'inherit' : 'lightgray', backgroundColor:'lightgray', padding:4}}
-                        onClick={() => cell.value && this.props.unlink(Number(cell.value))}
-                    >X</div>)} 
+            formatter: cell => (
+                <div 
+                    style={{
+                        cursor: cell.value ? 'pointer' : 'arrow',
+                        color: cell.value ? 'inherit' : 'lightgray',
+                        backgroundColor:'lightgray',
+                        padding:4
+                    }}
+                    onClick={() => cell.value && this.props.unlink(Number(cell.value))}
+                >X</div>
+            )
 
         })
         side('B')
@@ -74,7 +79,7 @@ export default class CustomGrid extends Component {
         const width = this.props.width ? this.props.width + "px" : "auto"
 
         return (
-            <div style={{padding:10,width:width,maxWidth: width}}>
+            <div className="custom-grid" style={{width:width,maxWidth: width}}>
                 <ReactDataGrid
                     maxWidth={width}
                     columns={(()=>this.getColumns())()}

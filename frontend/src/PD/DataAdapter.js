@@ -1,6 +1,5 @@
 import React, { Component } from 'react'
 import { proxyURL, restURL, weldsTableColumns } from '../config'
-import { Toast } from 'react-bootstrap'
 
 
 export default class DataAdapter extends Component {
@@ -41,7 +40,7 @@ export default class DataAdapter extends Component {
 
         const points = {
 
-            run_matches: () => {
+            run_matches_: () => {
 
                 let options = []
 
@@ -287,25 +286,5 @@ export default class DataAdapter extends Component {
 
     spin = s => this.spinner.style.display = s ? 'inline' : 'none'
 
-
-    render () {
-
-        return (
-            <div style={{position:"absolute"}}>
-                <Toast
-                    onClose={() => this.setState({rest_error: false})}
-                    show={this.state.rest_error}
-                    animation={false}
-                >
-                    <Toast.Header>
-                        <strong className="mr-auto">Error</strong>
-                            <small></small>
-                        </Toast.Header>
-                    <Toast.Body>Invalid response from server</Toast.Body>
-                </Toast>
-            </div>
-        )
-
-    }
 
 }
