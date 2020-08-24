@@ -321,8 +321,9 @@ export default class PD extends Component {
 
                     }}
                     onConfirm={() => {
-                        const feature_a = this.pipe_section_raw.features[this.first_match] === 'A' ? this.first_match : this.second_match
-                        const feature_b = this.pipe_section_raw.features[this.second_match] === 'B' ? this.second_match : this.first_match   
+                        console.log(this.pipe_section_raw.features[this.first_match],this.first_match)
+                        const feature_a = this.pipe_section_raw.features[this.first_match].side === 'A' ? this.first_match : this.second_match
+                        const feature_b = this.pipe_section_raw.features[this.second_match].side === 'B' ? this.second_match : this.first_match   
                         const data = [{
                             feature_a: feature_a,
                             feature_b: feature_b,
@@ -338,6 +339,7 @@ export default class PD extends Component {
                             match_on: false,
                             confirm_on: false
                         })
+                        console.log(data)
                         this.dataAdapter.post('feature_pair', data, () => this.loadPipeSection())
 
                     }}
