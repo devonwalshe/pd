@@ -214,17 +214,17 @@ export default class Ctrl extends Component {
                         </div>
                     </div>
                     <div style={{float:'right'}}>
-                    <Toggle
-                        active={this.state.manually_checked}
-                        on='Complete'
-                        off='Uncomplete'
-                        onstyle='success'
-                        offstyle='danger'
-                        width={120}
-                        height={38}
-                        onClick={this.props.manualCheck}
-                    />
-                </div>
+                        <Toggle
+                            active={this.state.manually_checked}
+                            on='Complete'
+                            off='Incomplete'
+                            onstyle='success'
+                            offstyle='danger'
+                            width={120}
+                            height={38}
+                            onClick={this.props.manualCheck}
+                        />
+                    </div>
                 </div>
                 <div style={{backgroundColor:'#fff', display:'inline-block', padding:10, width:'100%'}}>
                     <div style={{alignItems:'center', display:"flex", float:"left"}}>

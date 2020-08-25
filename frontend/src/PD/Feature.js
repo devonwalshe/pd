@@ -127,7 +127,8 @@ export default class Feature extends Component {
                                 'us_weld_dist_coord_m',
                                 'length_in',
                                 'width_in',
-                                'depth_in'
+                                'depth_in',
+                                'comments'
                             ]
                             
                             let out = [
