@@ -1,12 +1,15 @@
 import React, { Component } from 'react'
-import { proxyURL, restURL } from '../config'
+import { proxyURL, restURL, weldsTableColumns } from '../config'
+
 
 export default class DataAdapter extends Component {
 
     constructor(props) {
 
         super(props)
-        this.state = {}
+        this.state = {
+            rest_error: false
+        }
 
         this.spinner = document.getElementById('spinner')
         this.toast = document.getElementById('toast')
@@ -26,8 +29,6 @@ export default class DataAdapter extends Component {
             })
             .catch(e => {
                 this.spin(false)
-                console.log(e)
-                
                 this.toast.style.display = 'block'
             })
 
@@ -38,7 +39,7 @@ export default class DataAdapter extends Component {
 
         const points = {
 
-            run_matches: () => {
+            run_matches_: () => {
 
                 let options = []
 
@@ -73,7 +74,7 @@ export default class DataAdapter extends Component {
                         table: [],
                         weld_a_width: 0,
                         weld_b_width: 0,
-                        welds: []
+                        welds: {}
 
                     },
                     temp = [],
@@ -113,17 +114,14 @@ export default class DataAdapter extends Component {
         
 
                 ;(['A','B']).forEach(side => {
-                    //side: A, weld id: 12321, upstream weld distance: 26.2343, j joint length: 15.51, wall thickness: 0.1]
 
-                    const fields = [
-                        'side',
-                        'weld_id',
-                        'us_weld_dist',
-                        'joint_length',
-                        'wall_thickness']
+                    pipeSection.welds[side] = {}
 
-                    weldsTemp[side] && fields.forEach(field => pipeSection.welds.push((<div key={side + field}><div>{field}</div><div>{weldsTemp[side][field]}</div></div>)))
+                        weldsTemp[side] && weldsTableColumns.map(f => pipeSection.welds[side][f] = weldsTemp[side][f])
+
+//                    weldsTemp[side] && weldsTableColumns.forEach(field => pipeSection.welds.push((<div key={side + field}><div>{field}</div><div>{weldsTemp[side][field]}</div></div>)))
                 })
+
 
 
                 for (let i = 0, ix = temp.length; i < ix; i +=1) {
@@ -240,7 +238,7 @@ export default class DataAdapter extends Component {
     post = (rest, data, cbk) => {
         
         const url = proxyURL +
-            '?url=' +
+            '?method=POST&url=' +
             encodeURIComponent(restURL) +
             rest +
             '/' +
@@ -286,5 +284,6 @@ export default class DataAdapter extends Component {
     }
 
     spin = s => this.spinner.style.display = s ? 'inline' : 'none'
+
 
 }

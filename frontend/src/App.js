@@ -1,9 +1,10 @@
 import React, { Component } from 'react'
 import './App.css'
 import PD from './PD/PD.js'
+import Upload from './PD/Upload.js'
+import Runs from './PD/Runs.js'
 import Dashboard from './PD/Dashboard.js'
 import Pipelines from './PD/Pipelines.js'
-import Upload from './PD/Upload.js'
 import FeatureMap from './PD/FeatureMap.js'
 import { Button } from 'react-bootstrap'
 import 'bootstrap/dist/css/bootstrap.min.css'
@@ -17,11 +18,11 @@ export default class App extends Component {
     super(props)
 
     this.state = {
-      current: 3,
+      current: 2,
       page: null
     }
 
-    this.buttons = ['Dashboard', 'Pipelines', 'Upload Datasets', 'Run Matches', 'Feature Maps']
+    this.buttons = ['Dashboard', 'Pipelines', 'Run Matches', 'Feature Maps']
 
   }
 
@@ -47,8 +48,10 @@ export default class App extends Component {
     let pages = [
       (<Dashboard/>),
       (<Pipelines/>),
-      (<Upload/>),
-      (<PD/>),
+      (<Runs
+        goRun={id => this.setState({page: (<PD id={id}/>)})}
+        newRun={() => this.setState({page: (<Upload/>)})} 
+      />),
       (<FeatureMap/>)
     ]
 

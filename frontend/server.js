@@ -18,7 +18,7 @@ const requestListener = function (req, res) {
 
       form.parse(req, function (err, fields, files) {
 
-        for (let i = 0, ix = files.file.length; i < ix; i += 1) {
+        for (let i = 0, ix = (files.file || []).length; i < ix; i += 1) {
 
           const file = files.file[i]
 
@@ -75,7 +75,6 @@ const requestListener = function (req, res) {
       fetch(decodeURIComponent(obj.url), request)
           .then(response => response.text())
           .then(data => {
-            //console.log(data)
             obj.data && (request.method != 'GET') && res.setHeader('Content-Type', 'application/json')
             res.setHeader('Access-Control-Allow-Origin', '*')
             res.setHeader('Access-Control-Request-Method', '*')

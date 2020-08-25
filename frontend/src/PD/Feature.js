@@ -1,7 +1,7 @@
-import React, { Component } from "react";
-import PropTypes from 'prop-types';
-import Popup from "reactjs-popup";
-import './feature.css';
+import React, { Component } from "react"
+import PropTypes from 'prop-types'
+import Popup from "reactjs-popup"
+import './feature.css'
 
 export default class Feature extends Component {
 
@@ -26,29 +26,34 @@ export default class Feature extends Component {
             'metal loss / mill anomaly': 'metal_loss'
         }
         
-        
     }
 
 
     render() {
     
+        const offsetTop = 30
         const i = this.props.feature
         const a = i.attributes
         const border = i.side === 'A' ? 'orange' : 'blue'
         const minsize = 18
+        const offset = {
+            x: -17,
+            y: -5
+        }
 
         let left = isFinite(i.left) ? i.left : 0,
             top = -20,
             width = 28,
             height = 28,
             lt = false,
-            nodim = true
+            nodim = true,
+            isloss = false
 
         if (i.height && i.width) {
 
-            top = i.top
             height = Math.max(i.height, minsize)
             width = Math.max(i.width, minsize)
+            top = i.top + offset.x - height / 2
             nodim = false
 
             if (i.height <= minsize || i.width <= minsize)
@@ -57,6 +62,17 @@ export default class Feature extends Component {
 
         }
 
+        if (a.feature_category === 'metal loss / mill anomaly') {
+
+            isloss = true
+            height = Math.max(i.height, 2)
+            width = Math.max(i.width, 2)
+            top = i.top + offset.x - Math.floor(height / 2)
+
+        }
+
+        left -= width / 2
+
         const icowh = Math.round(Math.min(height, width) - 4)
 
         return (
@@ -64,13 +80,14 @@ export default class Feature extends Component {
                 key={i.id + 'popup'}
                 trigger={
                     <div
-                        className={"shape " + (i.matched ? "matched" : "unmatched")}
+                        className={'shape ' + (i.matched ? 'matched' : 'unmatched') + (isloss ? ' isloss' : '')}
                         key={i.id}
                         style={{
-                            left: left,
-                            top: top,
-                            height: height  + 4,
-                            width: width + 4}}
+                            backgroundColor: isloss ? border : 'none',
+                            left: left + offset.y,
+                            top: top + offsetTop,
+                            height: height,
+                            width: width}}
                     >
                         <div>
                             <div
@@ -78,18 +95,19 @@ export default class Feature extends Component {
                                 onClick={e => this.props.onClick(e.currentTarget.id)}
                                 id={i.id}
                                 style={{
+                                backgroundColor: isloss ? border : 'none',
                                 padding: 1,
                                 border: "1px solid " + border,
                                 height: height,
                                 width: width}}>
-                                <img
+                                {isloss ? '' : (<img
                                     alt={a.feature_category}
                                     width={icowh}
                                     height={icowh}
                                     src={"./feature_icons/" + (this.icons[a.feature_category] || "unknown") + ".png"}
-                                />
+                                />)}
                             </div>
-                            {lt ? (<div>&lt;</div>) : ''}
+                            {lt && !isloss ? (<div>&lt;</div>) : ''}
                         </div>
                         {nodim ? (<div></div>) : ''}
                     </div>
@@ -129,7 +147,7 @@ export default class Feature extends Component {
                             return out
                         })(i,a)}
                     </div>
-                </div>                
+                </div>
             </Popup>
         )
     }
