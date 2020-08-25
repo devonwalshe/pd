@@ -1,5 +1,4 @@
 import React, { Component } from 'react'
-import { Chart } from 'react-charts'
 import { Button, Form, Toast } from 'react-bootstrap'
 import { Typeahead } from 'react-bootstrap-typeahead'
 import CustomGrid from './CustomGrid'
@@ -21,7 +20,7 @@ export default class PD extends Component {
 
         this.state = {
 
-            features_filter: [],
+            features_filter: true,
             match_on: false,
             confirm_on: false,
             hover_graph: 0,
@@ -32,12 +31,16 @@ export default class PD extends Component {
             },
             is_loading: false,
             rest_error: false,
+            pipe_section_current: '',
             pipe_section_graph: [],
             pipe_section_table: [],
             pipe_section_select: [],
             run_matches: [],
+            run_match_instance: 1,
             table_width: 0,
-            welds: []
+            welds: [],
+            manually_checked: false,
+            weld_side_a: true
 
         }
 
@@ -45,10 +48,12 @@ export default class PD extends Component {
             restError: () => this.setState({rest_error: true})
         })
 
+        this.pipe_section_index = 0
+        this.pipe_sections = []
         this.pipe_section_instance = 0
         this.pipe_section_graph_width = 0
         this.pipe_section_raw = {}
-        this.run_match_instance = 0
+        //this.run_match_instance = 0
         this.first_match = 0
         this.second_match = 0
         
@@ -59,14 +64,18 @@ export default class PD extends Component {
 
         this.getGraphWidth()
         this.setPipeSections()
-        this.dataAdapter.get('run_matches', null, (data) => {
+        
+        this.dataAdapter.get('run_match', '/1/pipe_sections', (data) => {
 
-            this.setState({run_matches: data})
+            this.pipe_sections = data
+            this.pipe_section_index = 0
+            this.sectionLoad()
+            
 
         })
 
         window.addEventListener('resize', () => this.getGraphWidth())
-    
+        
     }
 
     clickFeature = id => {
@@ -125,6 +134,59 @@ export default class PD extends Component {
 
     }
 
+    sectionGo = (dir, chk) => {
+
+        const ps = this.pipe_sections
+        const ix = ps.length
+        const p = this.pipe_section_index
+        const test = p => (((chk && p.manually_checked) || (!chk && !p.manually_checked)) &&
+                        ((this.state.features_filter && p.feature_count) || (!this.state.features_filter && !p.feature_count)))
+
+        let idx = -1
+
+        if (!~dir) {
+
+            for (let i = p - 1; i > -1; i -= 1)
+
+                if (test(ps[i])) {
+
+                    idx = ps[i].id
+                    this.pipe_section_index = i
+                    i = -1
+
+                }
+
+        } else {
+
+            for (let i = p + 1; i < ix; i += 1) 
+
+                if (test(ps[i])) {
+
+                    idx = ps[i].id
+                    this.pipe_section_index = i
+                    i = ix
+
+                }
+            
+        }
+
+        if (~idx) {
+
+            this.pipe_section_instance = idx
+            this.loadPipeSection()
+
+        }
+
+
+    }
+
+    sectionLoad = () => {
+
+        this.pipe_section_instance = this.pipe_sections[this.pipe_section_index].id
+        this.loadPipeSection()
+
+    }
+
     setPipeSections = data => this.setState({pipe_section_select: <Typeahead
 
         id="basic-typeahead-single"
@@ -154,7 +216,7 @@ export default class PD extends Component {
         const data = this.pipe_section_raw.features
         const graph_width = this.pipe_section_graph_width
         const max_width = Math.max(this.pipe_section_raw['weld_a_width'], this.pipe_section_raw['weld_b_width'])
-        
+
         let features = []
 
         for (let f in data) {
@@ -185,7 +247,7 @@ export default class PD extends Component {
 
             }
         }
-        this.setState({pipe_section_graph: features})
+        this.setState({pipe_section_graph: features, pipe_section_current: this.pipe_section_raw.section_id})
 
     }
 
@@ -245,8 +307,8 @@ export default class PD extends Component {
         this.dataAdapter.get('pipe_section', this.pipe_section_instance, data => {
         
             this.pipe_section_raw = data
-            console.log(this.pipe_section_raw)
-            this.setState({pipe_section_table: data.table, welds: data.welds})
+            
+            this.setState({pipe_section_table: data.table, welds: data.welds, manually_checked: data.manually_checked})
             this.graphPipeSection()
         
         })
@@ -255,34 +317,126 @@ export default class PD extends Component {
 
     unlink = id => window.confirm('Confirm unlinking the feature?') && this.dataAdapter.delete('feature_pair', id, () => this.loadPipeSection())
 
-    
+    /**<Form.Control
+                            as="text"
+                            onChange={e =>{
+                                this.first_match = 0
+                                this.second_match = 0
+                                this.setState({match_on: false})
+                                this.run_match_instance = Number(e.currentTarget.options[e.currentTarget.selectedIndex].value)
+                                 this.dataAdapter.get('pipe_sections', null, this.setPipeSections)
+                            }}
+                            style={{width:'200px'}}
+                        >
+                            <option>Run Matches...</option>
+                            {this.state.run_matches}
+                        </Form.Control> */
 
     render() {
 
         return (
 
             <>
-                <div style={{backgroundColor:'#eee', display:'inline-block', padding:10, width:'100%'}}>
-                    <div style={{alignItems:'baseline',display:'flex',float:'left'}}>
-                        <Form.Label style={{marginRight:'10px'}}>Run:</Form.Label>
+                <div style={{backgroundColor:'#eee', display:'inline-block', padding:10, width:'100%', whiteSpace:'nowrap'}}>
+                    <div style={{alignItems:'center',display:'flex',float:'left'}}>
+                        <Form.Label style={{marginRight:'10px'}}>Run ID:</Form.Label>
+                        <Form.Label style={{fontWeight: 'bold', marginRight:'10px'}}>{this.state.run_match_instance}</Form.Label>
+                        <Button variant="outline-primary" onClick={() => this.sectionGo(-1,true)} >&lt;&lt;</Button>
+                        <Button variant="outline-primary" onClick={() => this.sectionGo(-1,false)}>&lt;</Button>
+                        <div className="feature_filter">
+                            <div>Features</div>
+                            <div>
+                                <Toggle
+                                    active={this.state.features_filter}
+                                    id='match_toggle'
+                                    on='YES'
+                                    off='NO'
+                                    onstyle='default'
+                                    offstyle='default'
+                                    width={60}
+                                    height={20}
+                                    onClick={() => {
+
+                                        this.setState({features_filter: !this.state.features_filter})
+
+                                    }}
+                                />
+                            </div>
+                        </div>
+                        <Button variant="outline-primary" onClick={() => this.sectionGo(1,false)}>&gt;</Button>
+                        <Button variant="outline-primary" onClick={() => this.sectionGo(1,true)}>&gt;&gt;</Button>
+
+                        Section: <b>{this.state.pipe_section_current}</b>
+                        &nbsp;
+                        Jump to Weld:
                         <Form.Control
-                            as="select"
-                            onChange={e =>{
-                                this.first_match = 0
-                                this.second_match = 0
-                                this.setState({match_on: false})
-                                this.run_match_instance = Number(e.currentTarget.options[e.currentTarget.selectedIndex].value)
-                                this.dataAdapter.get('pipe_sections', null, this.setPipeSections)
+                            type="text"
+                            onKeyPress={e => {
+                                
+                                if (e.key === 'Enter') {
+
+                                    const param = escape('?weld_id=' + e.target.value + '&run_match=1')
+
+                                    this.dataAdapter.get('welds', param, data => {
+
+                                        
+                                        data.forEach(weld => {
+
+                                            if ((weld.side === 'A' && this.state.weld_side_a) ||
+                                                (weld.side === 'B' && !this.state.weld_side_a)) {
+
+                                                    this.pipe_section_instance = weld.pipe_section_id
+                                                    this.loadPipeSection()
+                                                    
+
+                                                }
+
+                                        })
+
+                                    })
+
+                                }
                             }}
-                            style={{width:'200px'}}
-                        >
-                            <option>Run Matches...</option>
-                            {this.state.run_matches}
-                        </Form.Control>
-                        <Form.Label style={{marginLeft:'20px',marginRight:'10px'}}>Pipe:</Form.Label>
+                            style={{width:'100px'}}></Form.Control>
+                        <Toggle
+                            active={this.state.weld_side_a}
+                            id='match_toggle'
+                            on='A'
+                            off='B'
+                            onstyle='side_a'
+                            offstyle='side_b'
+                            width={50}
+                            height={38}
+                            onClick={() => {
+                                this.setState({weld_side_a: !this.state.weld_side_a})
+                            }}
+                        />
 
-                        {this.state.pipe_section_select}
+                    </div>
+                    <div style={{alignItems:'baseline',float:'right'}}>
+                        <Toggle
+                            active={this.state.manually_checked}
+                            on='Complete'
+                            off='Uncomplete'
+                            onstyle='success'
+                            offstyle='danger'
+                            width={120}
+                            height={38}
+                            onClick={() => {
 
+                                const r = this.pipe_section_raw
+                                const data = [{
+                                    id: r.id,
+                                    section_id: r.section_id,
+                                    run_match: r.run_match,
+                                    manually_checked: !this.state.manually_checked
+                                }]
+                                this.dataAdapter.put('pipe_section', r.id, data, data => {
+                                    this.setState({manually_checked: data.manually_checked})
+                                })
+
+                            }}
+                        />
                     </div>
                 </div>
                 <div style={{backgroundColor:'#fff', display:'inline-block', padding:10, width:'100%'}}>
@@ -299,7 +453,6 @@ export default class PD extends Component {
                         </div>
                         <Toggle
                             active={this.state.match_on}
-                            id='match_toggle'
                             on='ON'
                             off='OFF'
                             onstyle='primary'
@@ -336,7 +489,7 @@ export default class PD extends Component {
 
                                         feature_a: feature_a,
                                         feature_b: feature_b,
-                                        run_match: this.run_match_instance,
+                                        run_match: this.state.run_match_instance,
                                         pipe_section: this.pipe_section_instance
 
                                     }]
@@ -382,18 +535,6 @@ export default class PD extends Component {
                     </div>
                 </div>
                 <div className="welds_table">{this.state.welds}</div>
-       <div style={{height:'400px',width:'400px'}}>         <Chart data={[{
-         label: 'Series 1',
-         data: [
-           { x: 1, y: 10 },
-           { x: 2, y: 10 },
-           { x: 3, y: 10 },
-         ],
-       }]} axes={[
-        { primary: true, type: 'linear', position: 'bottom' },
-        { type: 'linear', position: 'left' },
-      ]} tooltip />
-      </div>
                 <div className="graph">
                     <div style={{position:"absolute"}}>
                         <Toast

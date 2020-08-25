@@ -8,7 +8,7 @@ class FeatureMap(Model):
   '''
   mapping_name = CharField()
   source_name = CharField()
-  
+
   class Meta:
     database = db
 
@@ -20,10 +20,10 @@ class FeatureMapping(Model):
   raw_col_name = CharField()
   processing_col_name = CharField()
   datatype = CharField()
-  
+
   class Meta:
     database = db
-  
+
 
 class RawFile(Model):
   '''
@@ -33,7 +33,7 @@ class RawFile(Model):
   file_url = CharField()
   uploaded_at = DateTimeField()
   data_mapping = ForeignKeyField(FeatureMap, backref='files')
-  
+
   ### Meta
   class Meta:
     database = db
@@ -43,10 +43,10 @@ class Pipeline(Model):
   A section of pipe that the inspection tool runs through
   '''
   name = CharField()
-  
+
   class Meta:
     database = db
-  
+
 class InspectionRun(Model):
   '''
   A single run of an inspection tool
@@ -69,11 +69,11 @@ class RunMatch(Model):
   section_count = IntegerField()
   sections_checked = IntegerField()
   name = CharField()
-  
+
   class Meta:
     database = db
-    
-    
+
+
 class PipeSection(Model):
   '''
   A section of pipe
@@ -81,10 +81,10 @@ class PipeSection(Model):
   section_id = CharField(unique=True)
   run_match = ForeignKeyField(RunMatch, backref='pipe_sections')
   manually_checked = BooleanField()
-  
+
   def feature_count(self):
     return(self.features.count())
-  
+
   class Meta:
     database = db
 
@@ -96,22 +96,23 @@ class Weld(Model):
   weld_id = CharField()
   pipe_section = ForeignKeyField(PipeSection, field='section_id', backref='weld')
   section_sequence = IntegerField()
+  wheel_count = DoubleField()
   run_match = ForeignKeyField(RunMatch, backref = 'welds')
   side = CharField()
   us_weld_dist = DoubleField()
   joint_length = DoubleField()
   wall_thickness = DoubleField()
-  
+
   def weld_pair(self):
     ### code to return the weld pair
     weld_pair_a = [wp for wp in self.weld_pair_a]
     weld_pair_b = [wp for wp in self.weld_pair_b]
     weld_pair = weld_pair_a + weld_pair_b
     return(weld_pair[0])
-  
+
   class Meta:
     database = db
-   
+
 class WeldPair(Model):
   '''
   A matched pair of welds between two inspection runs
@@ -119,14 +120,14 @@ class WeldPair(Model):
   weld_a = ForeignKeyField(Weld, backref='weld_pair_a')
   weld_b = ForeignKeyField(Weld, backref='weld_pair_b')
   run_match = ForeignKeyField(RunMatch, backref = 'weld_pairs')
-    
+
   class Meta:
     database = db
     indexes = (
       ### multiple on all three
       (('weld_a', 'weld_b', 'run_match'), True),
     )
-  
+
 class Feature(Model):
   '''
   An observed object from the inspection tool
@@ -137,7 +138,7 @@ class Feature(Model):
   ml_ma = BooleanField() # is it metal loss / mill anomaly?
   run_match = ForeignKeyField(RunMatch, backref='features')
   side = CharField()
-  
+
   def matched(self):
     if self.side=="A":
       fp = [fp for fp in FeaturePair.select().where(FeaturePair.feature_a == self.id)]
@@ -147,18 +148,18 @@ class Feature(Model):
       return(True)
     else:
       return(False)
-  
+
   def attrs_serialized(self):
     attrs = [model_to_dict(fa, recurse=False) for fa in self.attributes]
     return(attrs)
-    
+
   def serialize(self):
     obj = {**model_to_dict(self, recurse=False), **{'matched': self.matched()}, **{'attributes': self.attrs_serialized()}}
     return(obj)
-    
+
   class Meta:
     database = db
-  
+
 class FeatureAttribute(Model):
   '''
   An attribute field for each reading - dependent on the tool and supplier
@@ -167,7 +168,7 @@ class FeatureAttribute(Model):
   attribute_name = CharField()
   attribute_datatype = CharField()
   attribute_data = CharField()
-  
+
   class Meta:
     database = db
 
@@ -204,5 +205,3 @@ class RunMatchConf(Model):
   backtrack_validation_lookahead = IntegerField()
   feature_match_threshold = FloatField()
   metal_loss_match_threshold = FloatField()
-  
-

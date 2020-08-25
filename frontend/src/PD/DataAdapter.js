@@ -17,7 +17,7 @@ export default class DataAdapter extends Component {
     fetchRest = (rest, url, data, cbk) => {
 
         this.spin(true)
-
+        
         fetch(url)
             .then(res => res.json())
             .then(res => {
@@ -27,6 +27,7 @@ export default class DataAdapter extends Component {
             .catch(e => {
                 this.spin(false)
                 console.log(e)
+                
                 this.toast.style.display = 'block'
             })
 
@@ -64,6 +65,10 @@ export default class DataAdapter extends Component {
 
                 let pipeSection = {
 
+                        id: res.id,
+                        section_id: res.section_id,
+                        run_match: res.run_match,
+                        manually_checked: res.manually_checked,
                         features: {},
                         table: [],
                         weld_a_width: 0,
@@ -97,8 +102,7 @@ export default class DataAdapter extends Component {
                 })
         
                 let weldsTemp = {}
-                welds.map(a => {
-                 
+                welds.forEach(a => {
 
                     weldsTemp[a.side] = a
                     
@@ -214,7 +218,7 @@ export default class DataAdapter extends Component {
             '?url=' +
             encodeURIComponent(restURL) +
             rest +
-            (data ? '/' + data : '')
+            (data ? '/' + escape(data) : '')
 
         this.fetchRest(rest, url, data, cbk)
 
@@ -227,7 +231,7 @@ export default class DataAdapter extends Component {
             encodeURIComponent(restURL) +
             rest +
             (data ? '/' + data : '')
-console.log(url)
+
         this.fetchRest(rest, url, data, cbk)
 
     }
@@ -241,6 +245,17 @@ console.log(url)
             rest +
             '/' +
             '&data=' + JSON.stringify(data)
+
+        this.fetchRest(rest, url, data, cbk)
+
+    }
+
+    put = (rest, id, data, cbk) => {
+
+        const url = proxyURL +
+            '?method=PUT&url=' +
+            encodeURIComponent(restURL) +
+            rest + '%2F' + id + '&data=' + JSON.stringify(data)
 
         this.fetchRest(rest, url, data, cbk)
 
