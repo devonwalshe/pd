@@ -79,7 +79,6 @@ export default class App extends Component {
           ))}
         </div>
       </div>
-      <hr></hr>
       {this.state.page}
     </>
   )

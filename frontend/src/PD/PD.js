@@ -20,6 +20,7 @@ export default class PD extends Component {
             confirm_on: false,
             hover_graph: 0,
             hover_table: 0,
+            nav_status: '0000',
             section_id: '',
             pipe_section_graph: [],
             pipe_section_table: [],
@@ -69,6 +70,7 @@ export default class PD extends Component {
                 index: 0
             }
 
+            this.navStatus()
             this.loadPipeSection()
 
         })
@@ -127,6 +129,58 @@ export default class PD extends Component {
 
     }
 
+
+    navStatus = () => {
+
+        const p = this.pipe_sections
+        const ln = p.data.length
+
+        let n
+
+        if (!ln)
+
+            n = '0000'
+
+        else if (!p.index)
+
+            n = '0011'
+
+        else if (p.index === (ln - 1))
+
+            n = '1100'
+
+        else {
+
+            let nx = [0,1,1,0]
+
+            for (let i = p.index - 1; i > -1; i -= 1)
+
+                if (p.data[i].manually_checked) {
+
+                    nx[0] = 1
+                    i = -1
+
+                }
+
+            for (let i = p.index + 1; i < ln; i += 1)
+
+                if (p.data[i].manually_checked) {
+
+                    nx[3] = 1
+                    i = ln
+
+                }
+
+
+            n = nx.join('')
+
+        }
+
+        this.setState({nav_status: n})
+
+    }
+
+    
     sectionGo = (dir, chk, filter) => {
 
         const ps = this.pipe_sections.data
@@ -170,6 +224,7 @@ export default class PD extends Component {
 
         }
 
+        this.navStatus()
 
     }
 
@@ -309,6 +364,7 @@ export default class PD extends Component {
                         })
                     }}
                     match_on={this.state.match_on}
+                    nav_status={this.state.nav_status}
                     onCancel={() => {
                         this.highlightDom(this.first_match, 'transparent')
                         this.highlightDom(this.second_match, 'transparent')

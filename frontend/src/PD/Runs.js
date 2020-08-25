@@ -35,13 +35,45 @@ export default class Runs extends Component {
                     <div style={{height:10}}></div>
                     <ReactDataGrid
                         columns={
-                            ['id','run_a','run_b','pipeline','section_count','sections_checked','name'].map(col => {
+                            [
+                                {
+                                    key:'id',
+                                    width: 10
+                                },
+                                {
+                                    key: 'run_a',
+                                    width: 10
+                                },
+                                {
+                                    key: 'run_b',
+                                    width: 10
+                                },
+                                {
+                                    key: 'pipeline',
+                                    width: 15
+                                },
+                                {
+                                    key: 'section_count',
+                                    width: 20
+                                },
+                                {
+                                    key: 'sections_checked',
+                                    width: 20
+                                },
+                                {
+                                    key:'name',
+                                    width: 15
+                                }
+                            ].map(col => {
+                                console.log(col.width)
                                 return {
-                                    key: col,
-                                    name: col,
+                                    key: col.key,
+                                    name: col.key,
                                     editable: false,
                                     sortable: false,
                                     resizable: true,
+                                    width: Math.floor((800 - 13) / 100 * col.width),
+                                    minWidth: Math.floor((800 - 13) / 100 * col.width)
                                 }
                             })
                         }
