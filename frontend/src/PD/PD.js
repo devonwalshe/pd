@@ -132,7 +132,7 @@ export default class PD extends Component {
         const ps = this.pipe_sections.data
         const ix = ps.length
         const p = this.pipe_sections.index
-        const test = p => (((chk && p.manually_checked) || (!chk && !p.manually_checked)) &&
+        const test = p => (((chk && p.manually_checked) || !chk) &&
                         ((filter && p.feature_count) || !filter))
 
         let idx = -1
