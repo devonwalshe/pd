@@ -83,7 +83,7 @@ export default class Feature extends Component {
                         className={'shape ' + (i.matched ? 'matched' : 'unmatched') + (isloss ? ' isloss' : '')}
                         key={i.id}
                         style={{
-                           // backgroundColor: isloss ? border : 'none',
+                            //backgroundColor: isloss || !nodim ? border : 'none',
                             left: left + offset.y,
                             top: top + offsetTop,
                             height: height,
@@ -95,7 +95,7 @@ export default class Feature extends Component {
                                 onClick={e => this.props.onClick(e.currentTarget.id)}
                                 id={i.id}
                                 style={{
-                                backgroundColor: isloss ? border : 'none',
+                                backgroundColor: !nodim ? border : 'none',
                                 padding: 1,
                                 border: "1px solid " + border,
                                 height: height,

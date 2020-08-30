@@ -249,8 +249,8 @@ export default class PD extends Component {
 
                 if (!isNaN(h) && !isNaN(w)) {
 
-                    feature.width = graph_width / max_width * w / 12
-                    feature.height = graph_width / max_width * h / 12
+                    feature.width = w > 0.5 ? graph_width / max_width * w / 12 : 2
+                    feature.height = h > 0.5 ? graph_width / max_width * h / 12 : 2
 
                 }
             
