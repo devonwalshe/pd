@@ -83,7 +83,7 @@ export default class Feature extends Component {
                         className={'shape ' + (i.matched ? 'matched' : 'unmatched') + (isloss ? ' isloss' : '')}
                         key={i.id}
                         style={{
-                            backgroundColor: isloss ? border : 'none',
+                           // backgroundColor: isloss ? border : 'none',
                             left: left + offset.y,
                             top: top + offsetTop,
                             height: height,
@@ -100,7 +100,7 @@ export default class Feature extends Component {
                                 border: "1px solid " + border,
                                 height: height,
                                 width: width}}>
-                                {isloss ? '' : (<img
+                                {isloss || !nodim ? '' : (<img
                                     alt={a.feature_category}
                                     width={icowh}
                                     height={icowh}

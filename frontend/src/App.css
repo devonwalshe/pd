@@ -56,6 +56,13 @@
 }
 
 .axes > div:nth-child(2) {
+  background-color: #fafafa;
+  top: 6px;
+  left: 50px;
+  height: 34px;
+}
+
+.axes > div:nth-child(3) {
   background-color: #fff;
   top: 43px;
   left: 50px;
