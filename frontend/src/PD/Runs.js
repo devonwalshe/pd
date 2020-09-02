@@ -65,7 +65,6 @@ export default class Runs extends Component {
                                     width: 15
                                 }
                             ].map(col => {
-                                console.log(col.width)
                                 return {
                                     key: col.key,
                                     name: col.key,

@@ -130,7 +130,7 @@ export default class PD extends Component {
     }
 
 
-    navStatus = () => {
+    navStatus = filter => {
 
         const p = this.pipe_sections
         const ln = p.data.length
@@ -155,7 +155,7 @@ export default class PD extends Component {
 
             for (let i = p.index - 1; i > -1; i -= 1)
 
-                if (p.data[i].manually_checked) {
+                if (p.data[i].manually_checked && (!filter || p.data[i].feature_count)) {
 
                     nx[0] = 1
                     i = -1
@@ -164,13 +164,12 @@ export default class PD extends Component {
 
             for (let i = p.index + 1; i < ln; i += 1)
 
-                if (p.data[i].manually_checked) {
+                if (p.data[i].manually_checked && (!filter || p.data[i].feature_count)) {
 
                     nx[3] = 1
                     i = ln
 
                 }
-
 
             n = nx.join('')
 
@@ -205,15 +204,15 @@ export default class PD extends Component {
 
         } else {
 
-            for (let i = p + 1; i < ix; i += 1) 
+            for (let i = p + 1; i < ix; i += 1) {
 
                 if (test(ps[i])) {
 
                     idx = ps[i].id
                     this.pipe_sections.index = i
                     i = ix
-
-                }
+                    console.log(p,idx)
+                }}
             
         }
 
@@ -224,7 +223,7 @@ export default class PD extends Component {
 
         }
 
-        this.navStatus()
+        this.navStatus(filter)
 
     }
 

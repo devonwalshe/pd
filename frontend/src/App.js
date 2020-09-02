@@ -9,7 +9,6 @@ import FeatureMap from './PD/FeatureMap.js'
 import { Button } from 'react-bootstrap'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import './bootstrap2-toggle.css'
-import 'react-bootstrap-typeahead/css/Typeahead.css'
 
 export default class App extends Component {
 
