@@ -9,6 +9,10 @@ class FeatureMap(Model):
   mapping_name = CharField()
   source_name = CharField()
 
+  def mappings_serialized(self):
+    mappings = self.mappings
+    return([model_to_dict(mapping, recurse=False) for mapping in mappings])
+
   class Meta:
     database = db
 
@@ -31,8 +35,9 @@ class RawFile(Model):
   '''
   filename = CharField()
   file_url = CharField()
-  uploaded_at = DateTimeField()
+  uploaded_at = DateTimeField(null=True)
   data_mapping = ForeignKeyField(FeatureMap, backref='files')
+  source = CharField()
 
   ### Meta
   class Meta:
@@ -67,8 +72,20 @@ class RunMatch(Model):
   run_b = ForeignKeyField(InspectionRun, backref='match')
   pipeline = ForeignKeyField(Pipeline, backref='match')
   section_count = IntegerField()
-  sections_checked = IntegerField()
+
   name = CharField()
+
+  @property
+  def sections_checked(self):
+    return(self.pipe_sections.where(PipeSection.manually_checked==True).count())
+
+  @property
+  def fm_a(self):
+    return(self.run_a.raw_file.data_mapping)
+
+  @property
+  def fm_b(self):
+    return(self.run_b.raw_file.data_mapping)
 
   class Meta:
     database = db
@@ -180,6 +197,7 @@ class FeaturePair(Model):
   feature_b = ForeignKeyField(Feature, backref='feature_pair')
   run_match = ForeignKeyField(RunMatch, backref='feature_pairs')
   pipe_section = ForeignKeyField(PipeSection, backref='feature_pairs')
+
   class Meta:
     database = db
 
@@ -190,6 +208,9 @@ class MatcherRun(Model):
   run_match = ForeignKeyField(RunMatch, backref='matcher_run', unique=True)
   start_time = FloatField(null=True)
   end_time = FloatField(null=True)
+
+  class Meta:
+    database = db
 
 class RunMatchConf(Model):
   '''
@@ -205,3 +226,6 @@ class RunMatchConf(Model):
   backtrack_validation_lookahead = IntegerField()
   feature_match_threshold = FloatField()
   metal_loss_match_threshold = FloatField()
+
+  class Meta:
+    database = db

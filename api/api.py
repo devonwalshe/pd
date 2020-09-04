@@ -56,6 +56,8 @@ api.add_resource(RunMatchNew, '/run_match/',
 api.add_resource(RunMatchResource, '/run_match/<instance_id>',
                 resource_class_kwargs={ 'model': RunMatch })
 api.add_resource(RunMatchPipeSections, '/run_match/<instance_id>/pipe_sections')
+api.add_resource(RunMatchConfiguration, '/run_match/<run_match_id>/conf')
+
 
 ### PipeSections
 api.add_resource(PipeSectionList, '/pipe_sections/',
@@ -104,7 +106,7 @@ api.add_resource(FeatureAttributeNew, '/feature_attribute/',
                 resource_class_kwargs={ 'model': FeatureAttribute })
 api.add_resource(FeatureAttributeResource, '/feature_attribute/<instance_id>',
                 resource_class_kwargs={ 'model': FeatureAttribute })
-                
+
 ### MatchRunner
 api.add_resource(MatchRunner, '/matchrunner/<runmatch_id>')
 # api.add_resource(RunMatchConf, '/run_match/<runmatch_id>/conf')

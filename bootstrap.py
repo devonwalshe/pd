@@ -9,7 +9,7 @@ logger.addHandler(logging.StreamHandler())
 logger.setLevel(logging.DEBUG)
 
 from matcher.conf import mappings
-mapping = mappings['basic_coord']
+mapping = mappings['wc']
 
 db = PostgresqlDatabase('pd', user='azymuth', host='localhost', port=5432)
 
@@ -17,23 +17,47 @@ def bootstrap(drop=True):
   ### Set up database
   model_list = [Feature, FeatureAttribute, FeaturePair, Weld, WeldPair, \
                 PipeSection, Pipeline, InspectionRun, RunMatch, \
-                FeatureMapping, FeatureMap, RawFile]
+                FeatureMapping, FeatureMap, RawFile, RunMatchConf]
   if drop:
     db.drop_tables(model_list)
   db.create_tables(model_list)
-  ### Set up record for FeatureMapping
-  fm = FeatureMap.create(mapping_name='wc', source_name="Unknown")
+  fm = bootstrap_feature_mappings()
   raw_files = bootstrap_raw_files(fm)
   matched_data, rm = bootstrap_run_match(raw_files)
   pipe_sections = bootstrap_pipe_sections(matched_data, rm)
+  rmc = bootstrap_run_match_conf(rm, fm)
   weld_pairs = bootstrap_welds(matched_data, rm)
   features = bootstrap_features(matched_data, rm, mapping)
+
+def bootstrap_feature_mappings():
+  fm, created = FeatureMap.get_or_create(mapping_name='wc', source_name="sample company")
+  input_map = mapping['input_columns']
+  datatypes = {'ID': 'string',
+               'Wheel Count': 'float',
+               'Feature': 'string',
+               'Dist US Weld (ft)': 'float',
+               'WT': 'float',
+               'Depth': 'float',
+               'Length (in)': 'float',
+               'Width (in)': 'float',
+               'Orientation (deg)': 'integer',
+               'Pressure 1': 'float',
+               'Pressure 2': 'float',
+               'Joint Length': 'float',
+               'Latitude': 'float',
+               'Longitude': 'float',
+               'Comments': 'string'}
+  for raw,input in input_map.items():
+    fmg = FeatureMapping.get_or_create(feature_map=fm, raw_col_name=raw, processing_col_name=input, datatype=datatypes[raw])
+  # Return the feature map
+  return(fm)
+
 
 def bootstrap_raw_files(fm):
   ### Set up record for the raw files
   raw_files = ['data/case_1_2014.xls', 'data/case_1_2019.xlsx']
   for raw_file in raw_files:
-    RawFile.create(filename=raw_file, file_url=raw_file, uploaded_at=datetime.datetime.now(), data_mapping = fm)
+    RawFile.create(filename=raw_file, file_url=raw_file, uploaded_at=datetime.datetime.now(), data_mapping = fm, source="company_x")
   raw_files = [rf for rf in RawFile.select().where(RawFile.data_mapping == fm)]
   return(raw_files)
 
@@ -51,6 +75,20 @@ def bootstrap_run_match(raw_files):
                        section_count=matched_data.pipe_section.max() + 1, sections_checked=0, name = "2014_2019")
   ### Return
   return(matched_data, rm)
+
+def bootstrap_run_match_conf(rm, fm):
+  rmc = RunMatchConf.create(run_match=rm,
+                      feature_map=fm,
+                      coordinates_match=False,
+                      short_joint_threshold=20,
+                      short_joint_window=10,
+                      short_joint_lookahead=75,
+                      joint_length_difference=2,
+                      backtrack_validation_lookahead=10,
+                      feature_match_threshold=.98,
+                      metal_loss_match_threshold=.60
+                      )
+  return(rmc)
 
 def bootstrap_pipe_sections(matched_data, rm):
   ### Set up pipe sections

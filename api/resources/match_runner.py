@@ -11,7 +11,7 @@ from matcher.pr import PigRun
 from matcher.pr_matcher import PigRunMatcher
 
 class MatchRunner(Resource):
-  
+
   def get(self, run_match_id):
     ### Update on progress
     {
@@ -19,8 +19,8 @@ class MatchRunner(Resource):
      'feature_match_complete': False,
      'percent_complete': 0.0
    }
-    return(instance_id)
-    
+    return(run_match_id)
+
   def post(self, run_match_id):
     rm = RunMatch.get_by_id(run_match_id)
     ### Set up matcher run
@@ -30,5 +30,3 @@ class MatchRunner(Resource):
     ### Get the data
     file_a, file_b = (rm.run_a.raw_file.file_url, rm.run_b.raw_file.file_url)
     pr1, pr2 = ()
-    
-  
