@@ -11,25 +11,25 @@ export default class CustomGrid extends Component {
         let out = []
 
         const cols = [
-            {width: 10, col: 'feature_id'},
-            {width: 10, col: 'feature'},
-            {width: 10, col: 'feature_category'},
-            {width: 10, col: 'orientation_deg'},
-            {width: 10, col: 'us_weld_dist_wc_ft'},
-            {width: 10, col: 'us_weld_dist_coord_m'},
-            {width: 10, col: 'length_in'},
-            {width: 10, col: 'width_in'},
-            {width: 10, col: 'depth_in'}
+            {width: 75, col: 'feature_id'},
+            {width: 60, col: 'feature'},
+            {width: 115, col: 'feature_category'},
+            {width: 110, col: 'orientation_deg'},
+            {width: 130, col: 'us_weld_dist_wc_ft'},
+            {width: 145, col: 'us_weld_dist_coord_m'},
+            {width: 70, col: 'length_in'},
+            {width: 70, col: 'width_in'},
+            {width: 70, col: 'depth_in'}
         ]
 
         const side = s => cols.map(col => out.push({
 
             key: col.col + '_' + s,
             name: col.col + '_' + s,
-            //width: col.width,
             editable: false,
             sortable: false,
             resizable: true,
+            width: col.width,
             formatter: cell =>this.getGridColumn(s, cell)
 
         }))
@@ -39,7 +39,17 @@ export default class CustomGrid extends Component {
 
             key: '_gutter',
             width: 17,
-            formatter: () => (<div style={{backgroundColor:'lightgray', padding:4}}>&nbsp;</div>)
+            formatter: cell => (
+                <div 
+                    style={{
+                        cursor: cell.value ? 'pointer' : 'arrow',
+                        color: cell.value ? 'inherit' : 'lightgray',
+                        backgroundColor:'lightgray',
+                        padding:4
+                    }}
+                    onClick={() => cell.value && this.props.unlink(Number(cell.value))}
+                >X</div>
+            )
 
         })
         side('B')
@@ -70,7 +80,7 @@ export default class CustomGrid extends Component {
         const width = this.props.width ? this.props.width + "px" : "auto"
 
         return (
-            <div style={{padding:10,width:width,maxWidth: width}}>
+            <div className="custom-grid" style={{width:width,maxWidth: width}}>
                 <ReactDataGrid
                     maxWidth={width}
                     columns={(()=>this.getColumns())()}
@@ -90,6 +100,7 @@ CustomGrid.propTypes = {
     rows: PropTypes.array.isRequired,
     clickFeature: PropTypes.func.isRequired,
     hoverFeature: PropTypes.func.isRequired,
+    unlink: PropTypes.func.isRequired,
     width: PropTypes.number.isRequired
 
 }

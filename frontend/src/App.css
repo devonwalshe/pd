@@ -38,56 +38,47 @@
 }
 
 
-.graph {
-  margin: 5px;
-}
 
-.graph > div:last-child {
-  background-color: #ddd;
-  display: table;
-  height: 100%;
-  padding: 30px 10px 10px 10px;
-  width: 100%;
-}
-
-.graph > div:last-child > div:first-child {
-  color: white;
-  display: table-cell;
+.axes {
+  color: black;
   font-size: 0.7rem;
   height: 100%;
-  position: relative;
+  padding-left: 30px;
 }
 
-.graph > div:last-child > div:first-child > div:first-child {
-  padding-top: 7px;
-}
-
-.graph > div:last-child > div:first-child > div:last-child {
-  bottom: 5px;
+.axes > div {
   position: absolute;
-  right: 0;
 }
 
-.graph > div:last-child > div:last-child {
-  display: table-cell;
-  height: 390px;
-  position: relative;
-  vertical-align: top;
-  width: 100%;
+.axes > div:first-child {
+  margin-top: 6px;
+  left: 0;
 }
 
-.graph > div:last-child > div:last-child > div:first-child {
-  border-bottom: 1px solid white;
-  border-top: 1px solid white;
-  height: 362px;
-  margin: 14px 0px 14px 2px;
+.axes > div:nth-child(2) {
+  background-color: #fafafa;
+  top: 6px;
+  left: 50px;
+  height: 34px;
+}
+
+.axes > div:nth-child(3) {
+  background-color: #fff;
+  top: 43px;
+  left: 50px;
+  height: 361px;
+}
+
+.axes > div:last-child {
+  top: 425px;
+  left: 50px;
+  width: 500px;
+}
+
+.axes > div > div {
   position: absolute;
-  width: 100%;
-  width: -moz-available;
-  width: -webkit-fill-available;
-  width: -moz-available;
-  width: stretch;
 }
+
 
 
 /*
@@ -96,12 +87,95 @@ card
 .card {
   font-size: 12px;
 }
+
 .card > .header {
   width: 100%;
   border-bottom: 1px solid gray;
   font-size: 14px;
   text-align: center;
 }
+
+
+.graph {
+  background-color: #eee;
+  margin: 10px 5px 40px 5px;
+  height: 460px;
+  position: relative;
+}
+
+.graph > div {
+  position: absolute;
+}
+
+
+.info > div {
+  display: inline-block;
+}
+
+.info > div:first-child {
+  border-right: 1px solid lightgray;
+  padding: 0px 10px 0px
+}
+
+.info > div > div:first-child {
+  border-bottom: 1px solid lightgray;
+}
+
+
+.info > div:last-child {
+  padding: 0px 30px 0px 10px
+}
+
+.info > div > div:last-child {
+  font-weight: bold;
+}
+
+.menu {
+  box-shadow: 5px 5px 8px #ccc;
+  display: flex;
+  height: 70px;
+  justify-content: space-between;
+  margin-bottom: 25px;
+  padding: 15px 0px 0px 10px;
+  width: 100%;
+}
+.menu > div:first-child {
+  font-size: 1.2rem;
+  font-weight: bold;  
+  float: left;
+  padding: 4px 0px 0px 0px;
+}
+.menu > div:first-child > div {
+  display: none;
+  padding-left: 20px;
+}
+.menu > div:last-child {
+  float: right;
+}
+
+
+
+.custom-grid {
+  padding: 10px;
+}
+
+.custom-grid > .react-grid-Container > .react-grid-Main > .react-grid-Grid > div:last-child > .react-grid-Viewport > .react-grid-Canvas > div:last-child > .react-grid-Row > .react-grid-Cell {
+  padding: 0px !important;
+}
+
+.custom-grid > .react-grid-Container > .react-grid-Main > .react-grid-Grid > .react-grid-Header > .react-grid-HeaderRow > div > div {
+  font-size: 0.7rem;
+  padding: 5px 2px 3px 2px !important;
+}
+
+.custom-grid > .react-grid-Container > .react-grid-Main > .react-grid-Grid > .react-grid-Header > .react-grid-HeaderRow > div > div:nth-child(-n+9) {
+  border-top: 3px solid orange;
+}
+
+.custom-grid > .react-grid-Container > .react-grid-Main > .react-grid-Grid > .react-grid-Header > .react-grid-HeaderRow > div > div:nth-child(n+11) {
+  border-top: 3px solid blue;
+}
+
 
 
 /* Tooltip container */
@@ -134,23 +208,52 @@ card
 
 
 
-.react-grid-Cell {
-  padding: 0px !important;
+
+.upload {
+  height: 100%;
+  text-align: center;
+  width: 100%;
 }
 
-.react-grid-HeaderRow > div > div {
-  font-size: 0.7rem;
-  padding: 5px 2px 3px 2px !important;
+.upload > table {
+  margin: 0 auto;
+  padding: 20px 0px 20px 0px;
+  text-align: left;
 }
 
-.react-grid-HeaderRow > div > div:nth-child(-n+9) {
+.toaster {
+  display: none;
+  position: absolute;
+  background-color: wheat;
+  padding: 10px;
+}
+.toaster > div {
+  display: inline;
+  font-weight: bolder;
+  cursor: pointer;
+  padding-left: 30px;
+}
+
+.welds_table {
+  display: table;
+  font-size: smaller;
+  padding: 5px;
+  width: 100%;
+}
+.welds_table > div {
+  display: table-cell;
+}
+.welds_table > div > div {
+  border: 1px solid gray;
+  display: inline-block;
+  padding: 0px 3px 0px 3px;
+  width: 100%;
+}
+.welds_table > div:nth-child(-n+5) > div:first-child {
   border-top: 3px solid orange;
+  border-bottom: none;
 }
-
-.react-grid-HeaderRow > div > div:nth-child(n+11) {
+.welds_table > div:nth-child(n+6) > div:first-child {
   border-top: 3px solid blue;
+  border-bottom: none;
 }
-/*
-.react-grid-HeaderRow > div > div:nth-child(1) {
-  width:1% !important;
-}*/

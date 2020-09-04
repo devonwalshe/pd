@@ -13,11 +13,11 @@ mapping = mappings['basic_coord']
 
 db = PostgresqlDatabase('pd', user='azymuth', host='localhost', port=5432)
 
-def bootstrap(drop=False):
+def bootstrap(drop=True):
   ### Set up database
   model_list = [Feature, FeatureAttribute, FeaturePair, Weld, WeldPair, \
                 PipeSection, Pipeline, InspectionRun, RunMatch, \
-                FeatureMatch, FeatureMapping, FeatureMap, RawFile]
+                FeatureMapping, FeatureMap, RawFile]
   if drop:
     db.drop_tables(model_list)
   db.create_tables(model_list)
@@ -47,7 +47,8 @@ def bootstrap_run_match(raw_files):
   ### Read match output file
   matched_data = pd.read_csv('data/output/matched_runs_coord_20200707_161051.csv')
   ### Set up record for Run Match
-  rm = RunMatch.create(run_a = inspection_runs[0], run_b = inspection_runs[1], pipeline = pipeline, section_count=matched_data.pipe_section.max() + 1, sections_checked=0)
+  rm = RunMatch.create(run_a = inspection_runs[0], run_b = inspection_runs[1], pipeline = pipeline, 
+                       section_count=matched_data.pipe_section.max() + 1, sections_checked=0, name = "2014_2019")
   ### Return
   return(matched_data, rm)
 
@@ -167,3 +168,8 @@ def bootstrap_features(matched_data, rm, mapping):
   ### Pull them and return
   features = Feature.select().where(Feature.run_match == rm)
   return([f for f in features])
+
+    
+
+if __name__ == "__main__":
+  bootstrap()

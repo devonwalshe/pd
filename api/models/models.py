@@ -19,10 +19,11 @@ class FeatureMapping(Model):
   feature_map = ForeignKeyField(FeatureMap, backref='mappings')
   raw_col_name = CharField()
   processing_col_name = CharField()
-  datatype = CharField
+  datatype = CharField()
   
   class Meta:
     database = db
+  
 
 class RawFile(Model):
   '''
@@ -52,7 +53,7 @@ class InspectionRun(Model):
   '''
   raw_file = ForeignKeyField(RawFile, backref='run')
   run_date = DateTimeField()
-  pipeline = ForeignKeyField(Pipeline, backref='runs')
+  pipeline = ForeignKeyField(Pipeline, backref='inspection_runs')
 
   class Meta:
     database = db
@@ -61,11 +62,13 @@ class RunMatch(Model):
   '''
   Matches two runs
   '''
+  # name = CharField()
   run_a = ForeignKeyField(InspectionRun, backref='match')
   run_b = ForeignKeyField(InspectionRun, backref='match')
   pipeline = ForeignKeyField(Pipeline, backref='match')
   section_count = IntegerField()
   sections_checked = IntegerField()
+  name = CharField()
   
   class Meta:
     database = db
@@ -78,6 +81,9 @@ class PipeSection(Model):
   section_id = CharField(unique=True)
   run_match = ForeignKeyField(RunMatch, backref='pipe_sections')
   manually_checked = BooleanField()
+  
+  def feature_count(self):
+    return(self.features.count())
   
   class Meta:
     database = db
@@ -96,6 +102,13 @@ class Weld(Model):
   joint_length = DoubleField()
   wall_thickness = DoubleField()
   
+  def weld_pair(self):
+    ### code to return the weld pair
+    weld_pair_a = [wp for wp in self.weld_pair_a]
+    weld_pair_b = [wp for wp in self.weld_pair_b]
+    weld_pair = weld_pair_a + weld_pair_b
+    return(weld_pair[0])
+  
   class Meta:
     database = db
    
@@ -103,12 +116,16 @@ class WeldPair(Model):
   '''
   A matched pair of welds between two inspection runs
   '''
-  weld_a = ForeignKeyField(Weld, backref='weld_pair')
-  weld_b = ForeignKeyField(Weld, backref='weld_pair')
+  weld_a = ForeignKeyField(Weld, backref='weld_pair_a')
+  weld_b = ForeignKeyField(Weld, backref='weld_pair_b')
   run_match = ForeignKeyField(RunMatch, backref = 'weld_pairs')
-  
+    
   class Meta:
     database = db
+    indexes = (
+      ### multiple on all three
+      (('weld_a', 'weld_b', 'run_match'), True),
+    )
   
 class Feature(Model):
   '''
@@ -165,16 +182,27 @@ class FeaturePair(Model):
   class Meta:
     database = db
 
-class FeatureMatch(Model):
+class MatcherRun(Model):
   '''
-  Performs the feature match
+  Runner for the matcher
   '''
-  run_match = ForeignKeyField(RunMatch, backref='feature_match')
-  features_a = ForeignKeyField(Feature)
-  features_b = ForeignKeyField(Feature)
+  run_match = ForeignKeyField(RunMatch, backref='matcher_run', unique=True)
+  start_time = FloatField(null=True)
+  end_time = FloatField(null=True)
+
+class RunMatchConf(Model):
+  '''
+  All the configuration for a single run match
+  '''
+  run_match = ForeignKeyField(RunMatch, backref='conf', unique=True)
+  feature_map = ForeignKeyField(FeatureMap, backref='run_matches', unique=True)
+  coordinates_match = BooleanField()
+  short_joint_threshold = IntegerField()
+  short_joint_window = IntegerField()
+  short_joint_lookahead = IntegerField()
+  joint_length_difference = FloatField()
+  backtrack_validation_lookahead = IntegerField()
+  feature_match_threshold = FloatField()
+  metal_loss_match_threshold = FloatField()
   
-  class Meta:
-    database = db
-
-
 

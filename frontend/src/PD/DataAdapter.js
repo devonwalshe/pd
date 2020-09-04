@@ -1,30 +1,35 @@
 import React, { Component } from 'react'
-import PropTypes from 'prop-types'
+import { proxyURL, restURL, weldsTableColumns } from '../config'
+
 
 export default class DataAdapter extends Component {
 
     constructor(props) {
 
         super(props)
-        this.state = {}
+        this.state = {
+            rest_error: false
+        }
+
+        this.spinner = document.getElementById('spinner')
+        this.toast = document.getElementById('toast')
 
     }
 
 
     fetchRest = (rest, url, data, cbk) => {
 
-        this.props.isLoading(true)
-
+        this.spin(true)
+        
         fetch(url)
             .then(res => res.json())
             .then(res => {
-                this.props.isLoading(false)
+                this.spin(false)
                 cbk(this.adapt(rest, data, res), data)
             })
             .catch(e => {
-                this.props.isLoading(false)
-                console.log(e)
-                this.props.restError(e)
+                this.spin(false)
+                this.toast.style.display = 'block'
             })
 
     }
@@ -34,7 +39,7 @@ export default class DataAdapter extends Component {
 
         const points = {
 
-            run_matches: () => {
+            run_matches_: () => {
 
                 let options = []
 
@@ -61,10 +66,15 @@ export default class DataAdapter extends Component {
 
                 let pipeSection = {
 
+                        id: res.id,
+                        section_id: res.section_id,
+                        run_match: res.run_match,
+                        manually_checked: res.manually_checked,
                         features: {},
                         table: [],
                         weld_a_width: 0,
-                        weld_b_width: 0
+                        weld_b_width: 0,
+                        welds: {}
 
                     },
                     temp = [],
@@ -92,9 +102,28 @@ export default class DataAdapter extends Component {
         
                 })
         
-                welds.map(a => pipeSection['weld_'+ a.side.toLowerCase() + '_width'] = Number(a.us_weld_dist))
+                let weldsTemp = {}
+                welds.forEach(a => {
+
+                    weldsTemp[a.side] = a
+                    
+                    pipeSection['weld_'+ a.side.toLowerCase() + '_width'] = Number(a.us_weld_dist)
+                    
+                })
         
         
+
+                ;(['A','B']).forEach(side => {
+
+                    pipeSection.welds[side] = {}
+
+                        weldsTemp[side] && weldsTableColumns.map(f => pipeSection.welds[side][f] = weldsTemp[side][f])
+
+//                    weldsTemp[side] && weldsTableColumns.forEach(field => pipeSection.welds.push((<div key={side + field}><div>{field}</div><div>{weldsTemp[side][field]}</div></div>)))
+                })
+
+
+
                 for (let i = 0, ix = temp.length; i < ix; i +=1) {
                     
                     pipeSection.features[temp[i].id] = temp[i]
@@ -120,7 +149,7 @@ export default class DataAdapter extends Component {
                                             featuresIn.push(temp[i].id)
                                             featuresIn.push(temp[k].id)
                                                 
-                                            pipeSection.table.push(this.getTableRow(temp[i], temp[k]))
+                                            pipeSection.table.push(this.getTableRow(temp[i], temp[k], pairs[j].id))
             
                                         } else if
                                             (temp[i].side === 'B' && temp[i].id === pairs[j].feature_b &&
@@ -128,7 +157,7 @@ export default class DataAdapter extends Component {
                                             
                                             featuresIn.push(temp[i].id)
                                             featuresIn.push(temp[k].id)
-                                            pipeSection.table.push(this.getTableRow(temp[k], temp[i]))
+                                            pipeSection.table.push(this.getTableRow(temp[k], temp[i], pairs[j].id))
             
                                         }
         
@@ -151,7 +180,7 @@ export default class DataAdapter extends Component {
     }
 
 
-    getTableRow = (a, b) => {
+    getTableRow = (a, b, f) => {
 
         const rnd = num => Number(num).toFixed(4)
         const side = (o, s) => {
@@ -169,10 +198,12 @@ export default class DataAdapter extends Component {
             }
         }
 
+        
+
         return{
 
             ...side(a, 'A'),
-            _gutter:'',
+            _gutter: f ? f : false,
             ...side(b, 'B'),
 
         }
@@ -181,9 +212,21 @@ export default class DataAdapter extends Component {
 
     get = (rest, data, cbk) => {
 
-        const url = this.props.proxyURL +
+        const url = proxyURL +
             '?url=' +
-            encodeURIComponent(this.props.restURL) +
+            encodeURIComponent(restURL) +
+            rest +
+            (data ? '/' + escape(data) : '')
+
+        this.fetchRest(rest, url, data, cbk)
+
+    }
+
+    delete = (rest, data, cbk) => {
+
+        const url = proxyURL +
+            '?method=DELETE&url=' +
+            encodeURIComponent(restURL) +
             rest +
             (data ? '/' + data : '')
 
@@ -194,9 +237,9 @@ export default class DataAdapter extends Component {
 
     post = (rest, data, cbk) => {
         
-        const url = this.props.proxyURL +
-            '?url=' +
-            encodeURIComponent(this.props.restURL) +
+        const url = proxyURL +
+            '?method=POST&url=' +
+            encodeURIComponent(restURL) +
             rest +
             '/' +
             '&data=' + JSON.stringify(data)
@@ -205,16 +248,42 @@ export default class DataAdapter extends Component {
 
     }
 
+    put = (rest, id, data, cbk) => {
 
-}
+        const url = proxyURL +
+            '?method=PUT&url=' +
+            encodeURIComponent(restURL) +
+            rest + '%2F' + id + '&data=' + JSON.stringify(data)
+
+        this.fetchRest(rest, url, data, cbk)
+
+    }
 
 
+    upload = (data, cbk) => {
 
-DataAdapter.propTypes = {
+        this.spin(true)
 
-    proxyURL: PropTypes.string.isRequired,
-    restURL: PropTypes.string.isRequired,
-    isLoading: PropTypes.func.isRequired,
-    restError: PropTypes.func.isRequired
+        fetch(this.props.proxyURL + '?upload', {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json'
+            },
+            body: data
+        })
+            .then(res => {
+                this.spin(false)
+                cbk(res)
+            })
+            .catch(e => {
+                this.spin(false)
+                console.log(e)
+                this.toast.style.display = 'block'
+            })
+        
+    }
+
+    spin = s => this.spinner.style.display = s ? 'inline' : 'none'
+
 
 }
