@@ -56,7 +56,14 @@
 }
 
 .axes > div:nth-child(2) {
-  background-color: #eee;
+  background-color: #fafafa;
+  top: 6px;
+  left: 50px;
+  height: 34px;
+}
+
+.axes > div:nth-child(3) {
+  background-color: #fff;
   top: 43px;
   left: 50px;
   height: 361px;
@@ -90,8 +97,9 @@ card
 
 
 .graph {
-  margin: 0px 5px 40px 5px;
-  height: 420px;
+  background-color: #eee;
+  margin: 10px 5px 40px 5px;
+  height: 460px;
   position: relative;
 }
 
@@ -123,9 +131,12 @@ card
 }
 
 .menu {
+  box-shadow: 5px 5px 8px #ccc;
   display: flex;
+  height: 70px;
   justify-content: space-between;
-  padding: 10px 0px 0px 10px;
+  margin-bottom: 25px;
+  padding: 15px 0px 0px 10px;
   width: 100%;
 }
 .menu > div:first-child {
@@ -224,7 +235,6 @@ card
 }
 
 .welds_table {
-  border-top: 1px solid gray;
   display: table;
   font-size: smaller;
   padding: 5px;

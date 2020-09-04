@@ -20,6 +20,7 @@ export default class PD extends Component {
             confirm_on: false,
             hover_graph: 0,
             hover_table: 0,
+            nav_status: '0000',
             section_id: '',
             pipe_section_graph: [],
             pipe_section_table: [],
@@ -69,6 +70,7 @@ export default class PD extends Component {
                 index: 0
             }
 
+            this.navStatus()
             this.loadPipeSection()
 
         })
@@ -127,6 +129,57 @@ export default class PD extends Component {
 
     }
 
+
+    navStatus = filter => {
+
+        const p = this.pipe_sections
+        const ln = p.data.length
+
+        let n
+
+        if (!ln)
+
+            n = '0000'
+
+        else if (!p.index)
+
+            n = '0011'
+
+        else if (p.index === (ln - 1))
+
+            n = '1100'
+
+        else {
+
+            let nx = [0,1,1,0]
+
+            for (let i = p.index - 1; i > -1; i -= 1)
+
+                if (p.data[i].manually_checked && (!filter || p.data[i].feature_count)) {
+
+                    nx[0] = 1
+                    i = -1
+
+                }
+
+            for (let i = p.index + 1; i < ln; i += 1)
+
+                if (p.data[i].manually_checked && (!filter || p.data[i].feature_count)) {
+
+                    nx[3] = 1
+                    i = ln
+
+                }
+
+            n = nx.join('')
+
+        }
+
+        this.setState({nav_status: n})
+
+    }
+
+    
     sectionGo = (dir, chk, filter) => {
 
         const ps = this.pipe_sections.data
@@ -151,15 +204,15 @@ export default class PD extends Component {
 
         } else {
 
-            for (let i = p + 1; i < ix; i += 1) 
+            for (let i = p + 1; i < ix; i += 1) {
 
                 if (test(ps[i])) {
 
                     idx = ps[i].id
                     this.pipe_sections.index = i
                     i = ix
-
-                }
+                    console.log(p,idx)
+                }}
             
         }
 
@@ -170,6 +223,7 @@ export default class PD extends Component {
 
         }
 
+        this.navStatus(filter)
 
     }
 
@@ -194,8 +248,8 @@ export default class PD extends Component {
 
                 if (!isNaN(h) && !isNaN(w)) {
 
-                    feature.width = graph_width / max_width * w / 12
-                    feature.height = graph_width / max_width * h / 12
+                    feature.width = w > 0.5 ? graph_width / max_width * w / 12 : 2
+                    feature.height = h > 0.5 ? graph_width / max_width * h / 12 : 2
 
                 }
             
@@ -309,6 +363,7 @@ export default class PD extends Component {
                         })
                     }}
                     match_on={this.state.match_on}
+                    nav_status={this.state.nav_status}
                     onCancel={() => {
                         this.highlightDom(this.first_match, 'transparent')
                         this.highlightDom(this.second_match, 'transparent')

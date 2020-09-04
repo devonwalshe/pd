@@ -83,7 +83,7 @@ export default class Feature extends Component {
                         className={'shape ' + (i.matched ? 'matched' : 'unmatched') + (isloss ? ' isloss' : '')}
                         key={i.id}
                         style={{
-                            backgroundColor: isloss ? border : 'none',
+                            //backgroundColor: isloss || !nodim ? border : 'none',
                             left: left + offset.y,
                             top: top + offsetTop,
                             height: height,
@@ -95,12 +95,12 @@ export default class Feature extends Component {
                                 onClick={e => this.props.onClick(e.currentTarget.id)}
                                 id={i.id}
                                 style={{
-                                backgroundColor: isloss ? border : 'none',
+                                backgroundColor: !nodim ? border : 'none',
                                 padding: 1,
                                 border: "1px solid " + border,
                                 height: height,
                                 width: width}}>
-                                {isloss ? '' : (<img
+                                {isloss || !nodim ? '' : (<img
                                     alt={a.feature_category}
                                     width={icowh}
                                     height={icowh}
@@ -127,7 +127,8 @@ export default class Feature extends Component {
                                 'us_weld_dist_coord_m',
                                 'length_in',
                                 'width_in',
-                                'depth_in'
+                                'depth_in',
+                                'comments'
                             ]
                             
                             let out = [

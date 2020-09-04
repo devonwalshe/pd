@@ -34,6 +34,7 @@ export default class Axes extends Component {
     xAxis = () => {
 
         document.getElementById('x_axis').style.width = this.graph_width - this.offset.y - this.offset.margin + 'px'
+        document.getElementById('feature_area').style.width = this.graph_width - this.offset.y - this.offset.margin + 'px'
         document.getElementById('plot_area').style.width = this.graph_width - this.offset.y - this.offset.margin + 'px'
 
         const w = Math.round(this.state.weld_width * 10) / 10
@@ -80,7 +81,8 @@ export default class Axes extends Component {
                     })()}
                 </div>
 
-                <div id="plot_area"></div>
+                <div id='feature_area'></div>
+                <div id='plot_area'></div>
 
                 <div id="x_axis" style={{backgroundColor:'black', height:0.8}}>
                     {this.state.x_axis}
