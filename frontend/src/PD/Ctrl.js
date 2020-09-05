@@ -28,7 +28,10 @@ export default class Ctrl extends Component {
             nav_status: props.nav_status,
             run_match: props.run_match,
             section_id: props.section_id,
-            weld_side_a: true
+            weld_side_a: true,
+            sectionIndex: props.sectionIndex,
+            sectionTotal: props.sectionTotal
+
         }
 
 
@@ -36,7 +39,6 @@ export default class Ctrl extends Component {
         this.second_match = 0
         this.dataAdapter = new DataAdapter()
 
-        
     }
 
     componentDidUpdate(props) {
@@ -45,15 +47,21 @@ export default class Ctrl extends Component {
             this.state.manually_checked !== props.manually_checked ||
             this.state.match_on !== props.match_on ||
             this.state.confirm_on !== props.confirm_on ||
-            this.state.nav_status !== props.nav_status)
+            this.state.nav_status !== props.nav_status ||
+            this.state.sectionIndex !== props.sectionIndex ||
+            this.state.sectionTotal !== props.sectionTotal)
 
             this.setState({
+
                 confirm_on: props.confirm_on,
                 manually_checked: props.manually_checked,
                 match_on: props.match_on,
                 nav_status: props.nav_status,
                 run_match: props.run_match,
-                section_id: props.section_id
+                section_id: props.section_id,
+                sectionIndex: props.sectionIndex,
+                sectionTotal: props.sectionTotal
+
             })
 
     }
@@ -62,6 +70,7 @@ export default class Ctrl extends Component {
     highligtDom = (id, color) => {
 
         const doc = document.getElementById(id)
+
         doc && (doc.style.backgroundColor = color)
 
     }
@@ -92,6 +101,7 @@ export default class Ctrl extends Component {
                         <OverlayTrigger
                             placement="bottom"
                             delay={{ show: 250, hide: 100 }}
+                            rootClose={true}
                             overlay={props => (
                                 <Tooltip id="button-tooltip" {...props}>
                                     Previous Complete section
@@ -109,6 +119,7 @@ export default class Ctrl extends Component {
                         <OverlayTrigger
                             placement="bottom"
                             delay={{ show: 250, hide: 100 }}
+                            rootClose={true}
                             overlay={props => (
                                 <Tooltip id="button-tooltip" {...props}>
                                     Previous section
@@ -123,6 +134,10 @@ export default class Ctrl extends Component {
                                 &lt;
                             </Button>
                         </OverlayTrigger>
+                        <div
+                            style={{color:'#888',padding:'0px 10px 0px 10px',width:80}}>
+                            {this.state.sectionIndex + '/' + this.state.sectionTotal}
+                        </div>
                         <div className="feature_filter">
                             <div>Features</div>
                             <div>
@@ -141,6 +156,7 @@ export default class Ctrl extends Component {
                         <OverlayTrigger
                             placement="bottom"
                             delay={{ show: 250, hide: 100 }}
+                            rootClose={true}
                             overlay={props => (
                                 <Tooltip id="button-tooltip" {...props}>
                                     Next section
@@ -158,6 +174,7 @@ export default class Ctrl extends Component {
                         <OverlayTrigger
                             placement="bottom"
                             delay={{ show: 250, hide: 100 }}
+                            rootClose={true}
                             overlay={props => (
                                 <Tooltip id="button-tooltip" {...props}>
                                     Next Complete section
@@ -307,7 +324,7 @@ Ctrl.propTypes = {
     manually_checked: PropTypes.bool.isRequired,
     confirm_on: PropTypes.bool.isRequired,
     match_on: PropTypes.bool.isRequired,
-    nav_status: PropTypes.string.isRequired
-
-
+    nav_status: PropTypes.string.isRequired,
+    sectionIndex: PropTypes.number.isRequired,
+    sectionTotal: PropTypes.number.isRequired
 }
