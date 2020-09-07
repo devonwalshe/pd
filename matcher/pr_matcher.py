@@ -10,57 +10,33 @@ from matcher.weld_matcher import WeldMatcher
 ### Organise the work
 class PigRunMatcher(object):
 
-  def __init__(self, pr1, pr2, mapping):
+  def __init__(self, pr1, pr2, feature_mapping, conf):
     self.pr1 = pr1
     self.pr2 = pr2
     self.df1 = pr1.init_df
     self.df2 = pr2.init_df
-    self.mapping = mappings[mapping]
-    self.coord_match = self.mapping['coordinates']
+    self.feature_mapping = feature_mapping
+    self.conf = conf
+    self.coord_match = conf['coordinates_match']
     self.matched_welds = None
 
   @timed(logger)
   def match_runs(self):
     ### Normalise wheel counts
-    # self.normalise_wc(self.df1, self.df2)
+      ### TODO ?
     ### Step one - match welds and update original dataframes
-    if self.coord_match:
-      matched_welds = WeldMatcher(self.df1, self.df2, self.mapping).match_welds()
-      ### Step two - add match information to datasets, and rematch welds so we have the right ids
-      self.map_runs(matched_welds)
-      matched_welds = WeldMatcher(self.df1, self.df2, self.mapping).match_welds()
-    else:
-      matched_welds = WeldMatcher(self.df1, self.df2, self.mapping).match_welds()
-      ### Step two - add match information to datasets, and rematch welds so we have the right ids
-      self.map_runs(matched_welds)
-      matched_welds = WeldMatcher(self.df1, self.df2, self.mapping).match_welds()
+    matched_welds = WeldMatcher(self.df1, self.df2, self.feature_mapping, self.conf).match_welds()
+    ### Step two - add match information to datasets, and rematch welds so we have the right ids
+    self.map_runs(matched_welds)
+    matched_welds = WeldMatcher(self.df1, self.df2, self.feature_mapping, self.conf).match_welds()
     ### Step three - match features
     matched_features = self.match_features()
     ### Step four - assemble final dataset
     runs_joined = self.assemble_data(matched_welds,matched_features)
+    ### Get rid of the unhelpful NaN objects
+    runs_joined = runs_joined = runs_joined.where(pd.notnull(runs_joined), None)
     ### Return
     return(runs_joined)
-
-
-  # ### TODO - tear this out into its own class
-  # @timed(logger)
-  # def match_welds(self, coords=True):
-  #   ### Subset welds
-  #   w1 = self.df1[self.df1.feature=='WELD']
-  #   w2 = self.df2[self.df2.feature=='WELD']
-  #   ### Build index based on nearest records using the haversine distance (Sorted Neighbourhod)
-  #   indexer = recordlinkage.Index()
-  #   indexer.sortedneighbourhood(left_on='h_dist', right_on='h_dist', window = 15)
-  #   index = indexer.index(w1, w2)
-  #   ### set up comparison
-  #   comp = recordlinkage.Compare()
-  #   comp.numeric('h_dist', 'h_dist', method='gauss')
-  #   results = comp.compute(index, w1, w2).rename(columns={0:"hdist"})
-  #   ### get exact matches
-  #   matches = results[results.hdist == 1]
-  #   ### pull in data from both sides
-  #   matched_welds = self.join_from_index(matches.index)
-  #   return(matched_welds)
 
 
   def map_runs(self, matched_welds):
@@ -148,18 +124,18 @@ class PigRunMatcher(object):
                 f2[f2.feature_category != "metal loss / mill anomaly"])
     ### Set up index
     indexer = recordlinkage.Index()
-    indexer.block(on=['feature_category', 'pipe_section'])
+    indexer.block(on=['feature', 'pipe_section'])
     index = indexer.index(ff1, ff2)
     ### Set up comparison
     comp = recordlinkage.Compare()
     comp.numeric('us_weld_dist_wc_ft', 'us_weld_dist_wc_ft')
-    comp.geo('orientation_x', 'orientation_y', 'orientation_x', 'orientation_y', method='squared')
+    comp.exact('feature_category', 'feature_category', missing_value=.75)
     ### Compute
     results = comp.compute(index, ff1, ff2)
-    ### Gen match score
+    ### Gen match score TODO - improve here
     results['match_score'] = results.iloc[:,0:results.shape[1]].mean(axis=1)
     ### Get matches above N and take top ones where there are multiple
-    matches = results[results['match_score'] >= self.mapping['feature_match']['fixed_feature_match']]
+    matches = results[results['match_score'] >= self.conf['feature_match_threshold']]
     matches = matches[matches.groupby('A')['match_score'].transform(max) == matches['match_score']]
 
     return(matches)
@@ -178,13 +154,13 @@ class PigRunMatcher(object):
     ### Set up comparison
     comp = recordlinkage.Compare()
     comp.numeric('us_weld_dist_wc_ft', 'us_weld_dist_wc_ft')
-    comp.numeric('orientation_x', 'orientation_x')
-    comp.numeric('orientation_y', 'orientation_y')
+    comp.numeric('orientation_x', 'orientation_x', scale=15)
+    comp.numeric('orientation_y', 'orientation_y', scale=15)
     results = comp.compute(index, mlma1, mlma2)
     ### Gen match score
     results['match_score'] = results.iloc[:,0:results.shape[1]].mean(axis=1)
     ### Get matches above N and take top ones where there are multiple
-    matches = results[results['match_score'] >= self.mapping['feature_match']['metal_loss_match']]
+    matches = results[results['match_score'] >= self.conf['metal_loss_match_threshold']]
     matches = matches[matches.groupby('A')['match_score'].transform(max) == matches['match_score']]
     return(matches)
 
@@ -229,8 +205,16 @@ class PigRunMatcher(object):
                    'lng_B', 'comments_B', 'us_weld_id_B', 'us_weld_dist_coord_B', 'us_weld_dist_wc_B', 'h_dist_B',
                    'orientation_x_B', 'orientation_y_B', 'pipe_section', 'section_sequence']
 
+    ### FIXME so this is included in the run match conf
+    output_cols = {'dup_cols': ['id','feature','wc','wt','depth_in','length_in',
+                                'width_in','joint_length','pressure_1',
+                                'pressure_2','us_weld_dist_wc_ft',
+                                'orientation_deg','orientation_x','orientation_y',
+                                'comments','feature_category'],
+                    'sort_cols': ['pipe_section', 'section_sequence']}
+
     ### Try keep with output from mapping
-    keep_columns = [x + "_A" for x in self.mapping['output_columns']['dup_cols']] + [x + "_B" for x in self.mapping['output_columns']['dup_cols']] + self.mapping['output_columns']['sort_cols']
+    keep_columns = [x + "_A" for x in output_cols['dup_cols']] + [x + "_B" for x in output_cols['dup_cols']] + output_cols['sort_cols']
 
     ### Organised unmatched
     unmatched_A = self.df1.drop(pd.concat([matched_welds.A, matched_features.A]))

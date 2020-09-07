@@ -9,6 +9,7 @@ class FeatureMap(Model):
   mapping_name = CharField()
   source_name = CharField()
 
+  @property
   def mappings_serialized(self):
     mappings = self.mappings
     return([model_to_dict(mapping, recurse=False) for mapping in mappings])
@@ -20,7 +21,7 @@ class FeatureMapping(Model):
   '''
   Individual mapping for features
   '''
-  feature_map = ForeignKeyField(FeatureMap, backref='mappings')
+  feature_map = ForeignKeyField(FeatureMap, backref='mappings', on_delete="CASCADE")
   raw_col_name = CharField()
   processing_col_name = CharField()
   datatype = CharField()
@@ -31,13 +32,14 @@ class FeatureMapping(Model):
 
 class RawFile(Model):
   '''
-  Raw uploaded files
+  Raw uploaded xlsx files
   '''
   filename = CharField()
   file_url = CharField()
   uploaded_at = DateTimeField(null=True)
-  data_mapping = ForeignKeyField(FeatureMap, backref='files')
+  data_mapping = ForeignKeyField(FeatureMap, backref='files', on_delete="SET NULL", null=True)
   source = CharField()
+  sheet_name = CharField()
 
   ### Meta
   class Meta:
@@ -56,9 +58,9 @@ class InspectionRun(Model):
   '''
   A single run of an inspection tool
   '''
-  raw_file = ForeignKeyField(RawFile, backref='run')
+  raw_file = ForeignKeyField(RawFile, backref='run', on_delete="CASCADE")
   run_date = DateTimeField()
-  pipeline = ForeignKeyField(Pipeline, backref='inspection_runs')
+  pipeline = ForeignKeyField(Pipeline, backref='inspection_runs', on_delete="CASCADE")
 
   class Meta:
     database = db
@@ -68,12 +70,23 @@ class RunMatch(Model):
   Matches two runs
   '''
   # name = CharField()
-  run_a = ForeignKeyField(InspectionRun, backref='match')
-  run_b = ForeignKeyField(InspectionRun, backref='match')
-  pipeline = ForeignKeyField(Pipeline, backref='match')
-  section_count = IntegerField()
-
+  run_a = ForeignKeyField(InspectionRun, backref='match', on_delete="CASCADE")
+  run_b = ForeignKeyField(InspectionRun, backref='match', on_delete="CASCADE")
+  pipeline = ForeignKeyField(Pipeline, backref='match', on_delete="SET NULL", null=True)
+  section_count = IntegerField(null=True)
   name = CharField()
+
+  @property
+  def conf(self):
+    return(self.confs.get())
+
+  @property
+  def match_complete(self):
+    return(True if self.pipe_sections.exists() else False)
+
+  @property
+  def manual_check_complete(self):
+    return(True if self.sections_checked == self.pipe_sections.count() else False)
 
   @property
   def sections_checked(self):
@@ -96,7 +109,7 @@ class PipeSection(Model):
   A section of pipe
   '''
   section_id = CharField(unique=True)
-  run_match = ForeignKeyField(RunMatch, backref='pipe_sections')
+  run_match = ForeignKeyField(RunMatch, backref='pipe_sections', on_delete="CASCADE")
   manually_checked = BooleanField()
 
   def feature_count(self):
@@ -111,13 +124,13 @@ class Weld(Model):
   Delineates pipe sections
   '''
   weld_id = CharField()
-  pipe_section = ForeignKeyField(PipeSection, field='section_id', backref='weld')
+  pipe_section = ForeignKeyField(PipeSection, field='section_id', backref='weld', on_delete="SET NULL", null=True)
   section_sequence = IntegerField()
   wheel_count = DoubleField()
-  run_match = ForeignKeyField(RunMatch, backref = 'welds')
+  run_match = ForeignKeyField(RunMatch, backref = 'welds', on_delete="CASCADE")
   side = CharField()
-  us_weld_dist = DoubleField()
-  joint_length = DoubleField()
+  us_weld_dist = DoubleField(null=True)
+  joint_length = DoubleField(null=True)
   wall_thickness = DoubleField()
 
   def weld_pair(self):
@@ -134,9 +147,9 @@ class WeldPair(Model):
   '''
   A matched pair of welds between two inspection runs
   '''
-  weld_a = ForeignKeyField(Weld, backref='weld_pair_a')
-  weld_b = ForeignKeyField(Weld, backref='weld_pair_b')
-  run_match = ForeignKeyField(RunMatch, backref = 'weld_pairs')
+  weld_a = ForeignKeyField(Weld, backref='weld_pair_a', on_delete="CASCADE")
+  weld_b = ForeignKeyField(Weld, backref='weld_pair_b', on_delete="CASCADE")
+  run_match = ForeignKeyField(RunMatch, backref = 'weld_pairs', on_delete="CASCADE")
 
   class Meta:
     database = db
@@ -153,7 +166,7 @@ class Feature(Model):
   pipe_section = ForeignKeyField(PipeSection, field='section_id', backref='features')
   section_sequence = IntegerField()
   ml_ma = BooleanField() # is it metal loss / mill anomaly?
-  run_match = ForeignKeyField(RunMatch, backref='features')
+  run_match = ForeignKeyField(RunMatch, backref='features', on_delete="CASCADE")
   side = CharField()
 
   def matched(self):
@@ -181,7 +194,7 @@ class FeatureAttribute(Model):
   '''
   An attribute field for each reading - dependent on the tool and supplier
   '''
-  feature = ForeignKeyField(Feature, backref='attributes')
+  feature = ForeignKeyField(Feature, backref='attributes', on_delete="CASCADE")
   attribute_name = CharField()
   attribute_datatype = CharField()
   attribute_data = CharField()
@@ -193,30 +206,20 @@ class FeaturePair(Model):
   '''
   A matched pair or set of features between two inspection runs
   '''
-  feature_a = ForeignKeyField(Feature, backref='feature_pair')
-  feature_b = ForeignKeyField(Feature, backref='feature_pair')
-  run_match = ForeignKeyField(RunMatch, backref='feature_pairs')
-  pipe_section = ForeignKeyField(PipeSection, backref='feature_pairs')
+  feature_a = ForeignKeyField(Feature, backref='feature_pair', on_delete="CASCADE")
+  feature_b = ForeignKeyField(Feature, backref='feature_pair', on_delete="CASCADE")
+  run_match = ForeignKeyField(RunMatch, backref='feature_pairs', on_delete="CASCADE")
+  pipe_section = ForeignKeyField(PipeSection, backref='feature_pairs', on_delete="CASCADE")
 
   class Meta:
     database = db
 
-class MatcherRun(Model):
-  '''
-  Runner for the matcher
-  '''
-  run_match = ForeignKeyField(RunMatch, backref='matcher_run', unique=True)
-  start_time = FloatField(null=True)
-  end_time = FloatField(null=True)
-
-  class Meta:
-    database = db
 
 class RunMatchConf(Model):
   '''
   All the configuration for a single run match
   '''
-  run_match = ForeignKeyField(RunMatch, backref='conf', unique=True)
+  run_match = ForeignKeyField(RunMatch, backref='confs', unique=True, on_delete="CASCADE")
   feature_map = ForeignKeyField(FeatureMap, backref='run_matches', unique=True)
   coordinates_match = BooleanField()
   short_joint_threshold = IntegerField()

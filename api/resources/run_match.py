@@ -16,8 +16,34 @@ class RunMatchList(ListResource):
 
 class RunMatchNew(NewResource):
 
-  def __init__(self, **kwargs):
-    super().__init__(**kwargs)
+  def post(self):
+    data = request.get_json(force=True)
+    instances = []
+    for item in data:
+      instance = self.model(**item)
+      ### TODO add sensible try except blocks with rollbacks
+      conf = self.set_default_conf(instance)
+      instance.save()
+      instances.append(model_to_dict(instance, recurse=False))
+    if datetime.datetime in [type(v) for v in instances[0].values()]:
+      instances = [DateUtil.serialize_instance_dates(instance) for instance in instances]
+    return(instances, 201)
+
+
+  def set_default_conf(self, rm):
+    ### Defaults: can be changed later
+    rmc = RunMatchConf.create(run_match=rm,
+                              feature_map=rm.run_a.raw_file.data_mapping,
+                              coordinates_match=False,
+                              short_joint_threshold=20,
+                              short_joint_window=10,
+                              short_joint_lookahead=75,
+                              joint_length_difference=2,
+                              backtrack_validation_lookahead=10,
+                              feature_match_threshold=.98,
+                              metal_loss_match_threshold=.60
+                              )
+    return(rmc)
 
 class RunMatchResource(BaseResource):
 
@@ -28,8 +54,11 @@ class RunMatchResource(BaseResource):
     ### include conf and feature map
     rm = RunMatch.get_by_id(instance_id)
     fm_a, fm_b = rm.fm_a, RunMatch.get_by_id(instance_id).fm_b
-    conf = [c for c in rm.conf][0]
-    res = {**model_to_dict(rm, recurse=False), 'sections_checked': rm.sections_checked, 'feature_maps':[model_to_dict(fm, recurse=False) for fm in [fm_a, fm_b]], "conf":model_to_dict(conf, recurse=False)}
+    conf = rm.conf
+    res = {**model_to_dict(rm, recurse=False), 'sections_checked': rm.sections_checked,
+          'match_complete': rm.match_complete, 'manual_check_complete': rm.manual_check_complete,
+          'feature_maps':[model_to_dict(fm, recurse=False) for fm in [fm_a, fm_b]],
+          "conf":model_to_dict(conf, recurse=False)}
     return(res)
 
 class RunMatchPipeSections(BaseResource):

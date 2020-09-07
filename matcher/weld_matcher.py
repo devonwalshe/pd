@@ -4,15 +4,14 @@ import pandas as pd
 import numpy as np
 
 class WeldMatcher(object):
-  
-  def __init__(self, df1, df2, mapping):
+
+  def __init__(self, df1, df2, feature_mapping, conf):
     # self.matched_welds = self.match_welds(w1, w2, coord_match)
     self.w1 = df1[df1.feature == "WELD"]
     self.w2 = df2[df2.feature == "WELD"]
-    self.coord_match = mapping['coordinates']
-    if not self.coord_match:
-      self.conf = mapping['weld_match']
-    
+    self.coord_match = conf['coordinates_match']
+    self.conf = conf
+
   @timed(logger)
   def match_welds(self):
     if self.coord_match:
@@ -20,7 +19,7 @@ class WeldMatcher(object):
     else:
       matched_welds = self.backtrack_matcher(self.w1, self.w2)
     return(matched_welds)
-    
+
   def coord_matcher(self, w1, w2):
     ### Build index based on nearest records using the haversine distance (Sorted Neighbourhod)
     indexer = recordlinkage.Index()
@@ -35,7 +34,7 @@ class WeldMatcher(object):
     ### pull in data from both sides
     matched_welds = self.join_from_index(w1, w2, matches.index)
     return(matched_welds)
-    
+
   def backtrack_matcher(self, w1, w2):
     '''
     Main controller for a pigrun without co-ordinates
@@ -53,7 +52,7 @@ class WeldMatcher(object):
       while matched_welds[0][-1].iat[-1, 0] + 1 <  n:
         ### update matched welds and decide whether to continue
         step, matched_welds = self.step_match(w1, w2, matched_welds)
-        print(matched_welds[0][-1].id.values[0], matched_welds[1][-1].id.values[0])
+        # print(matched_welds[0][-1].id.values[0], matched_welds[1][-1].id.values[0])
         ### Backtrack loop
         if not step:
           # if matched_welds[0][-1].id.item() > 24070:
@@ -65,11 +64,11 @@ class WeldMatcher(object):
       ### Now match the last few welds backwards:
       # ### Put together last welds
       last_welds = [[w1.iloc[[-1]]], [w2.iloc[[-1]]]]
-      while last_welds[0][0].iat[-1,0] + 1 > (n - self.conf['validation_lookahead']):
+      while last_welds[0][0].iat[-1,0] + 1 > (n - self.conf['backtrack_validation_lookahead']):
         step, last_welds = self.step_match(w1,w2, last_welds, True)
         if not step:
           break
-      
+
       ### Concat datasets
       last_welds_a = pd.concat(last_welds[0])
       last_welds_b = pd.concat(last_welds[1])
@@ -79,7 +78,7 @@ class WeldMatcher(object):
       matched_welds_a = pd.concat([matched_welds_a.iloc[:-(len(last_welds_a))], last_welds_a])
       matched_welds_b = pd.concat([matched_welds_b.iloc[:-(len(last_welds_b))], last_welds_b])
       ### Build multindex
-      idx = pd.MultiIndex.from_frame(pd.concat([matched_welds_a.A.reset_index(drop=True), 
+      idx = pd.MultiIndex.from_frame(pd.concat([matched_welds_a.A.reset_index(drop=True),
                                                 matched_welds_b.B.reset_index(drop=True)], axis=1))
       ### set welds back up
       w1.index, w2.index = (w1.A, w2.B)
@@ -88,7 +87,7 @@ class WeldMatcher(object):
       matched_welds = self.join_from_index(w1,w2,idx)
       ### Return
       return(matched_welds)
-      
+
     except:
       print("\n\n"+str(time.time() - start))
       print(sys.exc_info())
@@ -99,15 +98,15 @@ class WeldMatcher(object):
         On the basis that the pipe length or upstream weld is roughly equal (check coord match to verify this)
         If right side doesn't match, return None
     '''
-    JL_DIFF = self.conf['joint_length_diff']
+    JL_DIFF = self.conf['joint_length_difference']
     ### Set up our comparisons
     if reverse:
-      a2, b2 = (w1.iloc[[matched_welds[0][0].iat[0, 0] - 1]], 
+      a2, b2 = (w1.iloc[[matched_welds[0][0].iat[0, 0] - 1]],
                       w2.iloc[[matched_welds[1][0].iat[0, 0] - 1]])
     else:
-      a2, b2 = (w1.iloc[[matched_welds[0][-1].iat[-1, 0] + 1]], 
+      a2, b2 = (w1.iloc[[matched_welds[0][-1].iat[-1, 0] + 1]],
                       w2.iloc[[matched_welds[1][-1].iat[-1, 0] + 1]])
-    ### Compare joint lengths - NOTE - in test dataset largest absolute difference was .481 
+    ### Compare joint lengths - NOTE - in test dataset largest absolute difference was .481
     #### as a % of mean of the joint lengths, it was .22
     if abs(a2.joint_length.item() - b2.joint_length.item()) < JL_DIFF:
       ### TODO.- update this so backtracking uses US weld distance instead of pipe length
@@ -121,15 +120,15 @@ class WeldMatcher(object):
     else:
       print('\n Mismatched welds - backtracking')
       return(False, matched_welds)
-    
-    
+
+
   def backtrack(self, w1, w2, matched_welds):
     '''
-    Alternate matching methodology - find nearest short weld, move backwards, updating matched welds as we go.  
+    Alternate matching methodology - find nearest short weld, move backwards, updating matched welds as we go.
     '''
-    SJ = self.conf['short_joint']
-    SJ_VAR = self.conf['short_joint_var']
-    JL_DIFF = self.conf['joint_length_diff']
+    SJ = self.conf['short_joint_threshold']
+    SJ_VAR = self.conf['short_joint_window']
+    JL_DIFF = self.conf['joint_length_difference']
     ### Set up initial short welds
     last_match_a = matched_welds[0][-1].iat[-1, 0]
     last_match_b = matched_welds[1][-1].iat[-1, 0]
@@ -137,15 +136,15 @@ class WeldMatcher(object):
     short_weld_a = w1[(w1.index > last_match_a) & (w1.joint_length < SJ + SJ_VAR) & (w1.joint_length > SJ - SJ_VAR)].iloc[[0]]
     ### Matching short weld on B
     try:
-      short_weld_b = w2[(w2.index > last_match_b) & 
-                      # (w2.index < last_match_b + LOOKAHEAD) & 
-                        (w2.joint_length.between(short_weld_a.joint_length.item() - JL_DIFF, 
+      short_weld_b = w2[(w2.index > last_match_b) &
+                      # (w2.index < last_match_b + LOOKAHEAD) &
+                        (w2.joint_length.between(short_weld_a.joint_length.item() - JL_DIFF,
                                                  short_weld_a.joint_length.item() + JL_DIFF))].iloc[[0]]
     except IndexError: # likely close to the end - pick the last b
       short_weld_b = w2.iloc[[-6]]
-    
+
     LOOKAHEAD = self.conf['short_joint_lookahead']
-    VALIDATE = self.conf['validation_lookahead']
+    VALIDATE = self.conf['backtrack_validation_lookahead']
     ### Look for proximate short welds that match
     while True:
       ### TODO - need to be smarter about finding short weld - make sure welds ahead are all matching before deciding on it
@@ -156,9 +155,9 @@ class WeldMatcher(object):
           break
         else: # move b forward
           try:
-            short_weld_b = w2[(w2.index > short_weld_b.iat[-1,0]) & 
-                            # (w2.index < last_match_b + LOOKAHEAD) & 
-                           (w2.joint_length.between(short_weld_a.joint_length.item() - JL_DIFF, 
+            short_weld_b = w2[(w2.index > short_weld_b.iat[-1,0]) &
+                            # (w2.index < last_match_b + LOOKAHEAD) &
+                           (w2.joint_length.between(short_weld_a.joint_length.item() - JL_DIFF,
                                                     short_weld_a.joint_length.item() + JL_DIFF))].iloc[[0]]
           except IndexError: ### No more b's of similar size to find
             ### Next short weld a
@@ -190,7 +189,7 @@ class WeldMatcher(object):
       step, backtrack_welds = self.step_match(w1, w2, backtrack_welds, reverse=True)
     ### When it breaks, return backtrack welds
     return(True, backtrack_welds)
-    
+
   def validate_short_welds(self, w1, w2, short_weld_a, short_weld_b, VALIDATE):
     short_weld_matches = [[short_weld_a],[short_weld_b]]
     for i in range(VALIDATE):
@@ -205,7 +204,7 @@ class WeldMatcher(object):
         if step == False:
           return(False)
     return(True)
-      
+
 
   def join_from_index(self, df1, df2, index):
     '''
@@ -213,7 +212,7 @@ class WeldMatcher(object):
     '''
     primary_index, secondary_index = [index.names[0], index.names[1]]
     joined = df1.loc[index.get_level_values(primary_index)].reset_index().\
-                      join(df2.loc[index.get_level_values(secondary_index)].reset_index(), 
+                      join(df2.loc[index.get_level_values(secondary_index)].reset_index(),
                            lsuffix='_{}'.format(primary_index), rsuffix='_{}'.format(secondary_index)
                            )
     return(joined)

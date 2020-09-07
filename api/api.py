@@ -108,7 +108,7 @@ api.add_resource(FeatureAttributeResource, '/feature_attribute/<instance_id>',
                 resource_class_kwargs={ 'model': FeatureAttribute })
 
 ### MatchRunner
-api.add_resource(MatchRunner, '/matchrunner/<runmatch_id>')
+api.add_resource(MatchRunnerNew, '/matchrunner/<runmatch_id>')
 # api.add_resource(RunMatchConf, '/run_match/<runmatch_id>/conf')
 
 ### Run Match Conf

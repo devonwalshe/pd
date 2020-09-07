@@ -28,13 +28,18 @@ class RawFileNew(NewResource):
     parse.add_argument('data_mapping_id')
     parse.add_argument('pipeline_id')
     parse.add_argument('run_date')
+    parse.add_argument('sheet_name')
+    parse.add_argument('source')
     args = parse.parse_args()
     # Get file from the request
-    rawfile, dm_id = (args['file'], args['data_mapping_id'])
+    rawfile, dm_id, source, sheet_name = (args['file'], args['data_mapping_id'], args['source'], args['sheet_name'])
     # Save the file to the filesystem
-    rawfile.save("api/public_uploads/{}".format(rawfile.filename))
+    rawfile.save("public_uploads/{}".format(rawfile.filename))
     # Save new RawFile record with updated timestamp if it doesn't already exist
-    rf, created = RawFile.get_or_create(filename=rawfile.filename, file_url="api/public_uploads/{}".format(rawfile.filename), data_mapping_id=dm_id)
+    rf, created = RawFile.get_or_create(filename=rawfile.filename,
+                                        file_url="public_uploads/{}".format(rawfile.filename),
+                                        data_mapping_id=dm_id, source=source,
+                                        sheet_name=sheet_name)
     rf.uploaded_at = datetime.datetime.now()
     rf.save()
     # Set up our inspection runs, updating if the date / pipeline combo is the same
@@ -44,8 +49,7 @@ class RawFileNew(NewResource):
     ir.raw_file = rf
     ir.save()
     # return
-    return(DateUtil.serialize_instance_dates(model_to_dict(rf, recurse=False)))
-
+    return(DateUtil.serialize_instance_dates({**model_to_dict(rf, recurse=False), **{"inspection_run_id": ir.id}}))
 
 
 class RawFileResource(BaseResource):

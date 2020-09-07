@@ -6,7 +6,7 @@ import numpy as np
 import datetime, logging, math
 logger = logging.getLogger('peewee')
 logger.addHandler(logging.StreamHandler())
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 from matcher.conf import mappings
 mapping = mappings['wc']
@@ -18,9 +18,11 @@ def bootstrap(drop=True):
   model_list = [Feature, FeatureAttribute, FeaturePair, Weld, WeldPair, \
                 PipeSection, Pipeline, InspectionRun, RunMatch, \
                 FeatureMapping, FeatureMap, RawFile, RunMatchConf]
+  ### Drop tables
   if drop:
     db.drop_tables(model_list)
   db.create_tables(model_list)
+  ### Set up data
   fm = bootstrap_feature_mappings()
   raw_files = bootstrap_raw_files(fm)
   matched_data, rm = bootstrap_run_match(raw_files)
@@ -55,9 +57,11 @@ def bootstrap_feature_mappings():
 
 def bootstrap_raw_files(fm):
   ### Set up record for the raw files
-  raw_files = ['data/case_1_2014.xls', 'data/case_1_2019.xlsx']
+  raw_files = ['public_uploads/case_1_2014.xlsx', 'public_uploads/case_1_2019.xlsx']
   for raw_file in raw_files:
-    RawFile.create(filename=raw_file, file_url=raw_file, uploaded_at=datetime.datetime.now(), data_mapping = fm, source="company_x")
+    RawFile.create(filename=raw_file, file_url=raw_file,
+                   uploaded_at=datetime.datetime.now(), data_mapping = fm,
+                   source="company_x", sheet_name="Original")
   raw_files = [rf for rf in RawFile.select().where(RawFile.data_mapping == fm)]
   return(raw_files)
 
@@ -72,7 +76,7 @@ def bootstrap_run_match(raw_files):
   matched_data = pd.read_csv('data/output/matched_runs_coord_20200707_161051.csv')
   ### Set up record for Run Match
   rm = RunMatch.create(run_a = inspection_runs[0], run_b = inspection_runs[1], pipeline = pipeline,
-                       section_count=matched_data.pipe_section.max() + 1, sections_checked=0, name = "2014_2019")
+                       section_count=matched_data.pipe_section.max() + 1, name = "2014_2019")
   ### Return
   return(matched_data, rm)
 
@@ -140,7 +144,6 @@ def bootstrap_features(matched_data, rm, mapping):
   b_cols = ["{}_B".format(col) for col in mapping['output_columns']['dup_cols']] + ['pipe_section', 'section_sequence']
   ### Iterate through all the matched data
   for idx, row in matched_data[(matched_data['feature_A'] != "WELD") & (matched_data['feature_B'] != "WELD")].iterrows():
-    print(idx)
     row_a = row[a_cols]
     row_b = row[b_cols]
     feature_a = Feature(feature_id = row_a['id_A'],
