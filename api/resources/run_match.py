@@ -13,6 +13,15 @@ class RunMatchList(ListResource):
   def __init__(self, **kwargs):
     super().__init__(**kwargs)
 
+  def get(self):
+      ###
+      instances = RunMatch.select()
+      instances = [{**model_to_dict(rm, recurse=False), 'pipe_sections': rm.pipe_section_count,
+            'sections_checked': rm.sections_checked,
+            'match_complete': rm.match_complete, 'manual_check_complete': rm.manual_check_complete,
+            "conf":model_to_dict(rm.conf, recurse=False)} for rm in instances]
+
+      return(instances)
 
 class RunMatchNew(NewResource):
 
@@ -56,7 +65,8 @@ class RunMatchResource(BaseResource):
     rm = RunMatch.get_by_id(instance_id)
     fm_a, fm_b = rm.fm_a, RunMatch.get_by_id(instance_id).fm_b
     conf = rm.conf
-    res = {**model_to_dict(rm, recurse=False), 'sections_checked': rm.sections_checked,
+    res = {**model_to_dict(rm, recurse=False), 'pipe_sections': rm.pipe_section_count,
+          'sections_checked': rm.sections_checked,
           'match_complete': rm.match_complete, 'manual_check_complete': rm.manual_check_complete,
           'feature_maps':[model_to_dict(fm, recurse=False) for fm in [fm_a, fm_b]],
           "conf":model_to_dict(conf, recurse=False)}

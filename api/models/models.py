@@ -78,6 +78,10 @@ class RunMatch(Model):
   name = CharField()
 
   @property
+  def pipe_section_count(self):
+    return(len([ps for ps in self.pipe_sections]))
+
+  @property
   def conf(self):
     return(self.confs.get())
 

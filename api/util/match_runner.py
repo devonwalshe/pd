@@ -13,10 +13,12 @@ from matcher.pr_matcher import PigRunMatcher
 from matcher.conf import mappings
 mapping = mappings['wc']
 
+db = PostgresqlDatabase('pd', user='azymuth', host='localhost', port=5432)
 
 ### Tasks
-
 class MatchRunnerUtil(object):
+
+
 
   def __init__(self, run_match):
     self.run_match = run_match
