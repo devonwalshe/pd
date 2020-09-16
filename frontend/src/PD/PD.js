@@ -27,7 +27,9 @@ export default class PD extends Component {
             screen_width: 0,
             welds: {},
             manually_checked: false,
-            max_weld_width: 0
+            max_weld_width: 0,
+            sectionIndex: 0,
+            sectionTotal: 0
 
         }
 
@@ -72,6 +74,7 @@ export default class PD extends Component {
 
             this.navStatus()
             this.loadPipeSection()
+            this.setState({sectionIndex: this.pipe_sections.index + 1, sectionTotal: this.pipe_sections.data.length})
 
         })
 
@@ -219,6 +222,7 @@ export default class PD extends Component {
         if (~idx) {
 
             this.pipe_sections.id = idx
+            this.setState({sectionIndex:this.pipe_sections.index + 1})
             this.loadPipeSection()
 
         }
@@ -339,105 +343,103 @@ export default class PD extends Component {
 
     }
 
-    render() {
+    render = () => (
 
-        return (
+        <>
+            <Ctrl
+                confirm_on={this.state.confirm_on}
+                manually_checked={this.state.manually_checked}
+                manualCheck={() => {
+                    const r = this.pipe_section_raw
+                    const data = [{
+                        id: r.id,
+                        section_id: r.section_id,
+                        run_match: r.run_match,
+                        manually_checked: !this.state.manually_checked
+                    }]
+                    data[0].id && this.dataAdapter.put('pipe_section', r.id, data, data => {
 
-            <>
-                <Ctrl
-                    confirm_on={this.state.confirm_on}
-                    manually_checked={this.state.manually_checked}
-                    manualCheck={() => {
-                        const r = this.pipe_section_raw
-                        const data = [{
-                            id: r.id,
-                            section_id: r.section_id,
-                            run_match: r.run_match,
-                            manually_checked: !this.state.manually_checked
-                        }]
-                        data[0].id && this.dataAdapter.put('pipe_section', r.id, data, data => {
+                        this.setState({manually_checked: data.manually_checked}, ()=>this.setState({...this.state}))
+                        this.pipe_sections.data[this.pipe_sections.index].manually_checked = data.manually_checked
 
-                            this.setState({manually_checked: data.manually_checked}, ()=>this.setState({...this.state}))
-                            this.pipe_sections.data[this.pipe_sections.index].manually_checked = data.manually_checked
+                    })
+                }}
+                match_on={this.state.match_on}
+                nav_status={this.state.nav_status}
+                onCancel={() => {
+                    this.highlightDom(this.first_match, 'transparent')
+                    this.highlightDom(this.second_match, 'transparent')
+                    this.first_match = 0
+                    this.second_match = 0
+                    this.setState({
+                        match_on  : false,
+                        confirm_on: false
+                    }, this.graphPipeSection)
+                }}
+                onConfirm={() => {
+                    const feature_a = this.pipe_section_raw.features[this.first_match].side === 'A' ? this.first_match : this.second_match
+                    const feature_b = this.pipe_section_raw.features[this.second_match].side === 'B' ? this.second_match : this.first_match   
+                    const data = [{
+                        feature_a: feature_a,
+                        feature_b: feature_b,
+                        run_match: this.run_match,
+                        pipe_section: this.pipe_sections.id
+                    }]
 
-                        })
-                    }}
-                    match_on={this.state.match_on}
-                    nav_status={this.state.nav_status}
-                    onCancel={() => {
+                    this.highlightDom(this.first_match, 'transparent')
+                    this.highlightDom(this.second_match, 'transparent')
+                    this.first_match = 0
+                    this.second_match = 0
+                    this.setState({
+                        match_on: false,
+                        confirm_on: false
+                    })
+                    this.dataAdapter.post('feature_pair', data, () => this.loadPipeSection())
+                }}
+                onMatch={() => {
+                    if (this.first_match) {
                         this.highlightDom(this.first_match, 'transparent')
                         this.highlightDom(this.second_match, 'transparent')
                         this.first_match = 0
                         this.second_match = 0
-                        this.setState({
-                            match_on  : false,
-                            confirm_on: false
-                        }, this.graphPipeSection)
-                    }}
-                    onConfirm={() => {
-                        const feature_a = this.pipe_section_raw.features[this.first_match].side === 'A' ? this.first_match : this.second_match
-                        const feature_b = this.pipe_section_raw.features[this.second_match].side === 'B' ? this.second_match : this.first_match   
-                        const data = [{
-                            feature_a: feature_a,
-                            feature_b: feature_b,
-                            run_match: this.run_match,
-                            pipe_section: this.pipe_sections.id
-                        }]
+                        this.graphPipeSection()
+                    }
+                    this.setState({match_on: !this.state.match_on}, ()=>this.setState({...this.state}))
+                }}
+                run_match={String(this.run_match)}
+                section_id={this.state.section_id}
+                sectionIndex={this.state.sectionIndex}
+                sectionTotal={this.state.sectionTotal}
+                sectionGo={this.sectionGo}
+                setMatchFilter={this.setMatchFilter}
+                weldGo={id => {
 
-                        this.highlightDom(this.first_match, 'transparent')
-                        this.highlightDom(this.second_match, 'transparent')
-                        this.first_match = 0
-                        this.second_match = 0
-                        this.setState({
-                            match_on: false,
-                            confirm_on: false
-                        })
-                        this.dataAdapter.post('feature_pair', data, () => this.loadPipeSection())
-                    }}
-                    onMatch={() => {
-                        if (this.first_match) {
-                            this.highlightDom(this.first_match, 'transparent')
-                            this.highlightDom(this.second_match, 'transparent')
-                            this.first_match = 0
-                            this.second_match = 0
-                            this.graphPipeSection()
-                        }
-                        this.setState({match_on: !this.state.match_on}, ()=>this.setState({...this.state}))
-                    }}
-                    run_match={String(this.run_match)}
-                    section_id={this.state.section_id}
-                    sectionGo={this.sectionGo}
-                    setMatchFilter={this.setMatchFilter}
-                    weldGo={id => {
+                    this.pipe_sections.id = id
+                    this.loadPipeSection()
 
-                        this.pipe_sections.id = id
-                        this.loadPipeSection()
+                }}
+                
 
-                    }}
-                    
-
+            />
+            <WeldsTable section_id={this.state.section_id || ''} welds={this.state.welds} />
+            <div className="graph">
+                <Axes
+                    graphWidth={this.state.screen_width}
+                    weldWidth={this.state.max_weld_width}
+                    offset={this.offset}
                 />
-                <WeldsTable section_id={this.state.section_id || ''} welds={this.state.welds} />
-                <div className="graph">
-                    <Axes
-                        graphWidth={this.state.screen_width}
-                        weldWidth={this.state.max_weld_width}
-                        offset={this.offset}
-                    />
-                    {this.state.pipe_section_graph}
-                </div>
-                <CustomGrid
-                    key="data_grid"
-                    rows={this.state.pipe_section_table}
-                    clickFeature={this.clickFeature}
-                    hoverFeature={this.hoverOnTable}
-                    unlink={id => window.confirm('Confirm unlinking the feature?') && this.dataAdapter.delete('feature_pair', id, () => this.loadPipeSection())}
-                    width={this.state.screen_width - 40}
-                />
-            </>
-            
-        )
-
-    }
+                {this.state.pipe_section_graph}
+            </div>
+            <CustomGrid
+                key="data_grid"
+                rows={this.state.pipe_section_table}
+                clickFeature={this.clickFeature}
+                hoverFeature={this.hoverOnTable}
+                unlink={id => window.confirm('Confirm unlinking the feature?') && this.dataAdapter.delete('feature_pair', id, () => this.loadPipeSection())}
+                width={this.state.screen_width - 40}
+            />
+        </>
+        
+    )
 
 }
