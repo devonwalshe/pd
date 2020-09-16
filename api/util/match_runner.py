@@ -1,12 +1,17 @@
 ### Lib imports
 import pandas as pd
 import numpy as np
+import re
 ### API models
 from api.models.models import *
 ### House imports
 from matcher.weld_matcher import WeldMatcher
 from matcher.pr import PigRun
 from matcher.pr_matcher import PigRunMatcher
+
+### TODO - fix features to get rid of this
+from matcher.conf import mappings
+mapping = mappings['wc']
 
 
 ### Tasks
@@ -19,6 +24,12 @@ class MatchRunnerUtil(object):
   def update_progress(self, data):
     pass
 
+  def run(self):
+    matched_data = self.launch_matcher()
+    print("here")
+    result = self.save_run_objects(matched_data)
+    print("here2")
+    return(result)
 
   def launch_matcher(self):
     ### Receive run match
@@ -107,13 +118,13 @@ class MatchRunnerUtil(object):
     return(True)
 
 
-  def save_features(self, matched_data, rm, mapping):
+  def save_features(self, matched_data, rm):
     ### Set up features
-    a_cols = ["{}_A".format(col) for col in mapping['output_columns']['dup_cols']] + ['pipe_section', 'section_sequence']
-    b_cols = ["{}_B".format(col) for col in mapping['output_columns']['dup_cols']] + ['pipe_section', 'section_sequence']
+    a_cols = [c for c in matched_data.columns.to_list() if "_A" in c] + ['pipe_section', 'section_sequence']
+    b_cols = [c for c in matched_data.columns.to_list() if "_B" in c] + ['pipe_section', 'section_sequence']
     ### Iterate through all the matched data
     for idx, row in matched_data[(matched_data['feature_A'] != "WELD") & (matched_data['feature_B'] != "WELD")].iterrows():
-      print(idx)
+      # print(idx)
       row_a = row[a_cols]
       row_b = row[b_cols]
       feature_a = Feature(feature_id = row_a['id_A'],
@@ -129,8 +140,8 @@ class MatchRunnerUtil(object):
                           run_match = rm,
                           side="B")
       ### If a feature has an ID - save it
-      left = not math.isnan(feature_a.feature_id)
-      right = not math.isnan(feature_b.feature_id)
+      left = feature_a.feature_id is not None
+      right = feature_b.feature_id is not None
       both = left & right
       if left:
         feature_a.feature_id = int(feature_a.feature_id)
@@ -142,7 +153,7 @@ class MatchRunnerUtil(object):
       if both:
           fp = FeaturePair(feature_a = feature_a, feature_b = feature_b, run_match = rm, pipe_section=feature_a.pipe_section)
           fp.save()
-      ### Set up feature attributes
+      ### Set up potential feature attributes
       mapping = {'feature':"str",
                  'wc':'float',
                  'wt':'float',
@@ -164,6 +175,9 @@ class MatchRunnerUtil(object):
                  'feature_category':'str',
                  'pipe_section':'int',
                  'section_sequence':'int'}
+      ### remove feature attributes that aren't in matched data
+      keep_cols = set([re.sub("_A|_B", "", c) for c in matched_data.columns.to_list()])
+      mapping = {k:v for k, v in mapping.items() if k in keep_cols}
       for k, v in mapping.items():
         ### Set up feature attribute for a and b
         if k not in ["pipe_section", 'section_sequence']:
