@@ -45,7 +45,7 @@ class RawFileNew(NewResource):
     # Set up our inspection runs, updating if the date / pipeline combo is the same
     pipeline = Pipeline.get_by_id(args['pipeline_id'])
     run_date = datetime.datetime.strptime(args['run_date'], "%Y-%m-%d")
-    ir, created = InspectionRun.get_or_create(pipeline=pipeline, run_date=run_date)
+    ir, created = InspectionRun.get_or_create(pipeline=pipeline, run_date=run_date, raw_file=rf)
     ir.raw_file = rf
     ir.save()
     # return

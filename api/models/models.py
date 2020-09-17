@@ -1,5 +1,7 @@
 from peewee import *
 from playhouse.shortcuts import model_to_dict, dict_to_model
+from playhouse.hybrid import hybrid_property, hybrid_method
+
 db = PostgresqlDatabase('pd', user='azymuth', host='localhost', port=5432)
 
 class FeatureMap(Model):
@@ -73,8 +75,11 @@ class RunMatch(Model):
   run_a = ForeignKeyField(InspectionRun, backref='match', on_delete="CASCADE")
   run_b = ForeignKeyField(InspectionRun, backref='match', on_delete="CASCADE")
   pipeline = ForeignKeyField(Pipeline, backref='match', on_delete="SET NULL", null=True)
-  section_count = IntegerField(null=True)
   name = CharField()
+
+  @property
+  def pipe_section_count(self):
+    return(len([ps for ps in self.pipe_sections]))
 
   @property
   def conf(self):
@@ -169,22 +174,24 @@ class Feature(Model):
   run_match = ForeignKeyField(RunMatch, backref='features', on_delete="CASCADE")
   side = CharField()
 
+  @hybrid_property
   def matched(self):
-    if self.side=="A":
-      fp = [fp for fp in FeaturePair.select().where(FeaturePair.feature_a == self.id)]
-    else:
-      fp = [fp for fp in FeaturePair.select().where(FeaturePair.feature_b == self.id)]
+    # fp = [fp for fp in self.feature_pair]
+    query = FeaturePair.select().where((FeaturePair.feature_a_id == self.id) | \
+                                       (FeaturePair.feature_b_id == self.id))
+    fp = [fp for fp in query]
     if fp != []:
       return(True)
     else:
       return(False)
+
 
   def attrs_serialized(self):
     attrs = [model_to_dict(fa, recurse=False) for fa in self.attributes]
     return(attrs)
 
   def serialize(self):
-    obj = {**model_to_dict(self, recurse=False), **{'matched': self.matched()}, **{'attributes': self.attrs_serialized()}}
+    obj = {**model_to_dict(self, recurse=False), **{'matched': self.matched}, **{'attributes': self.attrs_serialized()}}
     return(obj)
 
   class Meta:
@@ -197,7 +204,7 @@ class FeatureAttribute(Model):
   feature = ForeignKeyField(Feature, backref='attributes', on_delete="CASCADE")
   attribute_name = CharField()
   attribute_datatype = CharField()
-  attribute_data = CharField()
+  attribute_data = CharField(null=True)
 
   class Meta:
     database = db
@@ -232,3 +239,5 @@ class RunMatchConf(Model):
 
   class Meta:
     database = db
+
+del(db)

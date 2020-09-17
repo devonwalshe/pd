@@ -10,4 +10,4 @@ from api.resources.weld_pair import WeldPairList, WeldPairNew, WeldPairResource
 from api.resources.feature import FeatureList, FeatureNew, FeatureResource
 from api.resources.feature_pair import FeaturePairList, FeaturePairNew, FeaturePairResource
 from api.resources.feature_attribute import FeatureAttributeList, FeatureAttributeNew, FeatureAttributeResource
-from api.resources.match_runner import MatchRunnerNew
+from api.resources.match_runner import MatchRunnerNew, MatchRunnerExport

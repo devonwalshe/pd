@@ -2,7 +2,7 @@ import React, { Component } from 'react'
 import { Form, Button } from 'react-bootstrap'
 import DataAdapter from './DataAdapter'
 
-export default class Upload extends Component {
+export default class RawFile extends Component {
 
     constructor(props) {
 

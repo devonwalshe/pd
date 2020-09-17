@@ -1,10 +1,9 @@
 import React, { Component } from 'react'
 import './App.css'
 import PD from './PD/PD.js'
-import Upload from './PD/Upload.js'
-import Runs from './PD/Runs.js'
-import Dashboard from './PD/Dashboard.js'
-import Pipelines from './PD/Pipelines.js'
+import RunMatch from './PD/RunMatch.js'
+import Pipeline from './PD/Pipeline.js'
+import RawFile from './PD/RawFile.js'
 import FeatureMap from './PD/FeatureMap.js'
 import { Button } from 'react-bootstrap'
 import 'bootstrap/dist/css/bootstrap.min.css'
@@ -21,43 +20,45 @@ export default class App extends Component {
       page: null
     }
 
-    this.buttons = ['Dashboard', 'Pipelines', 'Run Matches', 'Feature Maps']
+    this.pages = [
+      {
+        name: 'Pipelines',
+        comp: (<Pipeline/>)
+      },
+      {
+        name: 'Raw Files',
+        comp: (<RawFile/>)
+      },
+      { 
+        name: 'Run Matches',
+        comp: (
+          <RunMatch
+            goRun={id => this.setState({page: (<PD id={id}/>)})}
+          />
+        )
+      },
+      {
+        name: 'Feature Maps',
+        comp: (<FeatureMap/>)
+      }
+    ]
 
   }
 
   
+  componentDidMount = () => this.getPage()
 
-  componentDidMount = () => {
+  clickMenu = i => {
 
-    this.getPage()
 
-  }
+    document.getElementById(this.pages[this.state.current].name).variant = 'link'
+    document.getElementById(this.pages[i].name).variant = 'outline-primary'
 
-  clickMenu = id => {
-
-    document.getElementById(this.buttons[this.state.current]).variant = 'link'
-    document.getElementById(id).variant = 'outline-primary'
-
-    this.setState({current: this.buttons.indexOf(id)}, this.getPage)
+    this.setState({current: i}, this.getPage)
 
   }
 
-  getPage = () => {
-
-    let pages = [
-      (<Dashboard/>),
-      (<Pipelines/>),
-      (<Runs
-        goRun={id => this.setState({page: (<PD id={id}/>)})}
-        newRun={() => this.setState({page: (<Upload/>)})} 
-      />),
-      (<FeatureMap/>)
-    ]
-
-    this.setState({page: pages[this.state.current]})
-
-
-  }
+  getPage = () => this.setState({page: this.pages[this.state.current].comp})
 
   render = () => (
 
@@ -73,8 +74,8 @@ export default class App extends Component {
           </div>
         </div>
         <div>
-          {this.buttons.map((b, i) => (
-            <Button id={b} key={b} variant={this.state.current === i ? 'outline-primary' : 'link'} onClick={() => this.clickMenu(b)}>{b}</Button>
+          {this.pages.map((p, i) => (
+            <Button id={p.name} key={p.name} variant={this.state.current === i ? 'outline-primary' : 'link'} onClick={() => this.clickMenu(i)}>{p.name}</Button>
           ))}
         </div>
       </div>

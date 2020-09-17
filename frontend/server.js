@@ -69,12 +69,14 @@ const requestListener = function (req, res) {
           'Accept': 'application/json',
           'Content-Type': 'application/json'
         }
+        
         request.body = JSON.parse(JSON.stringify(obj.data))
       }
 
       fetch(decodeURIComponent(obj.url), request)
           .then(response => response.text())
           .then(data => {
+            //console.log(data)
             obj.data && (request.method != 'GET') && res.setHeader('Content-Type', 'application/json')
             res.setHeader('Access-Control-Allow-Origin', '*')
             res.setHeader('Access-Control-Request-Method', '*')

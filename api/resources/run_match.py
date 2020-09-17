@@ -13,17 +13,27 @@ class RunMatchList(ListResource):
   def __init__(self, **kwargs):
     super().__init__(**kwargs)
 
+  def get(self):
+      ###
+      instances = RunMatch.select()
+      instances = [{**model_to_dict(rm, recurse=False), 'pipe_sections': rm.pipe_section_count,
+            'sections_checked': rm.sections_checked,
+            'match_complete': rm.match_complete, 'manual_check_complete': rm.manual_check_complete,
+            "conf":model_to_dict(rm.conf, recurse=False)} for rm in instances]
+
+      return(instances)
 
 class RunMatchNew(NewResource):
 
   def post(self):
     data = request.get_json(force=True)
+    print("\t\t**** {}".format(data))
     instances = []
     for item in data:
       instance = self.model(**item)
       ### TODO add sensible try except blocks with rollbacks
-      conf = self.set_default_conf(instance)
       instance.save()
+      conf = self.set_default_conf(instance)
       instances.append(model_to_dict(instance, recurse=False))
     if datetime.datetime in [type(v) for v in instances[0].values()]:
       instances = [DateUtil.serialize_instance_dates(instance) for instance in instances]
@@ -40,7 +50,7 @@ class RunMatchNew(NewResource):
                               short_joint_lookahead=75,
                               joint_length_difference=2,
                               backtrack_validation_lookahead=10,
-                              feature_match_threshold=.98,
+                              feature_match_threshold=.825,
                               metal_loss_match_threshold=.60
                               )
     return(rmc)
@@ -55,7 +65,8 @@ class RunMatchResource(BaseResource):
     rm = RunMatch.get_by_id(instance_id)
     fm_a, fm_b = rm.fm_a, RunMatch.get_by_id(instance_id).fm_b
     conf = rm.conf
-    res = {**model_to_dict(rm, recurse=False), 'sections_checked': rm.sections_checked,
+    res = {**model_to_dict(rm, recurse=False), 'pipe_sections': rm.pipe_section_count,
+          'sections_checked': rm.sections_checked,
           'match_complete': rm.match_complete, 'manual_check_complete': rm.manual_check_complete,
           'feature_maps':[model_to_dict(fm, recurse=False) for fm in [fm_a, fm_b]],
           "conf":model_to_dict(conf, recurse=False)}

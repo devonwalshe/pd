@@ -3,33 +3,49 @@ from peewee import *
 from api.models.models import *
 import pandas as pd
 import numpy as np
-import datetime, logging, math
+import datetime, logging, math, re, requests
 logger = logging.getLogger('peewee')
 logger.addHandler(logging.StreamHandler())
 logger.setLevel(logging.INFO)
-
+### Local importas
 from matcher.conf import mappings
 mapping = mappings['wc']
+from api.util.match_runner import MatchRunnerUtil
 
+### DB
 db = PostgresqlDatabase('pd', user='azymuth', host='localhost', port=5432)
 
-def bootstrap(drop=True):
+def drop_tables():
+    model_list = [Feature, FeatureAttribute, FeaturePair, Weld, WeldPair, \
+                  PipeSection, Pipeline, InspectionRun, RunMatch, \
+                  FeatureMapping, FeatureMap, RawFile, RunMatchConf]
+    db.drop_tables(model_list)
+    db.create_tables(model_list)
+
+def bootstrap(drop=True, launch_matcher=True):
   ### Set up database
   model_list = [Feature, FeatureAttribute, FeaturePair, Weld, WeldPair, \
                 PipeSection, Pipeline, InspectionRun, RunMatch, \
                 FeatureMapping, FeatureMap, RawFile, RunMatchConf]
   ### Drop tables
   if drop:
-    db.drop_tables(model_list)
-  db.create_tables(model_list)
+    drop_tables()
   ### Set up data
+  pipeline = bootstrap_pipeline()
   fm = bootstrap_feature_mappings()
-  raw_files = bootstrap_raw_files(fm)
-  matched_data, rm = bootstrap_run_match(raw_files)
-  pipe_sections = bootstrap_pipe_sections(matched_data, rm)
-  rmc = bootstrap_run_match_conf(rm, fm)
-  weld_pairs = bootstrap_welds(matched_data, rm)
-  features = bootstrap_features(matched_data, rm, mapping)
+  raw_files = bootstrap_raw_files(fm, pipeline)
+  matched_data, rm = bootstrap_run_match(pipeline, raw_files)
+  if launch_matcher:
+    matched_data_generated = MatchRunnerUtil(rm).launch_matcher()
+    result = MatchRunnerUtil(rm).save_run_objects(matched_data_generated)
+  else:
+    pipe_sections = bootstrap_pipe_sections(matched_data, rm)
+    weld_pairs = bootstrap_welds(matched_data, rm)
+    features = bootstrap_features(matched_data, rm, mapping)
+
+def bootstrap_pipeline():
+  pipeline = Pipeline.create(name='Case 1')
+  return(pipeline)
 
 def bootstrap_feature_mappings():
   fm, created = FeatureMap.get_or_create(mapping_name='wc', source_name="sample company")
@@ -55,28 +71,32 @@ def bootstrap_feature_mappings():
   return(fm)
 
 
-def bootstrap_raw_files(fm):
+def bootstrap_raw_files(fm, pipeline):
   ### Set up record for the raw files
-  raw_files = ['public_uploads/case_1_2014.xlsx', 'public_uploads/case_1_2019.xlsx']
+  raw_files = ['data/case_1_2014.xlsx', 'data/case_1_2019.xlsx']
+  data={"source": "test_source", "data_mapping_id":fm.id, "pipeline_id":pipeline.id, "sheet_name":"Original"}
   for raw_file in raw_files:
-    RawFile.create(filename=raw_file, file_url=raw_file,
-                   uploaded_at=datetime.datetime.now(), data_mapping = fm,
-                   source="company_x", sheet_name="Original")
+    data['run_date'] = "{}-01-01".format(re.search(r"\d{4}", raw_file)[0])
+    response = requests.post('http://localhost:5000/raw_file/',
+                             files = {'file': open('data/case_1_{}.xlsx'\
+                                                   .format(re.search(r"\d{4}",
+                                                           raw_file)[0]),
+                                      'rb')},
+                             data = data)
   raw_files = [rf for rf in RawFile.select().where(RawFile.data_mapping == fm)]
   return(raw_files)
 
-def bootstrap_run_match(raw_files):
-  ### Set up record for pipeline
-  pipeline = Pipeline.create(name='Case 1')
-  ### Set up record for each inspection run
-  InspectionRun.create(raw_file = raw_files[0], run_date=datetime.datetime(2014,1,1), pipeline=pipeline)
-  InspectionRun.create(raw_file = raw_files[1], run_date=datetime.datetime(2019,1,1), pipeline=pipeline)
+def bootstrap_run_match(pipeline, raw_files):
+  ### Get inspection runs
   inspection_runs = [ir for ir in InspectionRun.select().where(InspectionRun.pipeline==pipeline)]
   ### Read match output file
   matched_data = pd.read_csv('data/output/matched_runs_coord_20200707_161051.csv')
   ### Set up record for Run Match
-  rm = RunMatch.create(run_a = inspection_runs[0], run_b = inspection_runs[1], pipeline = pipeline,
-                       section_count=matched_data.pipe_section.max() + 1, name = "2014_2019")
+  data = [{'run_a': inspection_runs[0].id, "run_b":inspection_runs[1].id, "pipeline_id":pipeline.id,
+          'name': "2014_2019"}]
+  response = requests.post('http://localhost:5000/run_match/', json=data)
+  ## get run match from response
+  rm = RunMatch.get_by_id(response.json()[0]['id'])
   ### Return
   return(matched_data, rm)
 
@@ -89,7 +109,7 @@ def bootstrap_run_match_conf(rm, fm):
                       short_joint_lookahead=75,
                       joint_length_difference=2,
                       backtrack_validation_lookahead=10,
-                      feature_match_threshold=.98,
+                      feature_match_threshold=.90,
                       metal_loss_match_threshold=.60
                       )
   return(rmc)

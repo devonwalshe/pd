@@ -8,16 +8,26 @@ from multiprocessing import Process
 ### house imports
 from api.models.models import *
 from api.util.match_runner import MatchRunnerUtil
+from api.util.match_exporter import MatchExporter
 
 class MatchRunnerNew(Resource):
 
-  def post(self, run_match_id):
-    rm = RunMatch.get_by_id(run_match_id)
+  def post(self, runmatch_id):
+    rm = RunMatch.get_by_id(runmatch_id)
     ### Check if its already done
-    return("Matcher already run for run match {}".format(rm.id))
+    if rm.match_complete:
+      return("Matcher already run for run match {}".format(rm.id))
     ### Set up matcher run
-    matched_data = MatcherRunnerUtil.launch_matcher(rm)
-    ### Save data to database as background task
-    matcher_task = Process(target=MatcherRunnerUtil.launch_matcher, args=(rm))
-    matcher_task.start()
+    mru = MatchRunnerUtil(rm)
+    # matcher_task = Process(target=mru.run)
+    # matcher_task.start()
+    mru.run()
     return("Matcher started!")
+
+class MatchRunnerExport(Resource):
+
+  def get(self, runmatch_id):
+    rm = RunMatch.get_by_id(runmatch_id)
+    exporter = MatchExporter(rm)
+    csv_text = exporter.assemble_data()
+    return(csv_text)
