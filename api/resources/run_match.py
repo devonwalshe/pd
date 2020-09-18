@@ -42,7 +42,7 @@ class RunMatchNew(NewResource):
 
   def set_default_conf(self, rm):
     ### Defaults: can be changed later
-    rmc = RunMatchConf.create(run_match=rm,
+    rmc = RunMatchConf.get_or_create(run_match=rm,
                               feature_map=rm.run_a.raw_file.data_mapping,
                               coordinates_match=False,
                               short_joint_threshold=20,

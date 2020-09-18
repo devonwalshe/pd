@@ -226,8 +226,8 @@ class RunMatchConf(Model):
   '''
   All the configuration for a single run match
   '''
-  run_match = ForeignKeyField(RunMatch, backref='confs', unique=True, on_delete="CASCADE")
-  feature_map = ForeignKeyField(FeatureMap, backref='run_matches', unique=True)
+  run_match = ForeignKeyField(RunMatch, backref='confs', on_delete="CASCADE")
+  feature_map = ForeignKeyField(FeatureMap, backref='run_matches')
   coordinates_match = BooleanField()
   short_joint_threshold = IntegerField()
   short_joint_window = IntegerField()
