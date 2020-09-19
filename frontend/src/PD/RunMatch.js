@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
 import DataAdapter from './DataAdapter'
 import ReactDataGrid from 'react-data-grid'
-import PropTypes from 'prop-types';
+import PropTypes from 'prop-types'
 import { Col, Button, Form } from 'react-bootstrap'
 import fontawesome from '@fortawesome/fontawesome'
 import { saveAs } from '@progress/kendo-file-saver'
@@ -37,10 +37,10 @@ export default class Runs extends Component {
             data => this.setState({new_match_pipeline: data.map(data => (<option key={data.id} value={data.id}>{data.name}</option>))})
         )
 
+        this.dataAdapter.get('run_matches', null, data => this.setState({rows: data}))
+
     }
 
-
-    componentDidMount = () => this.dataAdapter.get('run_matches', null, data => this.setState({rows: data}))
 
     addNew = () => {
 
@@ -57,7 +57,7 @@ export default class Runs extends Component {
         }]
         console.log(data)
         
-        this.dataAdapter.post('run_match', data, this.dataAdapter.get('run_matches', null, data => this.setState({rows: data})))
+        this.dataAdapter.post('run_match', data, () => this.dataAdapter.get('run_matches', null, data => this.setState({rows: data})))
         
     }
 

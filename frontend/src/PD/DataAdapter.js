@@ -264,13 +264,14 @@ export default class DataAdapter extends Component {
 
         this.spin(true)
 
-        fetch(this.props.proxyURL + '?upload', {
+        fetch(proxyURL + '?upload', {
             method: 'POST',
             headers: {
                 'Accept': 'application/json'
             },
             body: data
         })
+            .then(res => res.json())
             .then(res => {
                 this.spin(false)
                 cbk(res)

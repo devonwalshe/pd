@@ -20,7 +20,7 @@ rf_a = requests.post(url = base_url+"/raw_file/", data=data_a, files = files_a)
 rf_b = requests.post(url = base_url+"/raw_file/", data=data_b, files = files_b)
 
 ### Create new run match
-rm_data = [{"name": "pipeline_1_test", "run_a": ra.json()['inspection_run_id'], 'run_b': rb.json()['inspection_run_id'], 'pipeline':pipeline[0]['id']}]
+rm_data = [{"name": "pipeline_1_test", "run_a": rf_a.json()['inspection_run_id'], 'run_b': rf_b.json()['inspection_run_id'], 'pipeline':pipeline[0]['id']}]
 rm_r = requests.post(url = base_url+"/run_match/", data=json.dumps(rm_data))
 
 ### launch match runner
