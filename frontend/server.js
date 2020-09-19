@@ -14,32 +14,49 @@ const requestListener = function (req, res) {
 
     if (uri === 'upload') {
 
-      const form = new formidable.IncomingForm({multiples:true});
+      const FormData = require('form-data')
+      const form = new FormData()
+      const incoming = new formidable.IncomingForm()
 
-      form.parse(req, function (err, fields, files) {
+      incoming.parse(req, function (err, fields, files) {
+ 
+        const file = files.file
+        const path = file.path
+        const name = file.name
+        const type = file.type
+        const buffer = fs.readFileSync(path)
+   
+        form.append('file', buffer, {
+          contentType: type,
+          name: 'file',
+          filename: name,
+        })
+   
+        for (let f in fields)
 
-        for (let i = 0, ix = (files.file || []).length; i < ix; i += 1) {
-
-          const file = files.file[i]
-
-          const oldpath = file.path
-          const newpath = uploadPath + '/' + file.name
-
-          fs.renameSync(oldpath, newpath, function (err) {
-            if (err) throw err;
-            res.write('File uploaded and moved!')
-                
+          form.append(f, fields[f])
+   
+        fetch("http://localhost:5000/raw_file/", {
+            mode: 'no-cors',
+            method: "POST",
+            headers: {
+              "Accept": "application/json"
+            },
+            body: form
           })
-          
-        }
-        res.setHeader('Content-Type', 'application/json'),
-        res.setHeader('Access-Control-Allow-Origin', '*');
-        res.setHeader('Access-Control-Request-Method', '*');
-        res.setHeader('Access-Control-Allow-Methods', 'OPTIONS, GET, POST');
-        res.setHeader('Access-Control-Allow-Headers', '*');
-        res.writeHead(200);
-        res.end();
-
+          .then(response => response.text())
+          .then(data => {
+            res.setHeader('Content-Type', 'application/json')
+            res.setHeader('Access-Control-Allow-Origin', '*')
+            res.setHeader('Access-Control-Request-Method', '*')
+            res.setHeader('Access-Control-Allow-Methods', 'OPTIONS, GET, POST, PUT')
+            res.setHeader('Access-Control-Allow-Headers', '*')
+            res.writeHead(200)
+            res.end(data)
+          }, e => {
+            console.log("Error submitting form!", e)
+            res.end()
+          })
       })
       
     } else {
@@ -69,12 +86,14 @@ const requestListener = function (req, res) {
           'Accept': 'application/json',
           'Content-Type': 'application/json'
         }
+        
         request.body = JSON.parse(JSON.stringify(obj.data))
       }
 
       fetch(decodeURIComponent(obj.url), request)
           .then(response => response.text())
           .then(data => {
+            //console.log(data)
             obj.data && (request.method != 'GET') && res.setHeader('Content-Type', 'application/json')
             res.setHeader('Access-Control-Allow-Origin', '*')
             res.setHeader('Access-Control-Request-Method', '*')
