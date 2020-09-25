@@ -5,7 +5,7 @@ import DataAdapter from './DataAdapter'
 import Axes from './Axes'
 import WeldsTable from './WeldsTable'
 import Ctrl from './Ctrl'
-
+import PropTypes from 'prop-types'
 
 export default class PD extends Component {
 
@@ -45,9 +45,9 @@ export default class PD extends Component {
             index: 0,
             id: 0
         }
-        
+
         this.pipe_section_raw = {}
-        this.run_match = 1
+        this.run_match = this.props.run_match
         this.first_match = 0
         this.second_match = 0
         this.offset = {
@@ -441,5 +441,12 @@ export default class PD extends Component {
         </>
         
     )
+
+}
+
+
+PD.propTypes = {
+
+    run_match: PropTypes.number.isRequired
 
 }
