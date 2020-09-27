@@ -1,10 +1,10 @@
-const fetch = require("node-fetch")
+const fetch = require('node-fetch')
 const http = require('http')
 const url = require('url')
 const formidable = require('formidable')
 const fs = require('fs')
 const port = 3001
-const { uploadPath } = require('./src/config')
+const { restURL } = require('./src/config')
 
 const requestListener = function (req, res) {
 
@@ -36,11 +36,11 @@ const requestListener = function (req, res) {
 
           form.append(f, fields[f])
    
-        fetch("http://localhost:5000/raw_file/", {
+        fetch(restURL + '/raw_file/', {
             mode: 'no-cors',
-            method: "POST",
+            method: 'POST',
             headers: {
-              "Accept": "application/json"
+              'Accept': 'application/json'
             },
             body: form
           })
@@ -54,7 +54,7 @@ const requestListener = function (req, res) {
             res.writeHead(200)
             res.end(data)
           }, e => {
-            console.log("Error submitting form!", e)
+            console.log('Error submitting form!', e)
             res.end()
           })
       })

@@ -33,7 +33,7 @@ export default class App extends Component {
         name: 'Run Matches',
         comp: (
           <RunMatch
-            goRun={id => this.setState({page: (<PD id={id}/>)})}
+            goRun={run_match => this.setState({page: (<PD run_match={Number(run_match)}/>)})}
           />
         )
       },
