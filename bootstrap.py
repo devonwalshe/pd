@@ -7,14 +7,14 @@ import datetime, logging, math, re, requests
 logger = logging.getLogger('peewee')
 logger.addHandler(logging.StreamHandler())
 logger.setLevel(logging.INFO)
-import os
+import os, subprocess, re
 ### Local importas
 from matcher.conf import mappings
 mapping = mappings['wc']
 from api.util.match_runner import MatchRunnerUtil
 
 ### DB
-db = PostgresqlDatabase('pd', user=os.system('whoami'), host='localhost', port=5432)
+db = PostgresqlDatabase('pd', user=re.match("[^\n].*", subprocess.check_output('whoami').decode())[0], host='localhost', port=5432)
 
 def drop_tables():
     model_list = [Feature, FeatureAttribute, FeaturePair, Weld, WeldPair, \

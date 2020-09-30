@@ -1,4 +1,4 @@
-import os, yaml, re
+import os, subprocess, yaml, re
 ### load mappings
 mappings = {filename.replace('.yaml', ''): yaml.safe_load(open(os.path.join(os.path.realpath('matcher/feature_mappings'), filename)).read()) for filename in os.listdir('matcher/feature_mappings')}
 

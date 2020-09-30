@@ -1,9 +1,9 @@
 from peewee import *
 from playhouse.shortcuts import model_to_dict, dict_to_model
 from playhouse.hybrid import hybrid_property, hybrid_method
-import os
+import os, subprocess, re
 
-db = PostgresqlDatabase('pd', user=os.system('whoami'), host='localhost', port=5432)
+db = PostgresqlDatabase('pd', user=re.match("[^\n].*", subprocess.check_output('whoami').decode())[0], host='localhost', port=5432)
 
 class FeatureMap(Model):
   '''

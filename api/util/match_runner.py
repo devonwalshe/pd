@@ -14,7 +14,7 @@ from _logging import timed, logger
 from matcher.conf import mappings
 mapping = mappings['wc']
 
-db = PostgresqlDatabase('pd', user=os.system('whoami'), host='localhost', port=5432, autorollback=True)
+db = PostgresqlDatabase('pd', user=re.match("[^\n].*", subprocess.check_output('whoami').decode())[0], host='localhost', port=5432, autorollback=True)
 
 ### Tasks
 class MatchRunnerUtil(object):
