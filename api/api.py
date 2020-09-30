@@ -3,11 +3,12 @@ from flask_restful import Resource, Api, fields
 from peewee import *
 import pandas as pd
 import numpy as np
+import os
 
 from api.models.models import *
 from api.resources import *
 
-db = PostgresqlDatabase('pd', user='azymuth', host='localhost', port=5432)
+db = PostgresqlDatabase('pd', user=os.system('whoami'), host='localhost', port=5432)
 
 app = Flask(__name__)
 api = Api(app)

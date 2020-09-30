@@ -1,8 +1,9 @@
 from peewee import *
 from playhouse.shortcuts import model_to_dict, dict_to_model
 from playhouse.hybrid import hybrid_property, hybrid_method
+import os
 
-db = PostgresqlDatabase('pd', user='azymuth', host='localhost', port=5432)
+db = PostgresqlDatabase('pd', user=os.system('whoami'), host='localhost', port=5432)
 
 class FeatureMap(Model):
   '''
@@ -136,7 +137,7 @@ class Weld(Model):
   side = CharField()
   us_weld_dist = DoubleField(null=True)
   joint_length = DoubleField(null=True)
-  wall_thickness = DoubleField()
+  wall_thickness = DoubleField(null=True)
 
   def weld_pair(self):
     ### code to return the weld pair
