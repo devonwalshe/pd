@@ -35,13 +35,13 @@ class PipeSectionResource(BaseResource):
     features = [f.serialize() for f in ps.features]
     ### Get welds
     ### TODO - make this a regular expression boolean that looks for 0 (the first weld pair of any given run)
-    if re.match(r'.*(\d+$)', ps.section_id)[1] != "0":
+    if re.match(r'\d+_(\d+?$)', ps.section_id)[1] != "0":
       wp = Weld.get(Weld.pipe_section == ps.section_id).weld_pair()
       welds = [model_to_dict(wp.weld_a, recurse=False), model_to_dict(wp.weld_b, recurse=False)]
     ### Feature pairs
     fps = [model_to_dict(fp, recurse=False) for fp in ps.feature_pairs]
     ### merge the dicts
-    if re.match(r'.*(\d+$)', ps.section_id)[1] != "0":
+    if re.match(r'\d+_(\d+?$)', ps.section_id)[1] != "0":
       joined = {**model_to_dict(ps, recurse=False), **{'weld_pair_id':wp.id, 'feature_pairs': fps, 'welds': welds, 'features': features}}
     else:
       joined = {**model_to_dict(ps, recurse=False), **{'feature_pairs': fps, 'features': features}}
