@@ -2,6 +2,10 @@ import React, { Component } from 'react'
 import DataAdapter from './DataAdapter'
 import ReactDataGrid from 'react-data-grid'
 import { Button, Col, Form } from 'react-bootstrap'
+import fontawesome from '@fortawesome/fontawesome'
+import { faTrash } from '@fortawesome/free-solid-svg-icons'
+
+fontawesome.library.add(faTrash)
 
 
 export default class Pipeline extends Component {
@@ -21,6 +25,8 @@ export default class Pipeline extends Component {
 
         this.dataAdapter.get('pipelines', null, data => this.setState({rows: data}))
 
+        this.gridWidth = 800
+
     }
 
     addNew = () => this.dataAdapter.post(
@@ -34,8 +40,8 @@ export default class Pipeline extends Component {
 
     render = () => (
 
-            <div style={{width:'100%'}}>
-            <div style={{margin:'0 auto', width:'800px'}}>
+        <div style={{width:'100%'}}>
+            <div style={{margin:'0 auto', width: this.gridWidth + 'px'}}>
                 <ReactDataGrid
                     columns={
                         [
@@ -45,7 +51,22 @@ export default class Pipeline extends Component {
                             },
                             {
                                 key: 'name',
-                                width: 80
+                                width: 70
+                            },
+                            {
+                                key:'delete',
+                                width: 10,
+                                formatter: cell => (
+                                    <div style={{width: '100%', textAlign: 'center', cursor: 'pointer'}}>
+                                        <i className="fa fa-trash"></i>
+                                    </div>
+                                ),
+                                events: {
+                                    onClick: (e, arg) =>
+                                        this.dataAdapter.delete('pipeline', arg.rowId, () => 
+                                            this.dataAdapter.get('pipelines', null, data =>
+                                                this.setState({rows: data})))
+                                }
                             }
                         ].map(col => {
                             return {
@@ -54,8 +75,10 @@ export default class Pipeline extends Component {
                                 editable: false,
                                 sortable: false,
                                 resizable: true,
-                                width: Math.floor((800 - 13) / 100 * col.width),
-                                minWidth: Math.floor((800 - 13) / 100 * col.width),
+                                formatter: col.formatter || null,
+                                width: Math.floor((this.gridWidth - 13) / 100 * col.width),
+                                minWidth: Math.floor((this.gridWidth - 13) / 100 * col.width),
+                                events: col.events || {}
                             }
                         })
                     }
@@ -81,8 +104,7 @@ export default class Pipeline extends Component {
                     <Button variant='primary' onClick={this.addNew}>Add</Button>
                 </Form>
             </div>
-        </div>
-                
+        </div>        
             
     )
 

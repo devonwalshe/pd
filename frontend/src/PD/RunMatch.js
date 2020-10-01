@@ -5,9 +5,9 @@ import PropTypes from 'prop-types'
 import { Col, Button, Form } from 'react-bootstrap'
 import fontawesome from '@fortawesome/fontawesome'
 import { saveAs } from '@progress/kendo-file-saver'
-import { faDownload } from '@fortawesome/free-solid-svg-icons'
+import { faDownload, faTrash } from '@fortawesome/free-solid-svg-icons'
 
-fontawesome.library.add(faDownload)
+fontawesome.library.add(faDownload, faTrash)
 
 
 export default class Runs extends Component {
@@ -55,9 +55,13 @@ export default class Runs extends Component {
             run_b: run_b,
             pipeline: pipeline
         }]
-        console.log(data)
         
-        this.dataAdapter.post('run_match', data, () => this.dataAdapter.get('run_matches', null, data => this.setState({rows: data})))
+        this.dataAdapter.post('run_match', data, () => {
+
+            console.log(JSON.stringify(data))
+            this.dataAdapter.get('run_matches', null, data => this.setState({rows: data}))
+            
+        })
         
     }
 
@@ -83,19 +87,19 @@ export default class Runs extends Component {
                             },
                             {
                                 key: 'run_a',
-                                width: 10
+                                width: 9
                             },
                             {
                                 key: 'run_b',
-                                width: 10
+                                width: 9
                             },
                             {
                                 key: 'pipeline',
-                                width: 12
+                                width: 10
                             },
                             {
                                 key: 'section_count',
-                                width: 16
+                                width: 14
                             },
                             {
                                 key: 'sections_checked',
@@ -103,7 +107,7 @@ export default class Runs extends Component {
                             },
                             {
                                 key:'name',
-                                width: 15
+                                width: 13
                             },
                             {
                                 key:'export',
@@ -115,6 +119,21 @@ export default class Runs extends Component {
                                 ),
                                 events: {
                                     onClick: (e, arg) => this.downloadCSV(arg.rowId)
+                                }
+                            },
+                            {
+                                key:'delete',
+                                width: 8,
+                                formatter: cell => (
+                                    <div style={{width: '100%', textAlign: 'center', cursor: 'pointer'}}>
+                                        <i className="fa fa-trash"></i>
+                                    </div>
+                                ),
+                                events: {
+                                    onClick: (e, arg) =>
+                                        this.dataAdapter.delete('run_match', arg.rowId, () => 
+                                            this.dataAdapter.get('run_matches', null, data =>
+                                                this.setState({rows: data})))
                                 }
                             }
                         ].map(col => {

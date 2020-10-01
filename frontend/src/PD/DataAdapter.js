@@ -110,8 +110,6 @@ export default class DataAdapter extends Component {
                     pipeSection['weld_'+ a.side.toLowerCase() + '_width'] = Number(a.us_weld_dist)
                     
                 })
-        
-        
 
                 ;(['A','B']).forEach(side => {
 
@@ -119,7 +117,6 @@ export default class DataAdapter extends Component {
 
                         weldsTemp[side] && weldsTableColumns.map(f => pipeSection.welds[side][f] = weldsTemp[side][f])
 
-//                    weldsTemp[side] && weldsTableColumns.forEach(field => pipeSection.welds.push((<div key={side + field}><div>{field}</div><div>{weldsTemp[side][field]}</div></div>)))
                 })
 
 
@@ -285,6 +282,5 @@ export default class DataAdapter extends Component {
     }
 
     spin = s => this.spinner.style.display = s ? 'inline' : 'none'
-
 
 }

@@ -2,6 +2,7 @@ import React, { Component } from 'react'
 import { Form, Button } from 'react-bootstrap'
 import DataAdapter from './DataAdapter'
 import RawFileForm from './RawFileForm'
+import ReactDataGrid from 'react-data-grid'
 
 export default class RawFile extends Component {
 
@@ -11,12 +12,13 @@ export default class RawFile extends Component {
         this.state = {
             current: 0,
             step: null,
-            form: {}
+            form: {},
+            rows: []
         }
 
-
+        this.gridWidth = 800
         this.dataAdapter = new DataAdapter()
-
+        this.dataAdapter.get('raw_files', null, data => this.setState({rows: data}))
 
         this.steps = [
             (
@@ -80,6 +82,57 @@ export default class RawFile extends Component {
 
         <div style={{width:'100%'}}>
             <div style={{margin:'0 auto', width:'800px'}}>
+            <ReactDataGrid
+                    columns={
+                        [
+                            {
+                                key:'id',
+                                width: 10
+                            },
+                            {
+                                key: 'filename',
+                                width: 35
+                            },
+                            {
+                                key: 'uploaded_at',
+                                width: 45
+                            },
+                            {
+                                key:'delete',
+                                width: 10,
+                                formatter: cell => (
+                                    <div style={{width: '100%', textAlign: 'center', cursor: 'pointer'}}>
+                                        <i className="fa fa-trash"></i>
+                                    </div>
+                                ),
+                                events: {
+                                    onClick: (e, arg) =>
+                                        this.dataAdapter.delete('raw_file', arg.rowId, () => 
+                                            this.dataAdapter.get('raw_files', null, data =>
+                                                this.setState({rows: data})))
+                                }
+                            }
+                        ].map(col => {
+                            return {
+                                key: col.key,
+                                name: col.key,
+                                editable: false,
+                                sortable: false,
+                                resizable: true,
+                                formatter: col.formatter || null,
+                                width: Math.floor((this.gridWidth - 13) / 100 * col.width),
+                                minWidth: Math.floor((this.gridWidth - 13) / 100 * col.width),
+                                events: col.events || {}
+                            }
+                        })
+                    }
+                    rowGetter={i => this.state.rows[i]}
+                    rowsCount={this.state.rows.length}
+                    onGridRowsUpdated={this.onGridRowsUpdated}
+                    enableCellSelect={false}
+                />
+                <div style={{height:10}}></div>
+                <h3>Add New</h3>
                 {this.state.step}          
             </div>
             <br></br><br></br><br></br>
