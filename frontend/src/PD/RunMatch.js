@@ -56,10 +56,17 @@ export default class Runs extends Component {
             pipeline: pipeline
         }]
         
-        this.dataAdapter.post('run_match', data, () => {
+        this.dataAdapter.post('run_match', data, data => {
 
-            console.log(JSON.stringify(data))
-            this.dataAdapter.get('run_matches', null, data => this.setState({rows: data}))
+            const id = data[0].id
+
+            this.dataAdapter.get('run_matches', null, data => {
+                
+                this.setState({rows: data})
+             console.log(id)
+                this.dataAdapter.post('matchrunner/' + id, null, data =>  console.log(data))
+
+            })
             
         })
         

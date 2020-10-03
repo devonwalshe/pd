@@ -1,24 +1,23 @@
 ### Lib imports
 import pandas as pd
 import numpy as np
-import re
+import re, os
 ### API models
 from api.models.models import *
 ### House imports
 from matcher.weld_matcher import WeldMatcher
 from matcher.pr import PigRun
 from matcher.pr_matcher import PigRunMatcher
+from _logging import timed, logger
 
 ### TODO - fix features to get rid of this
 from matcher.conf import mappings
 mapping = mappings['wc']
 
-db = PostgresqlDatabase('pd', user='azymuth', host='localhost', port=5432)
+db = PostgresqlDatabase('pd', user=re.match("[^\n].*", subprocess.check_output('whoami').decode())[0], host='localhost', port=5432, autorollback=True)
 
 ### Tasks
 class MatchRunnerUtil(object):
-
-
 
   def __init__(self, run_match):
     self.run_match = run_match
@@ -26,13 +25,15 @@ class MatchRunnerUtil(object):
   def update_progress(self, data):
     pass
 
+  @timed(logger)
   def run(self):
     matched_data = self.launch_matcher()
-    print("here")
+    print("match run")
     result = self.save_run_objects(matched_data)
-    print("here2")
+    print("match saved")
     return(result)
 
+  @timed(logger)
   def launch_matcher(self):
     ### Receive run match
     rm = self.run_match
@@ -75,7 +76,7 @@ class MatchRunnerUtil(object):
       self.update_progress({})
     return(True)
 
-
+  @timed(logger)
   def save_pipe_sections(self, matched_data, rm):
     ### Set up pipe sections
     pipe_sections = [PipeSection(section_id = "{}_{}".format(rm.id, ps), run_match=rm, manually_checked=False) for ps in set(matched_data.pipe_section)]
@@ -83,7 +84,7 @@ class MatchRunnerUtil(object):
       PipeSection.bulk_create(pipe_sections, batch_size=100)
     return(True)
 
-
+  @timed(logger)
   def save_welds(self, matched_data, rm):
     ### Set up records for Welds
     welds_a = [Weld(weld_id = int(row['id_A']),
@@ -119,14 +120,14 @@ class MatchRunnerUtil(object):
       WeldPair.bulk_create(weld_pairs, batch_size=100)
     return(True)
 
-
+  @timed(logger)
   def save_features(self, matched_data, rm):
     ### Set up features
     a_cols = [c for c in matched_data.columns.to_list() if "_A" in c] + ['pipe_section', 'section_sequence']
     b_cols = [c for c in matched_data.columns.to_list() if "_B" in c] + ['pipe_section', 'section_sequence']
     ### Iterate through all the matched data
+    fs_a, fas_a, fs_b, fas_b, f_ps = ([],[],[],[],[])
     for idx, row in matched_data[(matched_data['feature_A'] != "WELD") & (matched_data['feature_B'] != "WELD")].iterrows():
-      # print(idx)
       row_a = row[a_cols]
       row_b = row[b_cols]
       feature_a = Feature(feature_id = row_a['id_A'],
@@ -148,13 +149,15 @@ class MatchRunnerUtil(object):
       if left:
         feature_a.feature_id = int(feature_a.feature_id)
         feature_a.save()
+        # feature_a.save()
       if right:
         feature_b.feature_id = int(feature_b.feature_id)
         feature_b.save()
+        # feature_b.save()
       ### if both have IDS
       if both:
-          fp = FeaturePair(feature_a = feature_a, feature_b = feature_b, run_match = rm, pipe_section=feature_a.pipe_section)
-          fp.save()
+        fp = FeaturePair(feature_a = feature_a, feature_b = feature_b, run_match = rm, pipe_section=feature_a.pipe_section)
+        f_ps.append(fp)
       ### Set up potential feature attributes
       mapping = {'feature':"str",
                  'wc':'float',
@@ -190,10 +193,14 @@ class MatchRunnerUtil(object):
           data_b = row[k]
         if left:
           fa_a = FeatureAttribute(feature = feature_a, attribute_name = k, attribute_datatype=v, attribute_data = data_a)
-          fa_a.save()
+          fas_a.append(fa_a)
         if right:
           fa_b = FeatureAttribute(feature = feature_b, attribute_name = k, attribute_datatype=v, attribute_data = data_b)
-          fa_b.save()
+          fas_b.append(fa_b)
     ### Pull them and return
+    with db.atomic():
+      # Feature.bulk_create(fs_a+fs_b, batch_size=1000)
+      FeaturePair.bulk_create(f_ps, batch_size=1000)
+      FeatureAttribute.bulk_create(fas_a+fas_b, batch_size=1000)
     # features = Feature.select().where(Feature.run_match == rm)
     return(True)

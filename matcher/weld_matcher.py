@@ -47,12 +47,12 @@ class WeldMatcher(object):
       ### Anchor iteration on left match, step forwards
       start = time.time()
       ### Set iteration count
-      n = w1.shape[0]
+      n = w1.shape[0] - 1
       ### match welds sequentially until they don't agree with eachother
       while matched_welds[0][-1].iat[-1, 0] + 1 <  n:
         ### update matched welds and decide whether to continue
         step, matched_welds = self.step_match(w1, w2, matched_welds)
-        # print(matched_welds[0][-1].id.values[0], matched_welds[1][-1].id.values[0])
+        print(matched_welds[0][-1].id.values[0], matched_welds[1][-1].id.values[0])
         ### Backtrack loop
         if not step:
           # if matched_welds[0][-1].id.item() > 24070:
@@ -132,16 +132,21 @@ class WeldMatcher(object):
     ### Set up initial short welds
     last_match_a = matched_welds[0][-1].iat[-1, 0]
     last_match_b = matched_welds[1][-1].iat[-1, 0]
-    ### First short weld on A
-    short_weld_a = w1[(w1.index > last_match_a) & (w1.joint_length < SJ + SJ_VAR) & (w1.joint_length > SJ - SJ_VAR)].iloc[[0]]
+
+
     ### Matching short weld on B
     try:
+      short_weld_a = w1[(w1.index > last_match_a) & (w1.joint_length < SJ + SJ_VAR) & (w1.joint_length > SJ - SJ_VAR)].iloc[[0]]
       short_weld_b = w2[(w2.index > last_match_b) &
                       # (w2.index < last_match_b + LOOKAHEAD) &
                         (w2.joint_length.between(short_weld_a.joint_length.item() - JL_DIFF,
                                                  short_weld_a.joint_length.item() + JL_DIFF))].iloc[[0]]
-    except IndexError: # likely close to the end - pick the last b
-      short_weld_b = w2.iloc[[-6]]
+    except IndexError: # likely close to the end - match the second to last welds and be done with it
+      short_weld_a = w1.iloc[[-2]]
+      short_weld_b = w2.iloc[[-2]]
+      backtrack_welds = [[short_weld_a], [short_weld_b]]
+      return(True, backtrack_welds)
+
 
     LOOKAHEAD = self.conf['short_joint_lookahead']
     VALIDATE = self.conf['backtrack_validation_lookahead']

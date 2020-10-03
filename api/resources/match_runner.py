@@ -22,7 +22,7 @@ class MatchRunnerNew(Resource):
     # matcher_task = Process(target=mru.run)
     # matcher_task.start()
     mru.run()
-    return("Matcher started!")
+    return('match_complete')
 
 class MatchRunnerExport(Resource):
 
