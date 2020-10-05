@@ -52,7 +52,7 @@ class WeldMatcher(object):
       while matched_welds[0][-1].iat[-1, 0] + 1 <  n:
         ### update matched welds and decide whether to continue
         step, matched_welds = self.step_match(w1, w2, matched_welds)
-        print(matched_welds[0][-1].id.values[0], matched_welds[1][-1].id.values[0])
+        # print(matched_welds[0][-1].id.values[0], matched_welds[1][-1].id.values[0])
         ### Backtrack loop
         if not step:
           # if matched_welds[0][-1].id.item() > 24070:

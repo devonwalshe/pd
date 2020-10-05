@@ -149,12 +149,10 @@ class MatchRunnerUtil(object):
       if left:
         feature_a.feature_id = int(feature_a.feature_id)
         feature_a.save()
-        # feature_a.save()
       if right:
         feature_b.feature_id = int(feature_b.feature_id)
         feature_b.save()
-        # feature_b.save()
-      ### if both have IDS
+      ### if both have IDs
       if both:
         fp = FeaturePair(feature_a = feature_a, feature_b = feature_b, run_match = rm, pipe_section=feature_a.pipe_section)
         f_ps.append(fp)
