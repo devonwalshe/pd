@@ -29,7 +29,7 @@ export default class Runs extends Component {
         this.dataAdapter.get(
             'inspection_runs',
             null,
-            data => this.setState({new_match_runs: data.map(data => (<option key={data.id} value={data.id}>{data.id}</option>))})
+        data => this.setState({new_match_runs: data.map(data => (<option key={data.id} value={data.id}>{data.raw_file}, {data.run_date}</option>))})
         )
         this.dataAdapter.get(
             'pipelines',
@@ -63,7 +63,7 @@ export default class Runs extends Component {
             this.dataAdapter.get('run_matches', null, data => {
                 
                 this.setState({rows: data})
-             console.log(id)
+
                 this.dataAdapter.post('matchrunner/' + id, null, data =>  console.log(data))
 
             })
