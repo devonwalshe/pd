@@ -29,7 +29,41 @@ export default class Runs extends Component {
         this.dataAdapter.get(
             'inspection_runs',
             null,
-        data => this.setState({new_match_runs: data.map(data => (<option key={data.id} value={data.id}>{data.raw_file}, {data.run_date}</option>))})
+            data => {
+                
+                this.dataAdapter.get(
+                    'raw_files',
+                    null,
+                    files =>
+
+                        this.setState({new_match_runs: data.map(data => 
+                        
+                            (<option key={data.id} value={data.id}>
+
+                                {(() => {
+                                    
+                                    const file = files.filter(file => file.id === data.raw_file)
+                                    
+                                    return file[0] && file[0].filename
+
+                                })()
+                                
+                                } - {(() => {
+                                    
+                                    const d = new Date(Date.parse(data.run_date))
+
+                                    return [d.getFullYear(), d.getMonth() + 1, d.getDate()].join('-')
+                                    
+                                })()}
+                            
+                            </option>)
+
+                        )})
+
+                )
+            }
+
+            
         )
         this.dataAdapter.get(
             'pipelines',
