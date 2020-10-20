@@ -25,6 +25,8 @@ export default class Feature extends Component {
             valve2: 'valve2',
             'metal loss / mill anomaly': 'metal_loss'
         }
+
+        this.enlarge = 10
         
     }
 
@@ -80,36 +82,53 @@ export default class Feature extends Component {
                 key={i.id + 'popup'}
                 trigger={
                     <div
-                        className={'shape ' + (i.matched ? 'matched' : 'unmatched') + (isloss ? ' isloss' : '')}
-                        key={i.id}
+                        id={i.id}
+                        onClick={e => this.props.matchMode ? this.props.onClick(e.currentTarget.id) : () => false}
                         style={{
-                            //backgroundColor: isloss || !nodim ? border : 'none',
-                            left: left + offset.y,
-                            top: top + offsetTop,
-                            height: height,
-                            width: width}}
+                            backgroundColor: this.props.matchMode ? i.side === 'A' ? '#fed8b1' : 'lightblue' : 'transparent',
+                            cursor: this.props.matchMode ? 'pointer' : 'default',
+                            left: left + offset.y - this.enlarge,
+                            top: top + offsetTop - this.enlarge,
+                            height: height + this.enlarge * 2,
+                            opacity: this.props.matchMode ? 0.8 : 1,
+                            padding: this.enlarge,
+                            width: width + this.enlarge * 2,
+                            zIndex: this.props.matchMode ? 1 : 0
+                        }}
                     >
-                        <div>
-                            <div
-                                onMouseOver={e =>this.props.onHover(e.currentTarget.id)}
-                                onClick={e => this.props.onClick(e.currentTarget.id)}
-                                id={i.id}
-                                style={{
-                                backgroundColor: !nodim ? border : 'none',
-                                padding: 1,
-                                border: "1px solid " + border,
+                        <div
+                            className={'shape ' + (i.matched ? 'matched' : 'unmatched') + (isloss ? ' isloss' : '')}
+                            style={{
                                 height: height,
-                                width: width}}>
-                                {isloss || !nodim ? '' : (<img
-                                    alt={a.feature_category}
-                                    width={icowh}
-                                    height={icowh}
-                                    src={"./feature_icons/" + (this.icons[a.feature_category] || "unknown") + ".png"}
-                                />)}
+                                width: width
+                            }}
+                        >
+                            <div>
+                                <div
+                                    onMouseOver={e =>this.props.onHover(e.currentTarget.id)}
+                                    onClick={e => !this.props.matchMode ? this.props.onClick(e.currentTarget.id) : () => false}
+                                    id={i.id}
+                                    style={{
+                                        backgroundColor: !nodim ? border : 'none',
+                                        padding: 1,
+                                        border: "1px solid " + border,
+                                        height: height,
+                                        width: width
+                                    }}
+                                >
+                                    {isloss || !nodim ? '' : (
+                                        <img
+                                            alt={a.feature_category}
+                                            width={icowh}
+                                            height={icowh}
+                                            src={"./feature_icons/" + (this.icons[a.feature_category] || "unknown") + ".png"}
+                                        />
+                                    )}
+                                </div>
+                                {lt && !isloss ? (<div>&lt;</div>) : ''}
                             </div>
-                            {lt && !isloss ? (<div>&lt;</div>) : ''}
+                            {nodim ? (<div></div>) : ''}
                         </div>
-                        {nodim ? (<div></div>) : ''}
                     </div>
                 }
                 keepTooltipInside="#root"
@@ -159,6 +178,7 @@ Feature.propTypes = {
 
     feature: PropTypes.object.isRequired,
     onClick: PropTypes.func.isRequired,
-    onHover: PropTypes.func.isRequired
+    onHover: PropTypes.func.isRequired,
+    matchMode: PropTypes.bool.isRequired
 
 }
