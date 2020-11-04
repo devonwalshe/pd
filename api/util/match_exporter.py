@@ -57,6 +57,9 @@ class MatchExporter(object):
       ### Normalise column names
       weld_a.update({"wc": weld_a['wheel_count'], "wt":weld_a['wall_thickness'], "id":weld_a['weld_id']})
       weld_b.update({"wc": weld_b['wheel_count'], "wt":weld_b['wall_thickness'], "id":weld_b['weld_id']})
+      ### Add the feature names for the welds
+      weld_a['feature'] = 'WELD'
+      weld_b['feature'] = 'WELD'
       ### Update pipe_section
       pipe_section, section_sequence = (weld_a['pipe_section'], weld_a['section_sequence'])
       pipe_section = re.search(r"[0-9]+$", pipe_section)[0]
@@ -68,9 +71,6 @@ class MatchExporter(object):
       dict_list.append(wp)
     ### Generate the df
     welds_df = pd.DataFrame(dict_list)
-    ### Fix pipe section
-
-
     ### Return
     return(welds_df)
 

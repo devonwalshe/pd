@@ -69,11 +69,11 @@ class PigRun(object):
     ids = []
     rows = df.shape[0]
     for i in range(0,rows):
-      if i >= widx[-1]:
+      if i <= widx[0]:
         us_weld = np.NaN
         # ds_weld = df.iloc[widx[widx <= i].max()].id
       else:
-        us_weld = df.iloc[widx[widx > i].min()].id
+        us_weld = df.iloc[widx[widx < i].max()].id
         # ds_weld = df.iloc[widx[widx <= i].max()].id
       ids.append(us_weld)
     return(ids)
@@ -100,7 +100,7 @@ class PigRun(object):
       us_weld_join = df.merge(df[(df.feature == "WELD")][['id','wc']], left_on='us_weld_id', right_on='id', how='left')
 
     # ds_weld_join = df.merge(df[(df.feature == "WELD")][['id','wc']], left_on='ds_weld_id', right_on='id', how='left')
-    df['us_weld_dist_wc_ft'] = us_weld_join['wc_y'] - us_weld_join['wc_x']
+    df['us_weld_dist_wc_ft'] = us_weld_join['wc_x'] - us_weld_join['wc_y']
     # df['ds_weld_dist'] = us_weld_join['wc_x'] - ds_weld_join['wc_y']
     return(df)
 
