@@ -106,7 +106,6 @@ export default class PD extends Component {
 
         } else {
 
-            this.highlightDom(id, this.bgHi)
             this.first_match = id
             this.graphPipeSection()
 
@@ -116,6 +115,55 @@ export default class PD extends Component {
 
 
     getGraphWidth = () => this.setState({screen_width: parseFloat(window.innerWidth)}, this.graphPipeSection)
+
+
+    graphPipeSection = () => {
+
+        const data = this.pipe_section_raw.features
+        const graph_width = this.state.screen_width - this.offset.y - this.offset.margin
+        const max_width = this.state.max_weld_width
+
+        let features = []
+
+        for (let f in data) {
+ 
+            if (((this.filter.matched && data[f].matched) || (this.filter.unmatched && !data[f].matched)) &&
+                (!this.first_match || (this.first_match === Number(f) || this.pipe_section_raw.features[this.first_match].side !== data[f].side))) {
+
+                let feature = {...data[f]}
+                const top = Number(data[f].attributes.orientation_deg)
+                const h = Number(data[f].attributes.width_in)
+                const w = Number(data[f].attributes.length_in)
+
+                if (!isNaN(h) && !isNaN(w)) {
+
+                    feature.width = w > 0.5 ? graph_width / max_width * w / 12 : 2
+                    feature.height = h > 0.5 ? graph_width / max_width * h / 12 : 2
+
+                }
+            
+                feature.top = 360 - (!isNaN(top) ? top : 360) + this.offset.x
+                feature.left = graph_width / max_width * Number(data[f].attributes.us_weld_dist_wc_ft) + this.offset.y
+                
+                features.push(
+
+                    <Feature
+                        key={'feature_' + feature.id}
+                        feature={feature}
+                        onClick={this.clickFeature}
+                        onHover={this.hoverOnGraph}
+                        matchMode={this.first_match && feature.id !== this.first_match? true : false}
+                    />
+
+                )
+
+            }
+
+        }
+
+        this.setState({pipe_section_graph: features})
+
+    }
 
 
     highlightDom = (id, color) => {
@@ -214,7 +262,7 @@ export default class PD extends Component {
                     idx = ps[i].id
                     this.pipe_sections.index = i
                     i = ix
-                    console.log(p,idx)
+
                 }}
             
         }
@@ -228,47 +276,6 @@ export default class PD extends Component {
         }
 
         this.navStatus(filter)
-
-    }
-
-
-    graphPipeSection = () => {
-
-        const data = this.pipe_section_raw.features
-        const graph_width = this.state.screen_width - this.offset.y - this.offset.margin
-        const max_width = this.state.max_weld_width
-
-        let features = []
-
-        for (let f in data) {
- 
-            if (((this.filter.matched && data[f].matched) || (this.filter.unmatched && !data[f].matched)) &&
-                (!this.first_match || (this.first_match === Number(f) || this.pipe_section_raw.features[this.first_match].side !== data[f].side))) {
-
-                let feature = {...data[f]}
-                const top = Number(data[f].attributes.orientation_deg)
-                const h = Number(data[f].attributes.width_in)
-                const w = Number(data[f].attributes.length_in)
-
-                if (!isNaN(h) && !isNaN(w)) {
-
-                    feature.width = w > 0.5 ? graph_width / max_width * w / 12 : 2
-                    feature.height = h > 0.5 ? graph_width / max_width * h / 12 : 2
-
-                }
-            
-                feature.top = 360 - (!isNaN(top) ? top : 360) + this.offset.x
-                feature.left = graph_width / max_width * Number(data[f].attributes.us_weld_dist_wc_ft) + this.offset.y
-                features.push(<Feature
-                    key={'feature_' + feature.id}
-                    feature={feature}
-                    onClick={this.clickFeature}
-                    onHover={this.hoverOnGraph}
-                />)
-
-            }
-        }
-        this.setState({pipe_section_graph: features})
 
     }
 
@@ -404,7 +411,7 @@ export default class PD extends Component {
                         this.second_match = 0
                         this.graphPipeSection()
                     }
-                    this.setState({match_on: !this.state.match_on}, ()=>this.setState({...this.state}))
+                    this.setState({match_on: !this.state.match_on}, () => this.setState({...this.state}))
                 }}
                 run_match={String(this.run_match)}
                 section_id={this.state.section_id}
