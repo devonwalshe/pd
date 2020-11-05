@@ -8,7 +8,8 @@ import os, subprocess, re
 from api.models.models import *
 from api.resources import *
 
-db = PostgresqlDatabase('pd', user=re.match("[^\n].*", subprocess.check_output('whoami').decode())[0], host='localhost', port=5432)
+db = PostgresqlDatabase('pd', user=re.match("[^\n].*", subprocess.check_output('whoami').decode())[0],
+                        host='localhost', port=5432, autocommit=True, autorollback=True)
 
 app = Flask(__name__)
 api = Api(app)
