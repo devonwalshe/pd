@@ -33,7 +33,8 @@ class MatchExporter(object):
     ### Join
     joined = pd.concat([welds, matched_features, unmatched_features])
     ### Sort
-    joined_sorted = joined_sorted.astype({"pipe_section":int, "section_sequence":int})
+    joined_sorted = joined.astype({"pipe_section":int, "section_sequence":int})
+
     joined_sorted = joined_sorted.sort_values(['pipe_section', 'section_sequence', 'us_weld_dist_wc_ft_B'])
     ### to csv
     csv_text = joined_sorted.to_csv()
