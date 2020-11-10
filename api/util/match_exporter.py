@@ -27,11 +27,17 @@ class MatchExporter(object):
                                                    self.get_matched_features(),
                                                    self.get_unmatched_features())
     ### Normalise cols
-    welds, matched_features, unmatched_features = (welds[cols],
-                                                   matched_features[cols],
-                                                   unmatched_features[cols])
-    ### Join
-    joined = pd.concat([welds, matched_features, unmatched_features])
+    if len(matched_features) > 0:
+      welds, matched_features, unmatched_features = (welds[cols],
+                                                     matched_features[cols],
+                                                     unmatched_features[cols])
+      ### Join
+      joined = pd.concat([welds, matched_features, unmatched_features])
+    else:
+      welds, unmatched_features = (welds[cols],
+                                                     unmatched_features[cols])
+      ### Join
+      joined = pd.concat([welds, unmatched_features])
     ### Sort
     joined_sorted = joined.astype({"pipe_section":int, "section_sequence":int})
 
