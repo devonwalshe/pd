@@ -137,6 +137,7 @@ class PigRunMatcher(object):
     ### Get matches above N and take top ones where there are multiple
     matches = results[results['match_score'] >= self.conf['feature_match_threshold']]
     matches = matches[matches.groupby('A')['match_score'].transform(max) == matches['match_score']]
+    matches = matches[matches.groupby('B')['match_score'].transform(max) == matches['match_score']]
 
     return(matches)
 
@@ -162,6 +163,8 @@ class PigRunMatcher(object):
     ### Get matches above N and take top ones where there are multiple
     matches = results[results['match_score'] >= self.conf['metal_loss_match_threshold']]
     matches = matches[matches.groupby('A')['match_score'].transform(max) == matches['match_score']]
+    matches = matches[matches.groupby('B')['match_score'].transform(max) == matches['match_score']]
+
     return(matches)
 
   ## FIXME - make sure we need this - I don't think we do...
@@ -239,9 +242,9 @@ class PigRunMatcher(object):
     unmatched, matched_welds, matched_features = (unmatched[keep_columns],
                                                  matched_welds[keep_columns],
                                                  matched_features[keep_columns])
-    ### Bind together
+    ### Bind together and sort
     runs_joined = pd.concat([matched_welds, matched_features, unmatched])
-    runs_joined = runs_joined.sort_values(['pipe_section', 'section_sequence'])
+    runs_joined = runs_joined.sort_values(['pipe_section', 'us_weld_dist_wc_ft_B', 'section_sequence'])
     ### return
     return(runs_joined)
 
