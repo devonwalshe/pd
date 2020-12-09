@@ -244,10 +244,30 @@ class PigRunMatcher(object):
                                                  matched_features[keep_columns])
     ### Bind together and sort
     runs_joined = pd.concat([matched_welds, matched_features, unmatched])
-    runs_joined = runs_joined.sort_values(['pipe_section', 'us_weld_dist_wc_ft_B', 'section_sequence'])
+    runs_joined = self.sort_rows(runs_joined)
+    runs_joined = runs_joined.reset_index(drop=True)
+    # runs_joined = runs_joined.sort_values(['pipe_section', 'us_weld_dist_wc_ft_B', 'us_weld_dist_wc_ft_A', 'section_sequence'])
     ### return
     return(runs_joined)
 
+  def sort_rows(self, df):
+    df['wc_interpolated'] = None
+    for i in range(len(df)):
+      a_present, b_present = (pd.notnull(df.iloc[i]['us_weld_dist_wc_ft_A']), pd.notnull(df.iloc[i]['us_weld_dist_wc_ft_B']))
+      ### If match - take right hand side
+      if a_present & b_present:
+        df.iloc[i,-1] = df.iloc[i]['us_weld_dist_wc_ft_B']
+      ### Else take whatever side there is
+      else:
+        df.iloc[i,-1] = df.iloc[i]['us_weld_dist_wc_ft_B'] if b_present else df.iloc[i]['us_weld_dist_wc_ft_A']
+    ## Sort
+    df = df.sort_values(['pipe_section', 'wc_interpolated'])
+    ### Reset section_sequence
+    df['section_sequence'] = df.groupby('pipe_section').cumcount()
+    df.loc[(df.feature_A=="WELD") | (df.feature_B=="WELD"), 'section_sequence'] = -1
+    ### final sort
+    # df = df.sort_values(['pipe_section', 'section_sequence'])
+    return(df)
 
   ### gen eyeball ds
   def gen_eyeball(results, df1, df2):

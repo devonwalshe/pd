@@ -18,7 +18,7 @@ class PigRun(object):
     ### Set up mapping on the class
     input_cols = [x['raw_col_name'] for x in feature_mapping]
     processing_cols = [x['processing_col_name'] for x in feature_mapping]
-    self.conf = conf
+    self.conf = conf # conf
     ### Import
     raw_df = pd.read_excel(path, sheet_name=sheet_name)[input_cols]
     raw_df.columns = processing_cols
@@ -69,11 +69,11 @@ class PigRun(object):
     ids = []
     rows = df.shape[0]
     for i in range(0,rows):
-      if i <= widx[0]:
+      if i < widx[0]:
         us_weld = np.NaN
         # ds_weld = df.iloc[widx[widx <= i].max()].id
       else:
-        us_weld = df.iloc[widx[widx < i].max()].id
+        us_weld = df.iloc[widx[widx <= i].max()].id
         # ds_weld = df.iloc[widx[widx <= i].max()].id
       ids.append(us_weld)
     return(ids)
@@ -183,6 +183,11 @@ class PigRun(object):
     '''
     add orientation coordinate
     '''
+    ### Format column - strip text if any and convert to numeric
+    ### Get list of orientation_deg
+    orientations = df.orientation_deg.fillna(np.nan).replace([np.nan], [""]).astype(str)
+    df['orientation_deg'] = pd.to_numeric(orientations.str.replace(pat="[a-zA-Z]+", repl="").str.strip())
+    ### Add co-ordinates
     df[['orientation_x', 'orientation_y']] = pd.DataFrame([self.calculate_orientation_coords(theta) for theta in df.orientation_deg])
     return(df)
 
