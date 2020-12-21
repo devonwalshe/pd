@@ -27,6 +27,14 @@ Pre-requisites:
 5. test API server response:
 	
   `http://localhost:5000/pipelines`
+  
+6. Start frontend
+
+  `cd frontend && PORT=3002 npm run dev`
+  
+6. Navigate to frontend
+
+  `http://localhost:3002`
 
 ## Project Components
 - API
