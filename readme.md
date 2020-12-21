@@ -16,9 +16,9 @@ Pre-requisites:
 	
   ` $ pip install -r requirements.txt`
   
-3. Load seed data into postgres:
+3. Bootstrap seed data
 	
-  ` $ createdb pd && psql pd < data/db_dump_2020-07-20.dump`
+  ` $ python bootstrap.py`
   
 4. Start flask api server:
 	
