@@ -109,7 +109,6 @@ export default class Feature extends Component {
                                     onClick={e => !this.props.matchMode ? this.props.onClick(e.currentTarget.id) : () => false}
                                     id={i.id}
                                     style={{
-                                        backgroundColor: !nodim ? border : 'none',
                                         padding: 1,
                                         border: "1px solid " + border,
                                         height: height,
