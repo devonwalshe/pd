@@ -16,7 +16,7 @@ export default class App extends Component {
     super(props)
 
     this.state = {
-      current: 1,
+      current: 2,
       page: null
     }
 

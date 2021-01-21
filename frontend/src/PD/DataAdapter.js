@@ -179,13 +179,13 @@ export default class DataAdapter extends Component {
 
     getTableRow = (a, b, f) => {
 
-        const rnd = num => Number(num).toFixed(4)
+        const rnd = num => num && Number(num).toFixed(4) || ' '
         const side = (o, s) => {
             return {
                 ['id_' + s]: (o && o.id) || false,
-                ['feature_id_' + s]: (o && o.feature_id) || false,
-                ['feature_' + s]: (o && o.attributes.feature) || false,
-                ['feature_category_' + s]: (o && o.attributes.feature_category) || false,
+                ['feature_id_' + s]: (o && o.feature_id + '') || false,
+                ['feature_' + s]: (o && o.attributes.feature + '') || false,
+                ['feature_category_' + s]: (o && o.attributes.feature_category + '') || false,
                 ['orientation_deg_' + s]: (o && rnd(o.attributes.orientation_deg)) || false,
                 ['us_weld_dist_wc_ft_' + s]: (o && rnd(o.attributes.us_weld_dist_wc_ft)) || false,
                 ['us_weld_dist_coord_m_' + s]: (o && rnd(o.attributes.us_weld_dist_coord_m)) || false,

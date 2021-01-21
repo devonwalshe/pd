@@ -10,6 +10,20 @@ export default class CustomGrid extends Component {
 
         let out = []
 
+        const getWidth = percent => Math.max(this.props.width / 100 * (percent/2), 1)
+
+        const cols = [
+            {width: getWidth(9), col: 'feature_id'},
+            {width: getWidth(7), col: 'feature'},
+            {width: getWidth(13), col: 'feature_category'},
+            {width: getWidth(13), col: 'orientation_deg'},
+            {width: getWidth(16), col: 'us_weld_dist_wc_ft'},
+            {width: getWidth(18), col: 'us_weld_dist_coord_m'},
+            {width: getWidth(8), col: 'length_in'},
+            {width: getWidth(7), col: 'width_in'},
+            {width: getWidth(7), col: 'depth_in'}
+        ]
+/*
         const cols = [
             {width: 75, col: 'feature_id'},
             {width: 60, col: 'feature'},
@@ -21,16 +35,18 @@ export default class CustomGrid extends Component {
             {width: 70, col: 'width_in'},
             {width: 70, col: 'depth_in'}
         ]
+*/
 
         const side = s => cols.map(col => out.push({
 
             key: col.col + '_' + s,
-            name: col.col + '_' + s,
+            name: col.col,
             editable: false,
             sortable: false,
             resizable: true,
             width: col.width,
-            formatter: cell =>this.getGridColumn(s, cell)
+            formatter: cell =>this.getGridColumn(s, cell)//,
+            //headerRenderer:()=>(<img src='http://localhost:3000/static/media/link.f0596feb.png' width="10" height="10"></img>)
 
         }))
 
@@ -38,7 +54,7 @@ export default class CustomGrid extends Component {
         out.push({
 
             key: '_gutter',
-            width: 17,
+            width: getWidth(2),
             formatter: cell => (
                 <div 
                     style={{
