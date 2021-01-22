@@ -7,12 +7,10 @@ export default class DataAdapter extends Component {
     constructor(props) {
 
         super(props)
+
         this.state = {
             rest_error: false
         }
-
-        this.spinner = document.getElementById('spinner')
-        this.toast = document.getElementById('toast')
 
     }
 
@@ -29,7 +27,7 @@ export default class DataAdapter extends Component {
             })
             .catch(e => {
                 this.spin(false)
-                this.toast.style.display = 'block'
+                document.getElementById('toast').style.display = 'block'
             })
 
     }
@@ -179,7 +177,7 @@ export default class DataAdapter extends Component {
 
     getTableRow = (a, b, f) => {
 
-        const rnd = num => num && Number(num).toFixed(4) || ' '
+        const rnd = num => (num && Number(num).toFixed(4)) || ' '
         const side = (o, s) => {
             return {
                 ['id_' + s]: (o && o.id) || false,
@@ -275,11 +273,17 @@ export default class DataAdapter extends Component {
             .catch(e => {
                 this.spin(false)
                 console.log(e)
-                this.toast.style.display = 'block'
+                document.getElementById('toast').style.display = 'block'
             })
         
     }
 
-    spin = s => this.spinner.style.display = s ? 'inline' : 'none'
+    spin = s => {
+
+        const spinner = document.getElementById('spinner')
+
+        spinner && (spinner.style.display = s ? 'inline' : 'none')
+
+    }
 
 }

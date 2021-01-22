@@ -1,6 +1,6 @@
 import React, { Component } from 'react'
 import './App.css'
-import PD from './PD/PD.js'
+import Discovery from './PD/Discovery.js'
 import RunMatch from './PD/RunMatch.js'
 import Pipeline from './PD/Pipeline.js'
 import RawFile from './PD/RawFile.js'
@@ -8,80 +8,120 @@ import FeatureMap from './PD/FeatureMap.js'
 import { Button } from 'react-bootstrap'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import './bootstrap2-toggle.css'
+import { BrowserRouter, Link, Route, Switch, withRouter } from 'react-router-dom'
 
-export default class App extends Component {
+class App extends Component {
 
+  
   constructor(props) {
 
     super(props)
 
-    this.state = {
-      current: 2,
-      page: null
-    }
+    this.startPage = 'runmatches'
 
-    this.pages = [
-      {
-        name: 'Pipelines',
-        comp: (<Pipeline/>)
-      },
-      {
-        name: 'Raw Files',
-        comp: (<RawFile/>)
-      },
-      { 
-        name: 'Run Matches',
-        comp: (
-          <RunMatch
-            goRun={run_match => this.setState({page: (<PD run_match={Number(run_match)}/>)})}
-          />
-        )
-      },
-      {
-        name: 'Feature Maps',
-        comp: (<FeatureMap/>)
-      }
-    ]
+    this.state = {
+
+      current: this.startPage
+
+    }
 
   }
 
   
-  componentDidMount = () => this.getPage()
-
-  clickMenu = i => {
+  componentDidMount = () => this.clickMenu(this.state.current)
 
 
-    document.getElementById(this.pages[this.state.current].name).variant = 'link'
-    document.getElementById(this.pages[i].name).variant = 'outline-primary'
+  clickMenu = id => {
 
-    this.setState({current: i}, this.getPage)
+      this.props.history.push(`/${id}`)
 
   }
 
-  getPage = () => this.setState({page: this.pages[this.state.current].comp})
+  componentDidUpdate(prevProps) {
+
+    if (this.props.location !== prevProps.location)
+
+      this.onRouteChanged()
+
+  }
+
+
+  onRouteChanged() {
+
+    document.getElementById(this.state.current).variant = 'link'
+    
+    const href = window.location.href.split('/')
+    const page = !isNaN(href.slice(-1)[0]) ? href.slice(-2)[0] : href.slice(-1)[0]
+    let current = page === 'runmatch' ? 'runmatches' : page
+
+    if (!~['pipeline','rawfiles','runmatches','featuremap','runmatch'].indexOf(current)) {
+
+      current = this.startPage
+      this.props.history.push(`/${current}`)
+
+    }
+
+    this.setState({current: current})
+    document.getElementById(current).variant = 'outline-primary'
+
+  }
 
   render = () => (
-
     <>
       <div id="toast" className="toaster">
-        Server returned invalid response
-        <div onClick={e => e.currentTarget.parentElement.style.display = 'none'}>x</div>    
-      </div>
-      <div className="menu">
-        <div>AKD Data Matching Tool
-          <div id="spinner">
-            <i className="fa fa-spinner fa-spin" />
+          Server returned invalid response
+          <div onClick={e => e.currentTarget.parentElement.style.display = "none"}>x</div>    
+        </div>
+        <div className="menu">
+          <div>AKD Data Matching Tool
+            <div id="spinner">
+              <i className="fa fa-spinner fa-spin" />
+            </div>
+          </div>
+          <div>
+            <Button
+              id="pipeline"
+              variant={this.state.current === "pipeline" ? "outline-primary" : "link"}
+              onClick={() => this.clickMenu("pipeline")}
+            >
+              Pipeline
+            </Button>
+            <Button
+              id="rawfiles"
+              variant={this.state.current === "rawfiles" ? "outline-primary" : "link"}
+              onClick={() => this.clickMenu("rawfiles")}
+            >
+              Raw Files
+            </Button>
+            <Button
+              id="runmatches"
+              variant={this.state.current === "runmatches" ? "outline-primary" : "link"}
+              onClick={() => this.clickMenu("runmatches")}
+            >
+              Run Matches
+            </Button>
+            <Button
+              id="featuremap"
+              variant={this.state.current === "featuremap" ? "outline-primary" : "link"}
+              onClick={() => this.clickMenu("featuremap")}
+            >
+              Feature Map
+            </Button>
           </div>
         </div>
-        <div>
-          {this.pages.map((p, i) => (
-            <Button id={p.name} key={p.name} variant={this.state.current === i ? 'outline-primary' : 'link'} onClick={() => this.clickMenu(i)}>{p.name}</Button>
-          ))}
-        </div>
-      </div>
-      {this.state.page}
+      <main>
+        <Switch>
+            <Route path="/pipeline" component={Pipeline} />
+            <Route path="/rawfiles" component={RawFile} />
+            <Route path="/runmatches" component={RunMatch} />
+            <Route path="/featuremap" component={FeatureMap} />
+            <Route path="/runmatch" component={Discovery} />
+        </Switch>
+      </main>
     </>
-
   )
 
 }
+
+
+export default withRouter(App)

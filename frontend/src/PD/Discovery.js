@@ -7,7 +7,7 @@ import WeldsTable from './WeldsTable'
 import Ctrl from './Ctrl'
 import PropTypes from 'prop-types'
 
-export default class PD extends Component {
+export default class Discovery extends Component {
 
     constructor(props) {
 
@@ -47,7 +47,7 @@ export default class PD extends Component {
         }
 
         this.pipe_section_raw = {}
-        this.run_match = this.props.run_match
+        this.run_match = window.location.href.split('/').slice(-1)[0]
         this.first_match = 0
         this.second_match = 0
         this.offset = {
@@ -60,22 +60,34 @@ export default class PD extends Component {
 
     }
 
+    
+    _isMounted = false
+
+
+    componentWillUnmount() {
+        this._isMounted = false
+      }
+
     componentDidMount() {
+
+        this._isMounted = true;
 
         this.getGraphWidth()
         
         this.dataAdapter.get('run_match', '/' + this.run_match + '/pipe_sections', data => {
 
-            this.pipe_sections = {
-                data: data,
-                id: data[0].id,
-                index: 0
+            if (this._isMounted) {
+
+                this.pipe_sections = {
+                    data: data,
+                    id: data[0].id,
+                    index: 0
+                }
+
+                this.navStatus()
+                this.loadPipeSection()
+                this.setState({sectionIndex: this.pipe_sections.index + 1, sectionTotal: this.pipe_sections.data.length})
             }
-
-            this.navStatus()
-            this.loadPipeSection()
-            this.setState({sectionIndex: this.pipe_sections.index + 1, sectionTotal: this.pipe_sections.data.length})
-
         })
 
         window.addEventListener('resize', this.getGraphWidth)
@@ -448,12 +460,5 @@ export default class PD extends Component {
         </>
         
     )
-
-}
-
-
-PD.propTypes = {
-
-    run_match: PropTypes.number.isRequired
 
 }

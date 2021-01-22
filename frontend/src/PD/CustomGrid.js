@@ -10,32 +10,23 @@ export default class CustomGrid extends Component {
 
         let out = []
 
-        const getWidth = percent => Math.max(this.props.width / 100 * (percent/2), 1)
+        if (this.props.width < 0)
+
+            return out
+
+        const getWidth = percent => this.props.width / 100 * percent
 
         const cols = [
-            {width: getWidth(9), col: 'feature_id'},
-            {width: getWidth(7), col: 'feature'},
-            {width: getWidth(13), col: 'feature_category'},
-            {width: getWidth(13), col: 'orientation_deg'},
-            {width: getWidth(16), col: 'us_weld_dist_wc_ft'},
-            {width: getWidth(18), col: 'us_weld_dist_coord_m'},
-            {width: getWidth(8), col: 'length_in'},
-            {width: getWidth(7), col: 'width_in'},
-            {width: getWidth(7), col: 'depth_in'}
+            {width: getWidth(4.5), col: 'feature_id'},
+            {width: getWidth(3.5), col: 'feature'},
+            {width: getWidth(6.5), col: 'feature_category'},
+            {width: getWidth(6.5), col: 'orientation_deg'},
+            {width: getWidth(8), col: 'us_weld_dist_wc_ft'},
+            {width: getWidth(9), col: 'us_weld_dist_coord_m'},
+            {width: getWidth(4), col: 'length_in'},
+            {width: getWidth(3.5), col: 'width_in'},
+            {width: getWidth(3.5), col: 'depth_in'}
         ]
-/*
-        const cols = [
-            {width: 75, col: 'feature_id'},
-            {width: 60, col: 'feature'},
-            {width: 115, col: 'feature_category'},
-            {width: 110, col: 'orientation_deg'},
-            {width: 130, col: 'us_weld_dist_wc_ft'},
-            {width: 145, col: 'us_weld_dist_coord_m'},
-            {width: 70, col: 'length_in'},
-            {width: 70, col: 'width_in'},
-            {width: 70, col: 'depth_in'}
-        ]
-*/
 
         const side = s => cols.map(col => out.push({
 
@@ -45,22 +36,21 @@ export default class CustomGrid extends Component {
             sortable: false,
             resizable: true,
             width: col.width,
-            formatter: cell =>this.getGridColumn(s, cell)//,
-            //headerRenderer:()=>(<img src='http://localhost:3000/static/media/link.f0596feb.png' width="10" height="10"></img>)
-
+            formatter: cell =>this.getGridColumn(s, cell)
         }))
 
         side('A')
         out.push({
 
             key: '_gutter',
-            width: getWidth(2),
+            width: getWidth(1),
             formatter: cell => (
                 <div 
                     style={{
                         cursor: cell.value ? 'pointer' : 'arrow',
                         color: cell.value ? 'inherit' : 'lightgray',
                         backgroundColor:'lightgray',
+                        fontSize: '11px',
                         padding:4
                     }}
                     onClick={() => cell.value && this.props.unlink(Number(cell.value))}

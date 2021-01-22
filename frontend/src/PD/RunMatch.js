@@ -26,6 +26,16 @@ export default class Runs extends Component {
 
         this.dataAdapter = new DataAdapter()
 
+    }
+
+
+    _isMounted = false
+
+
+    componentDidMount() {
+
+        this._isMounted = true
+
         this.dataAdapter.get(
             'inspection_runs',
             null,
@@ -36,7 +46,7 @@ export default class Runs extends Component {
                     null,
                     files =>
 
-                        this.setState({new_match_runs: data.map(data => 
+                        this._isMounted && this.setState({new_match_runs: data.map(data => 
                         
                             (<option key={data.id} value={data.id}>
 
@@ -65,15 +75,23 @@ export default class Runs extends Component {
 
             
         )
+        
         this.dataAdapter.get(
             'pipelines',
             null,
-            data => this.setState({new_match_pipeline: data.map(data => (<option key={data.id} value={data.id}>{data.name}</option>))})
+            data => this._isMounted && this.setState({new_match_pipeline: data.map(data => (<option key={data.id} value={data.id}>{data.name}</option>))})
         )
 
-        this.dataAdapter.get('run_matches', null, data => this.setState({rows: data}))
+        this.dataAdapter.get('run_matches', null, data => this._isMounted && this.setState({rows: data}))
+        
+    }
+
+    componentWillUnmount() {
+
+        this._isMounted = false
 
     }
+
 
 
     addNew = () => {
@@ -188,7 +206,7 @@ export default class Runs extends Component {
                                 minWidth: Math.floor((800 - 13) / 100 * col.width),
                                 formatter: col.formatter || null,
                                 events: col.events || {
-                                    onClick: (e, arg) => this.props.goRun(arg.rowId)
+                                    onClick: (e, arg) => this.props.history.push(`/runmatch/${arg.rowId}`)
                                 }
                             }
                         })
@@ -259,12 +277,5 @@ export default class Runs extends Component {
             </div>
         </div>
     )
-
-}
-
-
-Runs.propTypes = {
-
-    goRun: PropTypes.func.isRequired
 
 }

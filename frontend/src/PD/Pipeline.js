@@ -23,11 +23,28 @@ export default class Pipeline extends Component {
 
         this.dataAdapter = new DataAdapter()
 
-        this.dataAdapter.get('pipelines', null, data => this.setState({rows: data}))
-
         this.gridWidth = 800
 
     }
+
+    _isMounted = false
+
+
+    componentDidMount() {
+
+        this._isMounted = true
+
+        this.dataAdapter.get('pipelines', null, data => this._isMounted && this.setState({rows: data}))
+
+    }
+
+
+    componentWillUnmount() {
+
+        this._isMounted = false
+
+    }
+
 
     addNew = () => this.dataAdapter.post(
         

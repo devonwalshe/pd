@@ -17,20 +17,36 @@ export default class RawFileForm extends Component {
 
         this.dataAdapter = new DataAdapter()
 
+    }
+
+
+    _isMounted = false
+
+
+    componentDidMount() {
+
+        this._isMounted = true;
+
         this.dataAdapter.get(
             'feature_maps',
             null,
-            data => this.setState({data_mapping_id: data.map(data => (<option key={data.id} value={data.id}>{data.mapping_name}</option>))})
+            data => this._isMounted && this.setState({data_mapping_id: data.map(data => (<option key={data.id} value={data.id}>{data.mapping_name}</option>))})
         )
 
         this.dataAdapter.get(
             'pipelines',
             null,
-            data => this.setState({pipeline_id: data.map(data => (<option key={data.id} value={data.id}>{data.name}</option>))})
+            data => this._isMounted && this.setState({pipeline_id: data.map(data => (<option key={data.id} value={data.id}>{data.name}</option>))})
         )
 
     }
 
+
+    componentWillUnmount() {
+
+        this._isMounted = false
+
+    }
 
     render = () => (
         <>

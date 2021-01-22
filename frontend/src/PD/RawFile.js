@@ -18,7 +18,6 @@ export default class RawFile extends Component {
 
         this.gridWidth = 800
         this.dataAdapter = new DataAdapter()
-        this.dataAdapter.get('raw_files', null, data => this.setState({rows: data}))
 
         this.steps = [
             (
@@ -38,7 +37,22 @@ export default class RawFile extends Component {
     }
 
 
-    componentDidMount = () => this.getStep()
+    componentDidMount = () => {
+        
+        this._isMounted = true
+
+        this.dataAdapter.get('raw_files', null, data => this._isMounted && this.setState({rows: data}))
+        
+        this._isMounted && this.getStep()
+
+    }
+
+
+    componentWillUnmount() {
+
+        this._isMounted = false
+
+    }
 
     submit = () => {
 
