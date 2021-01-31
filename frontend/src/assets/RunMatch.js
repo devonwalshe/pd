@@ -1,7 +1,6 @@
 import React, { Component } from 'react'
-import DataAdapter from './DataAdapter'
+import APIClient from './APIClient'
 import ReactDataGrid from 'react-data-grid'
-import PropTypes from 'prop-types'
 import { Col, Button, Form } from 'react-bootstrap'
 import fontawesome from '@fortawesome/fontawesome'
 import { saveAs } from '@progress/kendo-file-saver'
@@ -24,7 +23,7 @@ export default class Runs extends Component {
             
         }
 
-        this.dataAdapter = new DataAdapter()
+        this.apiClient = new APIClient()
 
     }
 
@@ -36,17 +35,20 @@ export default class Runs extends Component {
 
         this._isMounted = true
 
-        this.dataAdapter.get(
-            'inspection_runs',
-            null,
-            data => {
-                
-                this.dataAdapter.get(
-                    'raw_files',
-                    null,
-                    files =>
 
-                        this._isMounted && this.setState({new_match_runs: data.map(data => 
+        this.apiClient.callAPI({
+
+            endpoint: 'inspection_runs',
+
+            callback: data => {
+                
+                this.apiClient.callAPI({
+
+                    endpoint: 'raw_files',
+
+                    callback: files => {
+                            
+                        const new_match_runs = data.map(data => 
                         
                             (<option key={data.id} value={data.id}>
 
@@ -68,21 +70,34 @@ export default class Runs extends Component {
                             
                             </option>)
 
-                        )})
+                        )
 
-                )
+                        this._isMounted && this.setState({new_match_runs: new_match_runs})
+
+                    }
+
+                })
+
             }
 
-            
-        )
+        })
         
-        this.dataAdapter.get(
-            'pipelines',
-            null,
-            data => this._isMounted && this.setState({new_match_pipeline: data.map(data => (<option key={data.id} value={data.id}>{data.name}</option>))})
-        )
+        this.apiClient.callAPI({
 
-        this.dataAdapter.get('run_matches', null, data => this._isMounted && this.setState({rows: data}))
+                endpoint: 'pipelines',
+
+                callback: data => this._isMounted && this.setState({new_match_pipeline: data.map(data => (<option key={data.id} value={data.id}>{data.name}</option>))})
+
+        })
+
+        this.apiClient.callAPI({
+
+            endpoint: 'run_matches',
+
+            callback: data => this._isMounted && this.setState({rows: data})
+
+        })
+
         
     }
 

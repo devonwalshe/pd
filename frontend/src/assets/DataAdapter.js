@@ -248,7 +248,7 @@ export default class DataAdapter extends Component {
             '?method=PUT&url=' +
             encodeURIComponent(restURL) +
             rest + '%2F' + id + '&data=' + JSON.stringify(data)
-
+            console.log(url)
         this.fetchRest(rest, url, data, cbk)
 
     }

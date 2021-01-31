@@ -1,11 +1,10 @@
 import React, { Component } from 'react'
 import CustomGrid from './CustomGrid'
 import Feature from './Feature.js'
-import DataAdapter from './DataAdapter'
+import APIClient from './APIClient.js'
 import Axes from './Axes'
 import WeldsTable from './WeldsTable'
 import Ctrl from './Ctrl'
-import PropTypes from 'prop-types'
 
 export default class Discovery extends Component {
 
@@ -33,7 +32,7 @@ export default class Discovery extends Component {
 
         }
 
-        this.dataAdapter = new DataAdapter()
+        this.apiClient = new APIClient()
 
         this.filter = {
             matched:true,
@@ -74,20 +73,36 @@ export default class Discovery extends Component {
 
         this.getGraphWidth()
         
-        this.dataAdapter.get('run_match', '/' + this.run_match + '/pipe_sections', data => {
+        this.apiClient.callAPI({
+            
+            endpoint: 'run_match',
+            
+            data: this.run_match + '/pipe_sections',
+            
+            callback: data => {
 
-            if (this._isMounted) {
+                if (this._isMounted) {
 
-                this.pipe_sections = {
-                    data: data,
-                    id: data[0].id,
-                    index: 0
+                    this.pipe_sections = {
+                        data: data,
+                        id: data[0].id,
+                        index: 0
+                    }
+
+                    this.navStatus()
+                    this.loadPipeSection()
+                    this.setState({
+                        
+                        sectionIndex: this.pipe_sections.index + 1,
+
+                        sectionTotal: this.pipe_sections.data.length
+
+                    })
+
                 }
 
-                this.navStatus()
-                this.loadPipeSection()
-                this.setState({sectionIndex: this.pipe_sections.index + 1, sectionTotal: this.pipe_sections.data.length})
             }
+
         })
 
         window.addEventListener('resize', this.getGraphWidth)
@@ -343,24 +358,218 @@ export default class Discovery extends Component {
 
     loadPipeSection = () => {
         
-        this.dataAdapter.get('pipe_section', this.pipe_sections.id, data => {
-        
-            this.pipe_section_raw = data
+        this.apiClient.callAPI({
             
-            this.setState({
-                id: data.id,
-                pipe_section_table: data.table,
-                welds: data.welds,
-                manually_checked: data.manually_checked,
-                max_weld_width: Math.max(data['weld_a_width'], data['weld_b_width']),
-                section_id: data.section_id
-            })
+            endpoint: 'pipe_section',
+            
+            data: this.pipe_sections.id,
+            
+            callback: data => {
+            
+                const getTableRow = (a, b, f) => {
 
-            this.graphPipeSection()
+                    const side = (obj, side) => {
+
+                        const att = (obj && obj.attributes) || null
+
+                        const cols = [
+                            {
+                                name: 'feature',
+                                type: 'str'
+                            },
+                            {
+                                name: 'feature_category',
+                                type: 'str'
+                            },
+                            {
+                                name: 'orientation_deg',
+                                type: 'num'
+                            },
+                            {
+                                name: 'us_weld_dist_wc_ft',
+                                type: 'num'
+                            },
+                            {
+                                name: 'us_weld_dist_coord_m',
+                                type: 'num'
+                            },
+                            {
+                                name: 'length_in',
+                                type: 'num'
+                            },
+                            {
+                                name: 'width_in',
+                                type: 'num'
+                            },
+                            {
+                                name: 'idepth_ind',
+                                type: 'num'
+                            }
+                        ]
+                        
+                        let out = {
+
+                            ['id_' + side]: (obj && obj.id) || '',
+                            ['feature_id_' + side]: (obj && obj.feature_id) || ''
+
+                        }
+                        
+                        cols.forEach(col => {
+
+                            out[col.name + '_' + side] = (att && ({
+                                num: col => att[col] && Number(att[col]).toFixed(4) || ' ',
+                                str: col => att[col] && att[col] || ''
+                            })[col.type](col.name)) || ''
+                            
+                        })
+
+                        return out
+                        
+                    }
+                    
+                    return{
+            
+                        ...side(a, 'A'),
+                        _gutter: f ? f : false,
+                        ...side(b, 'B'),
+            
+                    }
+            
+                }
+            
+
+                let pipeSection = {
+
+                    id: data.id,
+                    section_id: data.section_id,
+                    run_match: data.run_match,
+                    manually_checked: data.manually_checked,
+                    features: {},
+                    table: [],
+                    weld_a_width: 0,
+                    weld_b_width: 0,
+                    welds: {}
+
+                },
+                temp = [],
+                featuresIn = []
+
+                const pipe = data.features || []
+                const pairs = data.feature_pairs || []
+                const welds = data.welds || []
+
+                pipe.forEach(p => {
+        
+                    let feature = {
+        
+                            attributes: {},
+                            id: p.id,
+                            feature_id: p.feature_id,
+                            side: p.side,
+                            matched: p.matched
+        
+                        }
+        
+                    p.attributes.map(a => feature.attributes[a.attribute_name] = a.attribute_data)
+        
+                    temp.push(feature)
+        
+                })
+        
+                let weldsTemp = {}
+
+                welds.forEach(a => {
+
+                    weldsTemp[a.side] = a
+                    
+                    pipeSection['weld_'+ a.side.toLowerCase() + '_width'] = Number(a.us_weld_dist)
+                    
+                })
+
+                const sidesAB = ['A', 'B']
+
+                sidesAB.forEach(side => {
+
+                    pipeSection.welds[side] = {}
+
+                        weldsTemp[side] && this.weldsTableColumns.map(f => pipeSection.welds[side][f] = weldsTemp[side][f])
+
+                })
+
+
+
+                for (let i = 0, ix = temp.length; i < ix; i +=1) {
+                    
+                    pipeSection.features[temp[i].id] = temp[i]
+        
+                    if (!~featuresIn.indexOf(temp[i].id))
+                        
+                        if (!temp[i].matched) {
+        
+                            featuresIn.push(temp[i].id)
+                            pipeSection.table.push(temp[i].side === 'A' ? getTableRow(temp[i], null) : getTableRow(null, temp[i]))
+        
+                        } else {
+        
+                            for (let j = 0, jx = pairs.length; j < jx; j +=1) {
+        
+                                for (let k = 0, kx = temp.length; k < kx; k +=1) {
+
+                                    if (!~featuresIn.indexOf(temp[i].id) && !~featuresIn.indexOf(temp[k].id))
+
+                                        if (temp[i].side === 'A' && temp[i].id === pairs[j].feature_a &&
+                                            temp[k].side === 'B' && temp[k].id === pairs[j].feature_b) {
+                                        
+                                            featuresIn.push(temp[i].id)
+                                            featuresIn.push(temp[k].id)
+                                                
+                                            pipeSection.table.push(getTableRow(temp[i], temp[k], pairs[j].id))
+            
+                                        } else if
+                                            (temp[i].side === 'B' && temp[i].id === pairs[j].feature_b &&
+                                            temp[k].side === 'A' && temp[k].id === pairs[j].feature_a) {
+                                            
+                                            featuresIn.push(temp[i].id)
+                                            featuresIn.push(temp[k].id)
+                                            pipeSection.table.push(getTableRow(temp[k], temp[i], pairs[j].id))
+            
+                                        }
+        
+                                }
+        
+                            }
+        
+                        }
+        
+                }
+
+                this.pipe_section_raw = pipeSection
+                
+                this.setState({
+                    id: pipeSection.id,
+                    pipe_section_table: pipeSection.table,
+                    welds: pipeSection.welds,
+                    manually_checked: pipeSection.manually_checked,
+                    max_weld_width: Math.max(pipeSection['weld_a_width'], pipeSection['weld_b_width']),
+                    section_id: pipeSection.section_id
+                })
+
+                this.graphPipeSection()
+
+            }
         
         })
 
     }
+
+
+    weldsTableColumns = [
+        'side',
+        'weld_id',
+        'us_weld_dist',
+        'joint_length',
+        'wall_thickness'
+    ]
 
     render = () => (
 
@@ -376,11 +585,16 @@ export default class Discovery extends Component {
                         run_match: r.run_match,
                         manually_checked: !this.state.manually_checked
                     }]
-                    data[0].id && this.dataAdapter.put('pipe_section', r.id, data, data => {
 
-                        this.setState({manually_checked: data.manually_checked}, ()=>this.setState({...this.state}))
-                        this.pipe_sections.data[this.pipe_sections.index].manually_checked = data.manually_checked
-
+                    data[0].id && this.apiClient.callAPI({
+                        method: 'put',
+                        endpoint: 'pipe_section',
+                        id: r.id,
+                        data: JSON.stringify(data),
+                        callback: data => {
+                            this.setState({manually_checked: data.manually_checked}, ()=>this.setState({...this.state}))
+                            this.pipe_sections.data[this.pipe_sections.index].manually_checked = data.manually_checked
+                        }
                     })
                 }}
                 match_on={this.state.match_on}
@@ -404,7 +618,6 @@ export default class Discovery extends Component {
                         run_match: this.run_match,
                         pipe_section: this.pipe_sections.id
                     }]
-
                     this.highlightDom(this.first_match, 'transparent')
                     this.highlightDom(this.second_match, 'transparent')
                     this.first_match = 0
@@ -413,7 +626,12 @@ export default class Discovery extends Component {
                         match_on: false,
                         confirm_on: false
                     })
-                    this.dataAdapter.post('feature_pair', data, () => this.loadPipeSection())
+                    this.apiClient.callAPI({  
+                        method: 'post',
+                        endpoint: 'feature_pair',
+                        data: data,
+                        callback: () => this.loadPipeSection()
+                    })
                 }}
                 onMatch={() => {
                     if (this.first_match) {
@@ -432,15 +650,15 @@ export default class Discovery extends Component {
                 sectionGo={this.sectionGo}
                 setMatchFilter={this.setMatchFilter}
                 weldGo={id => {
-
                     this.pipe_sections.id = id
                     this.loadPipeSection()
-
                 }}
-                
-
             />
-            <WeldsTable section_id={this.state.section_id || ''} welds={this.state.welds} />
+            <WeldsTable section_id={this.state.section_id || ''} welds={this.state.welds} 
+            
+            columns={this.weldsTableColumns}/>
+
+            
             <div className="graph">
                 <Axes
                     graphWidth={this.state.screen_width}
@@ -454,11 +672,16 @@ export default class Discovery extends Component {
                 rows={this.state.pipe_section_table}
                 clickFeature={this.clickFeature}
                 hoverFeature={this.hoverOnTable}
-                unlink={id => window.confirm('Confirm unlinking the feature?') && this.dataAdapter.delete('feature_pair', id, () => this.loadPipeSection())}
+                unlink={id => window.confirm('Confirm unlinking the feature?') && this.apiClient.callAPI({
+                    method: 'delete',
+                    endpoint:'feature_pair',
+                    id: id,
+                    callback: () => this.loadPipeSection()})}
                 width={this.state.screen_width - 40}
             />
         </>
         
     )
+
 
 }

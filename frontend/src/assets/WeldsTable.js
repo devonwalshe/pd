@@ -1,5 +1,4 @@
 import React, { Component } from 'react'
-import { weldsTableColumns } from '../config'
 import PropTypes from 'prop-types'
 
 export default class WeldsTable extends Component {
@@ -14,12 +13,11 @@ export default class WeldsTable extends Component {
 
     }
 
-
     componentDidUpdate(props) {
         
         if (this.section_id !== props.section_id) {
 
-            ['A','B'].forEach(s => weldsTableColumns.map(f => this.setState({[s + f]: props.welds[s][f]})))
+            ['A','B'].forEach(s => this.props.columns.map(f => this.setState({[s + f]: props.welds[s][f]})))
             this.section_id = props.section_id
 
         }
@@ -32,7 +30,7 @@ export default class WeldsTable extends Component {
 
             <div className="welds_table">
 
-                {(() => ['A','B'].map(s => weldsTableColumns.map(f => (
+                {(() => ['A','B'].map(s => this.props.columns.map(f => (
 
                     <div key={s + f}><div>{f}</div><div>{this.state[s + f] || '\u00A0'}</div></div>
                     
@@ -49,6 +47,7 @@ export default class WeldsTable extends Component {
 WeldsTable.propTypes = {
 
     section_id: PropTypes.string.isRequired,
-    welds: PropTypes.object.isRequired
+    welds: PropTypes.object.isRequired,
+    columns: PropTypes.array.isRequired
 
 }

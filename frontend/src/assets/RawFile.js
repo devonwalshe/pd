@@ -1,6 +1,6 @@
 import React, { Component } from 'react'
 import { Form, Button } from 'react-bootstrap'
-import DataAdapter from './DataAdapter'
+import APIClient from './APIClient.js'
 import RawFileForm from './RawFileForm'
 import ReactDataGrid from 'react-data-grid'
 
@@ -17,7 +17,8 @@ export default class RawFile extends Component {
         }
 
         this.gridWidth = 800
-        this.dataAdapter = new DataAdapter()
+        
+        this.apiClient = new APIClient()
 
         this.steps = [
             (
@@ -41,7 +42,12 @@ export default class RawFile extends Component {
         
         this._isMounted = true
 
-        this.dataAdapter.get('raw_files', null, data => this._isMounted && this.setState({rows: data}))
+        this.apiClient.callAPI({
+            
+            endpoint: 'raw_files', 
+            callback: data => this._isMounted && this.setState({rows: data})
+            
+        })
         
         this._isMounted && this.getStep()
 
@@ -78,9 +84,24 @@ export default class RawFile extends Component {
             const data_a = getData('A')
             const data_b = getData('B')
         
-            this.dataAdapter.upload(data_a, data => console.log(data))
-            this.dataAdapter.upload(data_b, data => console.log(data))
+            this.apiClient.callAPI({
 
+                method: 'upload',
+                endpoint: 'raw_file',
+                data: data_a,
+                callback: data => console.log(data)
+
+            })
+
+            this.apiClient.callAPI({
+
+                method: 'upload',
+                endpoint: 'raw_file',
+                data: data_b,
+                callback: data => console.log(data)
+
+            })
+            
             this.setState({current: this.state.current + 1}, this.getStep)
             
         })
@@ -114,16 +135,23 @@ export default class RawFile extends Component {
                             {
                                 key:'delete',
                                 width: 10,
-                                formatter: cell => (
+                                formatter: () => (
                                     <div style={{width: '100%', textAlign: 'center', cursor: 'pointer'}}>
                                         <i className="fa fa-trash"></i>
                                     </div>
                                 ),
                                 events: {
                                     onClick: (e, arg) =>
-                                        this.dataAdapter.delete('raw_file', arg.rowId, () => 
-                                            this.dataAdapter.get('raw_files', null, data =>
-                                                this.setState({rows: data})))
+                                        this.apiClient.callAPI({
+                                            method: 'delete',
+                                            endpoint: 'raw_file',
+                                            id: arg.rowId,
+                                            callback: () => 
+                                            this.apiClient.callAPI({
+                                                endpoint: 'raw_files',
+                                                callback: data => this.setState({rows: data})
+                                            })
+                                        })
                                 }
                             }
                         ].map(col => {
