@@ -1,6 +1,5 @@
 import React, { Component } from 'react'
 import { Col, Form } from 'react-bootstrap'
-import DataAdapter from './DataAdapter'
 import PropTypes from 'prop-types'
 
 
@@ -15,36 +14,18 @@ export default class RawFileForm extends Component {
             pipeline_id: []
         }
 
-        this.dataAdapter = new DataAdapter()
-
     }
 
 
-    _isMounted = false
+    componentDidUpdate(props) {
 
+        if (props.data_mapping_id.length && !this.state.data_mapping_id.length)
 
-    componentDidMount() {
+            this.setState({data_mapping_id: props.data_mapping_id.map(data => (<option key={data.id} value={data.id}>{data.mapping_name}</option>))})
 
-        this._isMounted = true;
+        if (props.pipeline_id.length && !this.state.pipeline_id.length)
 
-        this.dataAdapter.get(
-            'feature_maps',
-            null,
-            data => this._isMounted && this.setState({data_mapping_id: data.map(data => (<option key={data.id} value={data.id}>{data.mapping_name}</option>))})
-        )
-
-        this.dataAdapter.get(
-            'pipelines',
-            null,
-            data => this._isMounted && this.setState({pipeline_id: data.map(data => (<option key={data.id} value={data.id}>{data.name}</option>))})
-        )
-
-    }
-
-
-    componentWillUnmount() {
-
-        this._isMounted = false
+            this.setState({pipeline_id: props.pipeline_id.map(data => (<option key={data.id} value={data.id}>{data.name}</option>))})
 
     }
 
@@ -128,6 +109,8 @@ export default class RawFileForm extends Component {
 
 RawFileForm.propTypes = {
 
-    side: PropTypes.string.isRequired
+    side: PropTypes.string.isRequired,
+    data_mapping_id: PropTypes.array.isRequired,
+    pipeline_id: PropTypes.array.isRequired
 
 }

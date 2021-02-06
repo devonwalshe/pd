@@ -70,7 +70,7 @@ export default class Axes extends Component {
                                     {360 - i * 30}
                                 </div>)
                             out.push(
-                                <div key={'y_axis_notch_' + i} style={{backgroundColor: 'black', left:26, top:i * 30 + this.offset.x + 7 , height: 1, width: 8}}>
+                                <div key={'y_axis_notch_' + i} style={{backgroundColor: 'black', left:26, top:i * 30 + this.offset.x + 7, height: 1, width: 8}}>
                                     
                                 </div>
                             )

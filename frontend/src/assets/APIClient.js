@@ -1,5 +1,5 @@
-import React, { Component } from 'react'
-import { proxyURL, restURL, weldsTableColumns } from '../config'
+import { Component } from 'react'
+import { restURL } from '../config'
 
 
 export default class APIClient extends Component {

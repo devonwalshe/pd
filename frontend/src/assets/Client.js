@@ -1,5 +1,5 @@
 import React, { Component } from 'react'
-import DataAdapter from './DataAdapter'
+import APIClient from './APIClient.js'
 import ReactDataGrid from 'react-data-grid'
 import { Button, Col, Form } from 'react-bootstrap'
 import fontawesome from '@fortawesome/fontawesome'
@@ -8,7 +8,7 @@ import { faTrash } from '@fortawesome/free-solid-svg-icons'
 fontawesome.library.add(faTrash)
 
 
-export default class Pipeline extends Component {
+export default class Client extends Component {
 
 
     constructor(props) {
@@ -21,7 +21,7 @@ export default class Pipeline extends Component {
             
         }
 
-        this.dataAdapter = new DataAdapter()
+        this.apiClient = new APIClient()
 
         this.gridWidth = 800
 
@@ -34,7 +34,13 @@ export default class Pipeline extends Component {
 
         this._isMounted = true
 
-        this.dataAdapter.get('pipelines', null, data => this._isMounted && this.setState({rows: data}))
+        this.apiClient.callAPI({
+            
+            endpoint: 'pipelines', 
+            callback: data => this._isMounted && this.setState({rows: data})
+        
+        })
+
 
     }
 
@@ -46,43 +52,54 @@ export default class Pipeline extends Component {
     }
 
 
-    addNew = () => this.dataAdapter.post(
+    addNew = () => this.apiClient.callAPI({
         
-        'pipeline',
-        [{name: document.getElementById('new_pipe_name').value}],
-        () => this.dataAdapter.get('pipelines', null, data => this.setState({rows: data}))
+        method: 'post',
+        endpoint: 'pipeline',
+        data: [{name: document.getElementById('new_pipe_name').value}],
+        callback: () => this.apiClient.callAPI({
+            
+            endpoint: 'pipelines',
+            callback: data => this.setState({rows: data})
+        
+        })
     
-    )
+    })
 
 
     render = () => (
-
-        <div style={{width:'100%'}}>
-            <div style={{margin:'0 auto', width: this.gridWidth + 'px'}}>
+        <div style={{width:"100%"}}>
+            <div style={{margin:"0 auto", width: this.gridWidth + "px"}}>
                 <ReactDataGrid
                     columns={
                         [
                             {
-                                key:'id',
+                                key:"id",
                                 width: 20
                             },
                             {
-                                key: 'name',
+                                key: "name",
                                 width: 70
                             },
                             {
-                                key:'delete',
+                                key:"delete",
                                 width: 10,
                                 formatter: cell => (
-                                    <div style={{width: '100%', textAlign: 'center', cursor: 'pointer'}}>
+                                    <div style={{width: "100%", textAlign: "center", cursor: "pointer"}}>
                                         <i className="fa fa-trash"></i>
                                     </div>
                                 ),
                                 events: {
                                     onClick: (e, arg) =>
-                                        this.dataAdapter.delete('pipeline', arg.rowId, () => 
-                                            this.dataAdapter.get('pipelines', null, data =>
-                                                this.setState({rows: data})))
+                                        this.apiClient.callAPI({
+                                            method: "delete",
+                                            endpoint: "pipeline",
+                                            id: arg.rowId,
+                                            callback: () => this.apiClient.callAPI({
+                                                endpoint: "pipelines",
+                                                callback: data => this.setState({rows: data})
+                                            })
+                                        })
                                 }
                             }
                         ].map(col => {
@@ -106,7 +123,7 @@ export default class Pipeline extends Component {
                 />
                 <div style={{height:10}}></div>
                 
-                <Form>
+                <Form onSubmit={event =>  event.preventDefault()}>
                     <Form.Label><b>Add new</b></Form.Label>
                     <Form.Group>
                         <Form.Row>
@@ -114,11 +131,11 @@ export default class Pipeline extends Component {
                                 <Form.Label>Name</Form.Label>
                             </Col>
                             <Col>
-                                <Form.Control id='new_pipe_name' type='text' placeholder='Enter name of new pipeline' />
+                                <Form.Control id="new_pipe_name" type="text" placeholder="Enter name of new pipeline" />
                             </Col>
                         </Form.Row>
                     </Form.Group>
-                    <Button variant='primary' onClick={this.addNew}>Add</Button>
+                    <Button variant="primary" onClick={this.addNew}>Add</Button>
                 </Form>
             </div>
         </div>        

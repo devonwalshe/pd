@@ -65,11 +65,11 @@ export default class Discovery extends Component {
 
     componentWillUnmount() {
         this._isMounted = false
-      }
+    }
 
     componentDidMount() {
 
-        this._isMounted = true;
+        this._isMounted = true
 
         this.getGraphWidth()
         
@@ -141,7 +141,7 @@ export default class Discovery extends Component {
     }
 
 
-    getGraphWidth = () => this.setState({screen_width: parseFloat(window.innerWidth)}, this.graphPipeSection)
+    getGraphWidth = () => this._isMounted && this.setState({screen_width: parseFloat(window.innerWidth)}, this.graphPipeSection)
 
 
     graphPipeSection = () => {
@@ -164,8 +164,11 @@ export default class Discovery extends Component {
 
                 if (!isNaN(h) && !isNaN(w)) {
 
-                    feature.width = w > 0.5 ? graph_width / max_width * w / 12 : 2
-                    feature.height = h > 0.5 ? graph_width / max_width * h / 12 : 2
+                    const minSize = 0.5
+                    const noDimFeatureSize = 2
+
+                    feature.width = w > minSize ? graph_width / max_width * w / 12 : noDimFeatureSize
+                    feature.height = h > minSize ? graph_width / max_width * h / 12 : noDimFeatureSize
 
                 }
             
@@ -417,8 +420,8 @@ export default class Discovery extends Component {
                         cols.forEach(col => {
 
                             out[col.name + '_' + side] = (att && ({
-                                num: col => att[col] && Number(att[col]).toFixed(4) || ' ',
-                                str: col => att[col] && att[col] || ''
+                                num: col => (att[col] && Number(att[col]).toFixed(4)) || ' ',
+                                str: col => (att[col] && att[col]) || ''
                             })[col.type](col.name)) || ''
                             
                         })
@@ -426,7 +429,7 @@ export default class Discovery extends Component {
                         return out
                         
                     }
-                    
+
                     return{
             
                         ...side(a, 'A'),
@@ -654,11 +657,10 @@ export default class Discovery extends Component {
                     this.loadPipeSection()
                 }}
             />
-            <WeldsTable section_id={this.state.section_id || ''} welds={this.state.welds} 
-            
-            columns={this.weldsTableColumns}/>
-
-            
+            <WeldsTable
+                section_id={this.state.section_id || ''}
+                welds={this.state.welds} 
+                columns={this.weldsTableColumns}/>
             <div className="graph">
                 <Axes
                     graphWidth={this.state.screen_width}

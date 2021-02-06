@@ -4,7 +4,7 @@ import { Button, Form, OverlayTrigger, Tooltip } from 'react-bootstrap'
 import Toggle from 'react-bootstrap-toggle'
 import fontawesome from '@fortawesome/fontawesome'
 import { faLink, faFilter, faSpinner, faSearchPlus, faSearchMinus } from '@fortawesome/free-solid-svg-icons'
-import DataAdapter from './DataAdapter'
+import APIClient from './APIClient.js'
 
 fontawesome.library.add(faLink, faFilter, faSpinner, faSearchPlus, faSearchMinus);
 
@@ -37,7 +37,8 @@ export default class Ctrl extends Component {
 
         this.first_match = 0
         this.second_match = 0
-        this.dataAdapter = new DataAdapter()
+        
+        this.apiClient = new APIClient()
 
     }
 
@@ -195,22 +196,21 @@ export default class Ctrl extends Component {
                                 type="text"
                                 placeholder="Weld #"
                                 onKeyPress={e => {
-                                    
                                     if (e.key === 'Enter') {
-
                                         const param = escape('?weld_id=' + e.target.value + '&run_match=1')
+                                        this.apiClient.callAPI({
+                                            endpoint: 'welds',
+                                            data: param,
+                                            callback: data => {
+                                                data.forEach(weld => {
 
-                                        this.dataAdapter.get('welds', param, data => {
+                                                    if ((weld.side === 'A' && this.state.weld_side_a) ||
+                                                        (weld.side === 'B' && !this.state.weld_side_a))
 
-                                            data.forEach(weld => {
+                                                            this.props.weldGo(weld.pipe_section_id)
 
-                                                if ((weld.side === 'A' && this.state.weld_side_a) ||
-                                                    (weld.side === 'B' && !this.state.weld_side_a))
-
-                                                        this.props.weldGo(weld.pipe_section_id)
-
-                                            })
-
+                                                })
+                                            }
                                         })
 
                                     }

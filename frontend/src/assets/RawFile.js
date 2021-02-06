@@ -10,31 +10,16 @@ export default class RawFile extends Component {
 
         super(props)
         this.state = {
-            current: 0,
-            step: null,
             form: {},
-            rows: []
+            rows: [],
+            data_mapping_id: [],
+            pipeline_id: []
         }
 
         this.gridWidth = 800
         
         this.apiClient = new APIClient()
 
-        this.steps = [
-            (
-                <Form>
-                    <RawFileForm side="A" />
-                    <RawFileForm side="B" />
-                    <Button variant='primary' onClick={this.submit}>Submit</Button>
-                </Form>
-            ),
-            (
-                <>
-                    Upload success.
-                </>
-            )
-    
-        ]
     }
 
 
@@ -44,13 +29,20 @@ export default class RawFile extends Component {
 
         this.apiClient.callAPI({
             
-            endpoint: 'raw_files', 
+            endpoint: 'raw_files',
             callback: data => this._isMounted && this.setState({rows: data})
             
         })
-        
-        this._isMounted && this.getStep()
 
+        this.apiClient.callAPI({
+            endpoint: 'feature_maps',
+            callback: data => this._isMounted && this.setState({data_mapping_id: data})
+        })
+
+        this.apiClient.callAPI({
+            endpoint: 'pipelines',
+            callback: data => this._isMounted && this.setState({pipeline_id: data})
+        })
     }
 
 
@@ -102,15 +94,11 @@ export default class RawFile extends Component {
 
             })
             
-            this.setState({current: this.state.current + 1}, this.getStep)
+            alert('Success')
             
         })
 
     }
-
-
-    getStep = () => this.setState({step: this.steps[this.state.current]})
-
     
 
     render = () => (
@@ -175,7 +163,19 @@ export default class RawFile extends Component {
                 />
                 <div style={{height:10}}></div>
                 <h3>Add New</h3>
-                {this.state.step}          
+                <Form>
+                    <RawFileForm
+                        side="A"
+                        data_mapping_id={this.state.data_mapping_id}
+                        pipeline_id={this.state.pipeline_id}
+                    />
+                    <RawFileForm
+                        side="B"
+                        data_mapping_id={this.state.data_mapping_id}
+                        pipeline_id={this.state.pipeline_id}
+                    />
+                    <Button variant='primary' onClick={this.submit}>Submit</Button>
+                </Form>
             </div>
             <br></br><br></br><br></br>
         </div>

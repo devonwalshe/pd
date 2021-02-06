@@ -2,13 +2,13 @@ import React, { Component } from 'react'
 import './App.css'
 import Discovery from './assets/Discovery.js'
 import RunMatch from './assets/RunMatch.js'
-import Pipeline from './assets/Pipeline.js'
+import Client from './assets/Client.js'
 import RawFile from './assets/RawFile.js'
 import FeatureMap from './assets/FeatureMap.js'
 import { Button } from 'react-bootstrap'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import './bootstrap2-toggle.css'
-import { BrowserRouter, Link, Route, Switch, withRouter } from 'react-router-dom'
+import { Route, Switch, withRouter } from 'react-router-dom'
 
 class App extends Component {
 
@@ -54,7 +54,7 @@ class App extends Component {
     const page = !isNaN(href.slice(-1)[0]) ? href.slice(-2)[0] : href.slice(-1)[0]
     let current = page === 'runmatch' ? 'runmatches' : page
 
-    if (!~['pipeline','rawfiles','runmatches','featuremap','runmatch'].indexOf(current)) {
+    if (!~['client','rawfiles','runmatches','featuremap','runmatch'].indexOf(current)) {
 
       current = this.startPage
       this.props.history.push(`/${current}`)
@@ -80,9 +80,9 @@ class App extends Component {
           </div>
           <div>
             <Button
-              id="pipeline"
-              variant={this.state.current === "pipeline" ? "outline-primary" : "link"}
-              onClick={() => this.clickMenu("pipeline")}
+              id="client"
+              variant={this.state.current === "client" ? "outline-primary" : "link"}
+              onClick={() => this.clickMenu("client")}
             >
               Pipeline
             </Button>
@@ -111,7 +111,7 @@ class App extends Component {
         </div>
       <main>
         <Switch>
-            <Route path="/pipeline" component={Pipeline} />
+            <Route path="/client" component={Client} />
             <Route path="/rawfiles" component={RawFile} />
             <Route path="/runmatches" component={RunMatch} />
             <Route path="/featuremap" component={FeatureMap} />

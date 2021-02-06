@@ -19,3 +19,7 @@ html, body
     padding:0;
 }
 
+.grid_adj {
+    width: 840px!important;
+    max-width: 840px!important;
+}
