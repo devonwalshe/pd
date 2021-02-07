@@ -1,5 +1,5 @@
 
-.TableHeaderCell-cell-8 {
+.MuiTableCell-root {
     border-right: 1px solid darkgray;
     font-weight: 300!important;
     letter-spacing: 0!important;
@@ -7,12 +7,19 @@
     padding-left: 0px;
     padding-right: 0px;
 }
-.TableHeaderCell-cell-8:first-child {
+.MuiTableCell-root:first-child {
     padding-left: 0px;
 }
 .MuiTableCell-root {
     padding: 0px;
 }
-.TableNoDataCell-cell-31 {
+.MuiTableBody-root {
     display: none!important;
+}
+
+
+
+.table td, .table th {
+    padding: .25rem!important;
+    vertical-align: middle!important;
 }
