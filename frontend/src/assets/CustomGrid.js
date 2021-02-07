@@ -99,7 +99,7 @@ export default class CustomGrid extends Component {
 
 
     getColumns = () => {
-console.log('get', this.state.gridColumns, this.getColumns)
+
         let out = []
 
         if (this.props.width < 0)
@@ -283,10 +283,10 @@ console.log('get', this.state.gridColumns, this.getColumns)
                             Cancel
                         </Button>
                     <Button variant="primary" onClick={() => {
-                        handleClose
+                        handleClose()
                     }}>
                         Save Changes
-                    </Button>
+                    </Button>   
                     </Modal.Footer>
                 </Modal>
                 <div onClick={handleShow}>
