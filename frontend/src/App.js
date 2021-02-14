@@ -9,6 +9,7 @@ import { Button } from 'react-bootstrap'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import './bootstrap2-toggle.css'
 import { Route, Switch, withRouter } from 'react-router-dom'
+import { valHooks } from 'jquery'
 
 class App extends Component {
 
@@ -21,7 +22,7 @@ class App extends Component {
 
     this.state = {
 
-      current: this.startPage
+      current: ''
 
     }
 
@@ -31,9 +32,22 @@ class App extends Component {
   componentDidMount = () => this.clickMenu(this.state.current)
 
 
-  clickMenu = id => {
+  clickMenu = location => {
 
-      this.props.history.push(`/${id}`)
+    let page
+
+    if (location)
+
+      page = location
+    
+    else {
+
+      const href = window.location.href.split('/')      
+      page = !isNaN(href.slice(-1)[0]) ? href.slice(-2)[0] + '/' + href.slice(-1)[0] : href.slice(-1)[0]
+
+    }
+    
+    this.props.history.push(`/${page}`)
 
   }
 
@@ -48,21 +62,17 @@ class App extends Component {
 
   onRouteChanged() {
 
-    document.getElementById(this.state.current).variant = 'link'
-    
     const href = window.location.href.split('/')
-    const page = !isNaN(href.slice(-1)[0]) ? href.slice(-2)[0] : href.slice(-1)[0]
-    let current = page === 'runmatch' ? 'runmatches' : page
+    let page = !isNaN(href.slice(-1)[0]) ? href.slice(-2)[0] : href.slice(-1)[0]
+    
+    if (!~['client','rawfiles','runmatches','featuremap','runmatch'].indexOf(page.split('/')[0])) {
 
-    if (!~['client','rawfiles','runmatches','featuremap','runmatch'].indexOf(current)) {
-
-      current = this.startPage
-      this.props.history.push(`/${current}`)
+      page = this.startPage
+      this.props.history.push(`/${page}`)
 
     }
 
-    this.setState({current: current})
-    document.getElementById(current).variant = 'outline-primary'
+    this.setState({current: page})
 
   }
 
@@ -95,7 +105,7 @@ class App extends Component {
             </Button>
             <Button
               id="runmatches"
-              variant={this.state.current === "runmatches" ? "outline-primary" : "link"}
+              variant={this.state.current === "runmatches" || this.state.current.split("/")[0] === "runmatch" ? "outline-primary" : "link"}
               onClick={() => this.clickMenu("runmatches")}
             >
               Run Matches

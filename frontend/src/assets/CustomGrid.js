@@ -25,11 +25,13 @@ export default class CustomGrid extends Component {
 
         this.state = {
             showModal: false,
-            gridColumns: JSON.parse(JSON.stringify(this.gridColumns)),
+            gridColumns: this.gridColumns.map(col => Object.assign({}, col)),
             adjColumns: [],
             adjWidths: [],
             totalPercent: 0
         }
+
+        this.adjGridWidth = 800
 
     }
 
@@ -76,7 +78,7 @@ export default class CustomGrid extends Component {
             fltr.map(col => {
                 return {
                     columnName: col.key,
-                    width: 800 / 100 * col.width
+                    width: this.adjGridWidth / 100 * col.width
                 }
             })
         )()
@@ -255,8 +257,39 @@ export default class CustomGrid extends Component {
                                             />
                                         </td>
                                         <td style={{textAlign:"center",verticalAlign: "middle"}}>
-                                            <i className="fa fa-arrow-up"></i>
-                                            <i className="fa fa-arrow-down"></i>
+                                            <div
+                                                style={{
+                                                    cursor: "pointer",
+                                                    display: "inline-block"
+                                                }}
+                                                onClick={() => {
+                                                    if (ind) {
+                                                        let cols = this.state.gridColumns.map(col => Object.assign({}, col))
+                                                        cols[ind - 1] = cols.splice(ind, 1, cols[ind - 1])[0]
+                                                        this.setAdjGrid()
+                                                        console.log(cols)
+                                                        this.setState({ gridColumns: [] }, () => this.setState({ gridColumns: cols }))
+                                                    }
+                                                }}
+                                            >
+                                                <i className="fa fa-arrow-up"></i>
+                                            </div>
+                                            <div
+                                                style={{
+                                                    cursor: "pointer",
+                                                    display: "inline-block"
+                                                }}
+                                                onClick={() => {
+                                                    if (ind < this.state.gridColumns.length - 1) {
+                                                        let cols = this.state.gridColumns.map(col => Object.assign({}, col))
+                                                        cols[ind] = cols.splice(ind + 1, 1, cols[ind])[0]
+                                                        this.setAdjGrid()
+                                                        this.setState({ gridColumns: [] }, () => this.setState({ gridColumns: cols }))
+                                                    }
+                                                }}
+                                            >
+                                                <i className="fa fa-arrow-down"></i>
+                                            </div>
                                         </td>
                                         <td>
                                             <Form.Control style={{width: "80px"}} 
@@ -279,17 +312,28 @@ export default class CustomGrid extends Component {
                         </BootTable>
                     </Modal.Body>
                     <Modal.Footer>
-                        <Button variant="secondary" onClick={handleClose}>
+                        <Button
+                            variant="secondary"
+                            onClick={handleClose}
+                        >
                             Cancel
                         </Button>
-                    <Button variant="primary" onClick={() => {
-                        handleClose()
+                    <Button
+                        variant="primary"
+                        onClick={() => {
+                            handleClose()
                     }}>
                         Save Changes
                     </Button>   
                     </Modal.Footer>
                 </Modal>
-                <div onClick={handleShow}>
+                <div
+                    style={{
+                        cursor: "pointer",
+                        display: "inline-block"
+                    }}
+                    onClick={handleShow}
+                >
                     <i className="fa fa-cog"></i>
                 </div>
                 <ReactDataGrid

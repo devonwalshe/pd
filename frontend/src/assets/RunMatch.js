@@ -123,29 +123,38 @@ export default class Runs extends Component {
             pipeline: pipeline
         }]
         
-        this.dataAdapter.post('run_match', data, data => {
+        this.apiClient.callAPI({
+            method: 'post',
+            endpoint: 'run_match',
+            data: data,
+            callback: data => {
 
-            const id = data[0].id
+                const id = data[0].id
 
-            this.dataAdapter.get('run_matches', null, data => {
-                
-                this.setState({rows: data})
+                this.apiClient.callAPI({
+                    endpoint: 'run_matches', 
+                    callback: data => {
+                        
+                        this.setState({rows: data})
+                        this.apiClient.callAPI({
+                            method: 'post',
+                            endpoint: 'matchrunner/' + id,
+                            callback: data =>  console.log(data)
+                        })
+                    }
+                })
 
-                this.dataAdapter.post('matchrunner/' + id, null, data =>  console.log(data))
-
-            })
-            
+            }
         })
         
     }
 
-    downloadCSV = id => this.dataAdapter.get(
+    downloadCSV = id => this.apiClient.callAPI({
 
-        'matchrunner/' + id + '/export',
-        null,
-        data => saveAs(new Blob([data], { type: 'text/plain;charset=utf-8' }), 'export.csv')
+        endpoint: 'matchrunner/' + id + '/export',
+        callback: data => saveAs(new Blob([data], { type: 'text/plain;charset=utf-8' }), 'export.csv')
 
-    )
+    })
 
 
     render = () => (
@@ -204,10 +213,15 @@ export default class Runs extends Component {
                                     </div>
                                 ),
                                 events: {
-                                    onClick: (e, arg) =>
-                                        this.dataAdapter.delete('run_match', arg.rowId, () => 
-                                            this.dataAdapter.get('run_matches', null, data =>
-                                                this.setState({rows: data})))
+                                    onClick: (e, arg) => this.apiClient.callAPI({
+                                        method: 'delete',
+                                        endpoint: 'run_match',
+                                        id: arg.rowId,
+                                        callback: () => this.apiClient.callAPI({
+                                            endpoint: 'run_matches',
+                                            callback: data => this.setState({rows: data})
+                                        })
+                                    })
                                 }
                             }
                         ].map(col => {
