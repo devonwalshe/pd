@@ -28,6 +28,7 @@ export default class Ctrl extends Component {
             nav_status: props.nav_status,
             run_match: props.run_match,
             section_id: props.section_id,
+            run_name: this.props.run_name,
             weld_side_a: true,
             sectionIndex: props.sectionIndex,
             sectionTotal: props.sectionTotal
@@ -50,7 +51,8 @@ export default class Ctrl extends Component {
             this.state.confirm_on !== props.confirm_on ||
             this.state.nav_status !== props.nav_status ||
             this.state.sectionIndex !== props.sectionIndex ||
-            this.state.sectionTotal !== props.sectionTotal)
+            this.state.sectionTotal !== props.sectionTotal ||
+            this.state.run_name !== props.run_name)
 
             this.setState({
 
@@ -59,6 +61,7 @@ export default class Ctrl extends Component {
                 match_on: props.match_on,
                 nav_status: props.nav_status,
                 run_match: props.run_match,
+                run_name: props.run_name,
                 section_id: props.section_id,
                 sectionIndex: props.sectionIndex,
                 sectionTotal: props.sectionTotal
@@ -89,12 +92,8 @@ export default class Ctrl extends Component {
                     <div style={{alignItems:'center',display:'flex',float:'left'}}>
                         <div className="info">
                             <div>
-                                <div>Run</div>
-                                <div>{this.state.run_match}</div>
-                            </div>
-                            <div>
-                                <div>Section</div>
-                                <div>{this.state.section_id || '\u00A0'}</div>
+                                <div>Name</div>
+                                <div>{this.state.run_name}</div>
                             </div>
                         </div>
                     </div>
@@ -314,6 +313,7 @@ Ctrl.propTypes = {
 
     run_match: PropTypes.string.isRequired,
     section_id: PropTypes.string.isRequired,
+    run_name: PropTypes.string.isRequired,
     sectionGo: PropTypes.func.isRequired,
     weldGo: PropTypes.func.isRequired,
     manualCheck: PropTypes.func.isRequired,
@@ -328,3 +328,4 @@ Ctrl.propTypes = {
     sectionIndex: PropTypes.number.isRequired,
     sectionTotal: PropTypes.number.isRequired
 }
+

@@ -25,7 +25,7 @@ export default class APIClient extends Component {
 
             url = restURL + request.endpoint + '/' +  (request.id ? request.id : '')
 
-            if (method === 'post')
+            if (method === 'post' && request.data)
 
                 req.body = JSON.stringify(request.data)
 
@@ -49,13 +49,13 @@ export default class APIClient extends Component {
 
         } else
 
-            url = restURL + request.endpoint + '/' + (request.data ? escape(request.data) : '')
+            url = restURL + request.endpoint + (request.data ? '/' + escape(request.data) : '')
 
         this.spin(true)
-//console.log(url)
+
         fetch(url, req)
 
-            .then(res => (~(['get', 'put']).indexOf(method) && res.json()))
+            .then(res => (~(['get', 'put', 'post']).indexOf(method) && res.json()))
 
             .then(res => {
 

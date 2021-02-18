@@ -21,6 +21,7 @@ export default class Discovery extends Component {
             hover_table: 0,
             nav_status: '0000',
             section_id: '',
+            run_name: '',
             pipe_section_graph: [],
             pipe_section_table: [],
             screen_width: 0,
@@ -102,6 +103,14 @@ export default class Discovery extends Component {
                 }
 
             }
+
+        })
+
+        this.apiClient.callAPI({
+
+            endpoint: 'run_match',
+            data: this.run_match,
+            callback: data => this._isMounted && this.setState({run_name: data.name})
 
         })
 
@@ -440,12 +449,12 @@ export default class Discovery extends Component {
             
                 }
             
-
                 let pipeSection = {
 
                     id: data.id,
                     section_id: data.section_id,
                     run_match: data.run_match,
+                    run_name: data.name,
                     manually_checked: data.manually_checked,
                     features: {},
                     table: [],
@@ -647,6 +656,7 @@ export default class Discovery extends Component {
                     this.setState({match_on: !this.state.match_on}, () => this.setState({...this.state}))
                 }}
                 run_match={String(this.run_match)}
+                run_name={this.state.run_name}
                 section_id={this.state.section_id}
                 sectionIndex={this.state.sectionIndex}
                 sectionTotal={this.state.sectionTotal}

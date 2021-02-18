@@ -138,7 +138,8 @@ export default class Runs extends Component {
                         this.setState({rows: data})
                         this.apiClient.callAPI({
                             method: 'post',
-                            endpoint: 'matchrunner/' + id,
+                            endpoint: 'matchrunner',
+                            id: id,
                             callback: data =>  console.log(data)
                         })
                     }
