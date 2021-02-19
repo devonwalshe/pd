@@ -25,7 +25,7 @@ export default class CustomGrid extends Component {
 
         this.state = {
             showModal: false,
-            gridColumns: this.gridColumns.map(col => Object.assign({}, col)),
+            gridColumns: this.props.gridColumns.map(col => Object.assign({}, col)),
             adjColumns: [],
             adjWidths: [],
             totalPercent: 0
@@ -42,6 +42,8 @@ export default class CustomGrid extends Component {
         this._isMounted = true
 
         this.setAdjGrid()
+
+//        this.setGridSides()
 
     }
 
@@ -87,19 +89,7 @@ export default class CustomGrid extends Component {
 
     }
 
-    gridColumns = [
-        {width:11, name: 'feature_id', key:'feature_id', show: true},
-        {width: 7, name: 'feature', key:'feature', show: true},
-        {width: 13, name: 'feature_category', key:'feature_category', show: true},
-        {width: 13, name: 'orientation_deg', key:'orientation_deg', show: true},
-        {width: 16, name: 'us_weld_dist_wc_ft', key:'us_weld_dist_wc_ft', show: true},
-        {width: 18, name: 'us_weld_dist_coord_m', key:'us_weld_dist_coord_m', show: true},
-        {width: 8, name: 'length_in', key:'length_in', show: true},
-        {width: 7, name: 'width_in', key:'width_in', show: true},
-        {width: 7, name: 'depth_in', key:'depth_in', show: true}
-    ]
-
-
+    
     getColumns = () => {
 
         let out = []
@@ -153,6 +143,7 @@ export default class CustomGrid extends Component {
 
     }
 
+
     getGridColumn = (side,item) => {
 
         const matched = typeof item.value === 'boolean' && !item.value
@@ -170,12 +161,38 @@ export default class CustomGrid extends Component {
 
     }
 
+
+    setGridSides = () => {
+
+        var children = document.querySelectorAll(".custom-grid .react-grid-Container .react-grid-Main .react-grid-Grid .react-grid-Header .react-grid-HeaderRow")
+
+        if (children)
+
+            children = children[0].children[0].children
+
+        for (let i = 0, ix = (children || []).length, mid = (ix - 1) / 2; i < ix; i += 1)
+
+            if (i < mid)
+
+                children[i].style.borderTop = '3px solid orange'
+
+            else if (i > mid)
+
+                children[i].style.borderTop = '3px solid blue'
+
+            else if (i === mid)
+
+                children[i].style.borderTop = '3px solid white'
+
+
+    }
+
     render() {
         
         const width = this.props.width ? this.props.width + "px" : "auto"
         const adjWidth = "800px"
 
-        const handleClose = () => this.setState({gridColumns: JSON.parse(JSON.stringify(this.gridColumns)), showModal: false})
+        const handleClose = () => this.setState({gridColumns: JSON.parse(JSON.stringify(this.state.gridColumns)), showModal: false})
         const handleShow = () => this.setState({showModal: true}, this.setAdjGrid)
 
         return (
@@ -338,7 +355,10 @@ export default class CustomGrid extends Component {
                 </div>
                 <ReactDataGrid
                     maxWidth={width}
-                    columns={(() => this.getColumns())()}
+                    columns={(() => {
+                        setTimeout(this.setGridSides, 20)
+                        return this.getColumns()
+                    })()}
                     rowGetter={i => this.props.rows[i]}
                     rowsCount={this.props.rows.length}
                     onGridRowsUpdated={this.onGridRowsUpdated}
@@ -353,6 +373,7 @@ export default class CustomGrid extends Component {
 CustomGrid.propTypes = {
 
     rows: PropTypes.array.isRequired,
+    gridColumns: PropTypes.array.isRequired,
     clickFeature: PropTypes.func.isRequired,
     hoverFeature: PropTypes.func.isRequired,
     unlink: PropTypes.func.isRequired,

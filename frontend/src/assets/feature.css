@@ -22,11 +22,10 @@
     position: absolute;
 }
 
-.shape:before {
+.matchbg:before {
     height: 10px;
     width: 12px;
     margin-left: 2px;
-    
     content: '.';
     color: transparent;
     display: block;
@@ -59,8 +58,9 @@
 }
 
 .feature_filter > div {
-    display: inline-block;
+    display: table-cell;
     font-size: smaller;
+    padding: 0px 10px 0px 10px;
 }
 .feature_filter > div:last-child {
     background: white;

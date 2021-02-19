@@ -129,7 +129,6 @@ card
 }
 
 .info > div:first-child {
-  border-right: 1px solid lightgray;
   padding: 0px 10px 0px
 }
 
@@ -182,14 +181,6 @@ card
 .custom-grid > .react-grid-Container > .react-grid-Main > .react-grid-Grid > .react-grid-Header > .react-grid-HeaderRow > div > div {
   font-size: 0.7rem;
   padding: 5px 2px 3px 2px !important;
-}
-
-.custom-grid > .react-grid-Container > .react-grid-Main > .react-grid-Grid > .react-grid-Header > .react-grid-HeaderRow > div > div:nth-child(-n+9) {
-  border-top: 3px solid orange;
-}
-
-.custom-grid > .react-grid-Container > .react-grid-Main > .react-grid-Grid > .react-grid-Header > .react-grid-HeaderRow > div > div:nth-child(n+11) {
-  border-top: 3px solid blue;
 }
 
 
@@ -249,29 +240,6 @@ card
   padding-left: 30px;
 }
 
-.welds_table {
-  display: table;
-  font-size: smaller;
-  padding: 5px;
-  width: 100%;
-}
-.welds_table > div {
-  display: table-cell;
-}
-.welds_table > div > div {
-  border: 1px solid gray;
-  display: inline-block;
-  padding: 0px 3px 0px 3px;
-  width: 100%;
-}
-.welds_table > div:nth-child(-n+5) > div:first-child {
-  border-top: 3px solid orange;
-  border-bottom: none;
-}
-.welds_table > div:nth-child(n+6) > div:first-child {
-  border-top: 3px solid blue;
-  border-bottom: none;
-}
 
 
 

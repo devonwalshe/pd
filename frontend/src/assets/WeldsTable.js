@@ -17,30 +17,56 @@ export default class WeldsTable extends Component {
         
         if (this.section_id !== props.section_id) {
 
-            ['A','B'].forEach(s => this.props.columns.map(f => this.setState({[s + f]: props.welds[s][f]})))
+            ['A','B'].forEach(side => this.props.columns.map(col => this.setState({[side + col.key]: props.welds[side][col.key]})))
             this.section_id = props.section_id
 
         }
 
     }
 
-    render () {
-
-        return (
-
-            <div className="welds_table">
-
-                {(() => ['A','B'].map(s => this.props.columns.map(f => (
-
-                    <div key={s + f}><div>{f}</div><div>{this.state[s + f] || '\u00A0'}</div></div>
-                    
-                ))))()}
-
-            </div>
-
-        )
-
+    styles = {
+        table: {
+            display: 'table',
+            fontSize: 'smaller',
+            padding: '5px',
+            width: '100%'
+        },
+        table_div: {
+            display: 'table-cell'
+        },
+        table_div_div: {
+            border: '1px solid gray',
+            display: 'inline-block',
+            padding: '0px 3px 0px 3px',
+            width: '100%'
+        },
+        table_side_A: {
+            borderTop: '3px solid orange',
+            borderBottom: 'none'
+        },
+        table_side_B: {
+            borderTop: '3px solid blue',
+            borderBottom: 'none'
+        }
     }
+
+    render = () => (
+        <div style={this.styles.table}>
+            {(() => ['A','B'].map(side => this.props.columns.map(col => (
+                <div
+                    key={side + col.key}
+                    style={this.styles.table_div}
+                >
+                    <div style={{...this.styles.table_div_div, ...this.styles['table_side_' + side]}}>
+                        {col.name}
+                    </div>
+                    <div style={this.styles.table_div_div}>
+                        {this.state[side + col.key] || '\u00A0'}
+                    </div>
+                </div>
+            ))))()}
+        </div>
+    )
 
 }
 

@@ -56,7 +56,7 @@ export default class Discovery extends Component {
             y: 55
         }
         this.bgHi = 'yellow'
-        
+        this.lossLimit = null
 
     }
 
@@ -159,7 +159,9 @@ export default class Discovery extends Component {
         const graph_width = this.state.screen_width - this.offset.y - this.offset.margin
         const max_width = this.state.max_weld_width
 
-        let features = []
+        let features = [],
+            sizes = []
+
 
         for (let f in data) {
  
@@ -183,28 +185,124 @@ export default class Discovery extends Component {
             
                 feature.top = 360 - (!isNaN(top) ? top : 360) + this.offset.x
                 feature.left = graph_width / max_width * Number(data[f].attributes.us_weld_dist_wc_ft) + this.offset.y
+                feature.isLoss = false
+
+                if (this.lossLimit && feature.attributes.feature_category === 'metal loss / mill anomaly') {
+
+                    feature.size = feature.width * feature.height
+                    feature.isLoss = true
+                    sizes.push(feature.size)
+                    
+                }
                 
-                features.push(
-
-                    <Feature
-                        key={'feature_' + feature.id}
-                        feature={feature}
-                        onClick={this.clickFeature}
-                        onHover={this.hoverOnGraph}
-                        matchMode={this.first_match && feature.id !== this.first_match? true : false}
-                    />
-
-                )
+                features.push(feature)
 
             }
 
         }
 
-        this.setState({pipe_section_graph: features})
+        if (this.lossLimit && this.lossLimit < sizes.length) {
+
+            sizes.sort((a, b) => b - a)
+
+            const size = sizes[this.lossLimit]
+
+            for (let i = features.length - 1; i > -1; i -= 1)
+
+                if (features[i].isLoss && features[i].size < size)
+
+                    features.splice(i, 1)
+
+        }
+
+        this.setState({pipe_section_graph: features.map(feature => (
+
+            <Feature
+                key={'feature_' + feature.id}
+                feature={feature}
+                onClick={this.clickFeature}
+                onHover={this.hoverOnGraph}
+                matchMode={this.first_match && feature.id !== this.first_match? true : false}
+            />
+
+        ))})
 
     }
 
 
+    gridColumns = [
+        {
+            width:11,
+            name: 'ID',
+            key:'feature_id',
+            show: true
+        },
+        {
+            width: 7,
+            name: 'Feature',
+            key:'feature',
+            show: true,
+            attr: 'str'
+        },
+        {
+            width: 13,
+            name: 'feature_category',
+            key:'feature_category',
+            show: false,
+            attr: 'str'
+        },
+        {
+            width: 16,
+            name: 'us_weld_dist_wc_ft',
+            key: 'us_weld_dist_wc_ft',
+            show: true,
+            attr: 'num'
+        },
+        {
+            width: 18,
+            name: 'us_weld_dist_coord_m',
+            key:'us_weld_dist_coord_m',
+            show: true,
+            attr: 'num'
+        },
+        {
+            width: 7,
+            name: 'Depth',
+            key:'depth_in',
+            show: true,
+            attr: 'num'
+        },
+        {
+            width: 8,
+            name: 'Length',
+            key:'length_in',
+            show: true,
+            attr: 'num'
+        },
+        {
+            width: 7,
+            name: 'Width',
+            key:'width_in',
+            show: true,
+            attr: 'num'
+        },
+        {
+            width: 13,
+            name: 'Orientation',
+            key:'orientation_deg',
+            show: true,
+            attr: 'num'
+        },
+        {
+            width: 13,
+            name: 'Comments',
+            key:'comments',
+            show: true,
+            attr: 'str'
+        }
+    ]
+
+    
     highlightDom = (id, color) => {
 
         const doc = document.getElementById(id)
@@ -377,47 +475,12 @@ export default class Discovery extends Component {
             data: this.pipe_sections.id,
             
             callback: data => {
-            
+
                 const getTableRow = (a, b, f) => {
 
                     const side = (obj, side) => {
 
                         const att = (obj && obj.attributes) || null
-
-                        const cols = [
-                            {
-                                name: 'feature',
-                                type: 'str'
-                            },
-                            {
-                                name: 'feature_category',
-                                type: 'str'
-                            },
-                            {
-                                name: 'orientation_deg',
-                                type: 'num'
-                            },
-                            {
-                                name: 'us_weld_dist_wc_ft',
-                                type: 'num'
-                            },
-                            {
-                                name: 'us_weld_dist_coord_m',
-                                type: 'num'
-                            },
-                            {
-                                name: 'length_in',
-                                type: 'num'
-                            },
-                            {
-                                name: 'width_in',
-                                type: 'num'
-                            },
-                            {
-                                name: 'idepth_ind',
-                                type: 'num'
-                            }
-                        ]
                         
                         let out = {
 
@@ -426,12 +489,12 @@ export default class Discovery extends Component {
 
                         }
                         
-                        cols.forEach(col => {
+                        this.gridColumns.forEach(col => {
 
-                            out[col.name + '_' + side] = (att && ({
+                            out[col.name + '_' + side] = (att && col.attr && ({
                                 num: col => (att[col] && Number(att[col]).toFixed(4)) || ' ',
                                 str: col => (att[col] && att[col]) || ''
-                            })[col.type](col.name)) || ''
+                            })[col.attr](col.key)) || ''
                             
                         })
 
@@ -504,7 +567,7 @@ export default class Discovery extends Component {
 
                     pipeSection.welds[side] = {}
 
-                        weldsTemp[side] && this.weldsTableColumns.map(f => pipeSection.welds[side][f] = weldsTemp[side][f])
+                    weldsTemp[side] && this.weldsTableColumns.map(col => pipeSection.welds[side][col.key] = weldsTemp[side][col.key])
 
                 })
 
@@ -576,11 +639,22 @@ export default class Discovery extends Component {
 
 
     weldsTableColumns = [
-        'side',
-        'weld_id',
-        'us_weld_dist',
-        'joint_length',
-        'wall_thickness'
+        {
+            key: 'weld_id',
+            name: 'Weld ID'
+        },
+        {
+            key: 'us_weld_dist',
+            name: 'Weld ID'
+        },
+        {
+            key: 'joint_length',
+            name: 'Distance'
+        },
+        {
+            key: 'comments',
+            name: 'Comment'
+        }
     ]
 
     render = () => (
@@ -666,6 +740,10 @@ export default class Discovery extends Component {
                     this.pipe_sections.id = id
                     this.loadPipeSection()
                 }}
+                lossLimit={lim => {
+                    this.lossLimit = lim
+                    this.graphPipeSection()
+                }}
             />
             <WeldsTable
                 section_id={this.state.section_id || ''}
@@ -684,6 +762,7 @@ export default class Discovery extends Component {
                 rows={this.state.pipe_section_table}
                 clickFeature={this.clickFeature}
                 hoverFeature={this.hoverOnTable}
+                gridColumns={this.gridColumns}
                 unlink={id => window.confirm('Confirm unlinking the feature?') && this.apiClient.callAPI({
                     method: 'delete',
                     endpoint:'feature_pair',
