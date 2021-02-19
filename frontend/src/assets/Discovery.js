@@ -20,7 +20,7 @@ export default class Discovery extends Component {
             hover_graph: 0,
             hover_table: 0,
             nav_status: '0000',
-            section_id: '',
+            //section_id: '',
             run_name: '',
             pipe_section_graph: [],
             pipe_section_table: [],
@@ -189,7 +189,7 @@ export default class Discovery extends Component {
 
                 if (this.lossLimit && feature.attributes.feature_category === 'metal loss / mill anomaly') {
 
-                    feature.size = feature.width * feature.height
+                    feature.size = w * h
                     feature.isLoss = true
                     sizes.push(feature.size)
                     
@@ -206,12 +206,14 @@ export default class Discovery extends Component {
             sizes.sort((a, b) => b - a)
 
             const size = sizes[this.lossLimit]
-
+console.log(sizes,size)
             for (let i = features.length - 1; i > -1; i -= 1)
 
                 if (features[i].isLoss && features[i].size < size)
 
                     features.splice(i, 1)
+
+                    console.log(features)
 
         }
 
@@ -367,67 +369,6 @@ export default class Discovery extends Component {
 
     }
 
-    
-    sectionGo = (dir, chk, filter) => {
-
-        const ps = this.pipe_sections.data
-        const ix = ps.length
-        const p = this.pipe_sections.index
-        const test = p => (((chk && p.manually_checked) || !chk) &&
-                        ((filter && p.feature_count) || !filter))
-
-        let idx = -1
-
-        if (!~dir) {
-
-            for (let i = p - 1; i > -1; i -= 1)
-
-                if (test(ps[i])) {
-
-                    idx = ps[i].id
-                    this.pipe_sections.index = i
-                    i = -1
-
-                }
-
-        } else {
-
-            for (let i = p + 1; i < ix; i += 1) {
-
-                if (test(ps[i])) {
-
-                    idx = ps[i].id
-                    this.pipe_sections.index = i
-                    i = ix
-
-                }}
-            
-        }
-
-        if (~idx) {
-
-            this.pipe_sections.id = idx
-            this.setState({sectionIndex:this.pipe_sections.index + 1})
-            this.loadPipeSection()
-
-        }
-
-        this.navStatus(filter)
-
-    }
-
-    
-    setMatchFilter = (matched, unmatched) => {
-
-        this.filter = {
-            matched: matched,
-            unmatched: unmatched
-        }
-
-        this.graphPipeSection()
-
-    }
-
     hoverOnGraph = id => {
 
         const hlt = (id, color) => {
@@ -526,6 +467,7 @@ export default class Discovery extends Component {
                     welds: {}
 
                 },
+                pipeSectionTable = [],
                 temp = [],
                 featuresIn = []
 
@@ -534,7 +476,7 @@ export default class Discovery extends Component {
                 const welds = data.welds || []
 
                 pipe.forEach(p => {
-        
+
                     let feature = {
         
                             attributes: {},
@@ -600,9 +542,8 @@ export default class Discovery extends Component {
                                                 
                                             pipeSection.table.push(getTableRow(temp[i], temp[k], pairs[j].id))
             
-                                        } else if
-                                            (temp[i].side === 'B' && temp[i].id === pairs[j].feature_b &&
-                                            temp[k].side === 'A' && temp[k].id === pairs[j].feature_a) {
+                                        } else if (temp[i].side === 'B' && temp[i].id === pairs[j].feature_b &&
+                                                    temp[k].side === 'A' && temp[k].id === pairs[j].feature_a) {
                                             
                                             featuresIn.push(temp[i].id)
                                             featuresIn.push(temp[k].id)
@@ -622,7 +563,7 @@ export default class Discovery extends Component {
                 
                 this.setState({
                     id: pipeSection.id,
-                    pipe_section_table: pipeSection.table,
+                    pipe_section_table: pipeSectionTable,//pipeSection.table,
                     welds: pipeSection.welds,
                     manually_checked: pipeSection.manually_checked,
                     max_weld_width: Math.max(pipeSection['weld_a_width'], pipeSection['weld_b_width']),
@@ -637,6 +578,67 @@ export default class Discovery extends Component {
 
     }
 
+
+
+    sectionGo = (dir, chk, filter) => {
+
+        const ps = this.pipe_sections.data
+        const ix = ps.length
+        const p = this.pipe_sections.index
+        const test = p => (((chk && p.manually_checked) || !chk) &&
+                        ((filter && p.feature_count) || !filter))
+
+        let idx = -1
+
+        if (!~dir) {
+
+            for (let i = p - 1; i > -1; i -= 1)
+
+                if (test(ps[i])) {
+
+                    idx = ps[i].id
+                    this.pipe_sections.index = i
+                    i = -1
+
+                }
+
+        } else {
+
+            for (let i = p + 1; i < ix; i += 1) {
+
+                if (test(ps[i])) {
+
+                    idx = ps[i].id
+                    this.pipe_sections.index = i
+                    i = ix
+
+                }}
+            
+        }
+
+        if (~idx) {
+
+            this.pipe_sections.id = idx
+            this.setState({sectionIndex:this.pipe_sections.index + 1})
+            this.loadPipeSection()
+
+        }
+
+        this.navStatus(filter)
+
+    }
+
+    
+    setMatchFilter = (matched, unmatched) => {
+
+        this.filter = {
+            matched: matched,
+            unmatched: unmatched
+        }
+
+        this.graphPipeSection()
+
+    }
 
     weldsTableColumns = [
         {

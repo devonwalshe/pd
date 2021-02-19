@@ -9,7 +9,6 @@ import { Button } from 'react-bootstrap'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import './bootstrap2-toggle.css'
 import { Route, Switch, withRouter } from 'react-router-dom'
-import { valHooks } from 'jquery'
 
 class App extends Component {
 

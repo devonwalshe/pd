@@ -27,7 +27,6 @@ export default class Ctrl extends Component {
             match_on: false,
             nav_status: props.nav_status,
             run_match: props.run_match,
-            section_id: props.section_id,
             run_name: this.props.run_name,
             weld_side_a: true,
             sectionIndex: props.sectionIndex,
@@ -45,8 +44,7 @@ export default class Ctrl extends Component {
 
     componentDidUpdate(props) {
         
-        if (this.state.section_id !== props.section_id ||
-            this.state.manually_checked !== props.manually_checked ||
+        if (this.state.manually_checked !== props.manually_checked ||
             this.state.match_on !== props.match_on ||
             this.state.confirm_on !== props.confirm_on ||
             this.state.nav_status !== props.nav_status ||
@@ -415,7 +413,6 @@ export default class Ctrl extends Component {
 Ctrl.propTypes = {
 
     run_match: PropTypes.string.isRequired,
-    section_id: PropTypes.string.isRequired,
     run_name: PropTypes.string.isRequired,
     sectionGo: PropTypes.func.isRequired,
     weldGo: PropTypes.func.isRequired,
