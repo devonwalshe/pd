@@ -43,8 +43,6 @@ export default class CustomGrid extends Component {
 
         this.setAdjGrid()
 
-//        this.setGridSides()
-
     }
 
     componentWillUnmount() {
@@ -120,7 +118,7 @@ export default class CustomGrid extends Component {
 
         out.push({
 
-            key: '_gutter',
+            key: 'match_pair',
             width: gutterWidth,
             formatter: cell => (
                 <div 

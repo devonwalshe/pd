@@ -49,7 +49,7 @@ export default class APIClient extends Component {
 
         } else
 
-            url = restURL + request.endpoint + (request.data ? '/' + escape(request.data) : '')
+            url = restURL + request.endpoint + (request.data ? (String(request.data).charAt(0) !== '?' ? '/' : '') + request.data : '')
 
         this.spin(true)
 

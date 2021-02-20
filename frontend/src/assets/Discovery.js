@@ -20,7 +20,6 @@ export default class Discovery extends Component {
             hover_graph: 0,
             hover_table: 0,
             nav_status: '0000',
-            //section_id: '',
             run_name: '',
             pipe_section_graph: [],
             pipe_section_table: [],
@@ -46,7 +45,7 @@ export default class Discovery extends Component {
             id: 0
         }
 
-        this.pipe_section_raw = {}
+        this.rawData = {}
         this.run_match = window.location.href.split('/').slice(-1)[0]
         this.first_match = 0
         this.second_match = 0
@@ -128,7 +127,7 @@ export default class Discovery extends Component {
 
         if (this.first_match) {
 
-            if (this.pipe_section_raw.features[this.first_match].side === this.pipe_section_raw.features[id].side)
+            if (this.rawData.features[this.first_match].side === this.rawData.features[id].side)
 
                 return
 
@@ -155,45 +154,32 @@ export default class Discovery extends Component {
 
     graphPipeSection = () => {
 
-        const data = this.pipe_section_raw.features
+        const data = this.rawData.features
         const graph_width = this.state.screen_width - this.offset.y - this.offset.margin
         const max_width = this.state.max_weld_width
+        const minSize = 0.5
+        const noDimFeatureSize = 2
 
-        let features = [],
-            sizes = []
-
+        let features = []
 
         for (let f in data) {
  
             if (((this.filter.matched && data[f].matched) || (this.filter.unmatched && !data[f].matched)) &&
-                (!this.first_match || (this.first_match === Number(f) || this.pipe_section_raw.features[this.first_match].side !== data[f].side))) {
+                (!this.first_match || (this.first_match === Number(f) || this.rawData.features[this.first_match].side !== data[f].side))) {
 
                 let feature = {...data[f]}
-                const top = Number(data[f].attributes.orientation_deg)
-                const h = Number(data[f].attributes.width_in)
-                const w = Number(data[f].attributes.length_in)
+
+                const h = data[f].width_in
+                const w = data[f].length_in
 
                 if (!isNaN(h) && !isNaN(w)) {
-
-                    const minSize = 0.5
-                    const noDimFeatureSize = 2
 
                     feature.width = w > minSize ? graph_width / max_width * w / 12 : noDimFeatureSize
                     feature.height = h > minSize ? graph_width / max_width * h / 12 : noDimFeatureSize
 
                 }
             
-                feature.top = 360 - (!isNaN(top) ? top : 360) + this.offset.x
                 feature.left = graph_width / max_width * Number(data[f].attributes.us_weld_dist_wc_ft) + this.offset.y
-                feature.isLoss = false
-
-                if (this.lossLimit && feature.attributes.feature_category === 'metal loss / mill anomaly') {
-
-                    feature.size = w * h
-                    feature.isLoss = true
-                    sizes.push(feature.size)
-                    
-                }
                 
                 features.push(feature)
 
@@ -201,33 +187,94 @@ export default class Discovery extends Component {
 
         }
 
-        if (this.lossLimit && this.lossLimit < sizes.length) {
+        let allFeatures = []
 
-            sizes.sort((a, b) => b - a)
+        if (this.lossLimit && this.lossLimit < this.rawData.sizes.length)
 
-            const size = sizes[this.lossLimit]
-console.log(sizes,size)
-            for (let i = features.length - 1; i > -1; i -= 1)
-
-                if (features[i].isLoss && features[i].size < size)
+            for (let i = features.length - 1; i > -1; i -= 1) {
+                
+                if (features[i].size && features[i].size < this.rawData.sizes[this.lossLimit])
 
                     features.splice(i, 1)
 
-                    console.log(features)
+                else
 
+                    allFeatures.push(features[i].id)
+
+            }
+
+        const getTableRow = (a, b, pair) => {
+
+            const side = (obj, side) => {
+
+                const attr = (obj && obj.attributes) || null
+                
+                let out = {
+
+                    ['id_' + side]: (obj && obj.id) || false,
+                    ['feature_id_' + side]: (obj && obj.feature_id) || false
+
+                }
+                
+                this.gridColumns.filter(col => col.type).forEach(col => {
+
+                    out[col.key + '_' + side] = (attr && ({
+                        num: key => (attr[key] && Number(attr[key]).toFixed(4)) || ' ',
+                        str: key => attr[key] || ' '
+                    })[col.type](col.key)) || false
+                    
+                })
+
+                return out
+                
+            }
+
+            return{
+    
+                ...side(a, 'A'),
+                match_pair: a && b ? pair : false,
+                ...side(b, 'B'),
+    
+            }
+    
         }
 
-        this.setState({pipe_section_graph: features.map(feature => (
+        let table = []
 
-            <Feature
-                key={'feature_' + feature.id}
-                feature={feature}
-                onClick={this.clickFeature}
-                onHover={this.hoverOnGraph}
-                matchMode={this.first_match && feature.id !== this.first_match? true : false}
-            />
+        const tableRaw = this.rawData.table || []
+        
+        tableRaw.forEach(row => {
 
-        ))})
+            if (!allFeatures.length)
+
+                table.push(getTableRow(row.A, row.B, row.match_pair))
+
+            else {
+                
+                const a = (~allFeatures.indexOf(row.A.id) && row.A) || null
+                const b = (~allFeatures.indexOf(row.B.id) && row.B) || null
+
+                if (a || b)
+
+                    table.push(getTableRow(a, b, row.match_pair))
+
+            }   
+
+        })
+
+
+        this.setState({
+            pipe_section_table: table,
+            pipe_section_graph: features.map(feature => (
+                <Feature
+                    key={'feature_' + feature.id}
+                    feature={feature}
+                    onClick={this.clickFeature}
+                    onHover={this.hoverOnGraph}
+                    matchMode={this.first_match && feature.id !== this.first_match? true : false}
+                />
+            ))
+        })
 
     }
 
@@ -244,63 +291,63 @@ console.log(sizes,size)
             name: 'Feature',
             key:'feature',
             show: true,
-            attr: 'str'
+            type: 'str'
         },
         {
             width: 13,
             name: 'feature_category',
             key:'feature_category',
             show: false,
-            attr: 'str'
+            type: 'str'
         },
         {
             width: 16,
             name: 'us_weld_dist_wc_ft',
             key: 'us_weld_dist_wc_ft',
             show: true,
-            attr: 'num'
+            type: 'num'
         },
         {
             width: 18,
             name: 'us_weld_dist_coord_m',
             key:'us_weld_dist_coord_m',
             show: true,
-            attr: 'num'
+            type: 'num'
         },
         {
             width: 7,
             name: 'Depth',
             key:'depth_in',
             show: true,
-            attr: 'num'
+            type: 'num'
         },
         {
             width: 8,
             name: 'Length',
             key:'length_in',
             show: true,
-            attr: 'num'
+            type: 'num'
         },
         {
             width: 7,
             name: 'Width',
             key:'width_in',
             show: true,
-            attr: 'num'
+            type: 'num'
         },
         {
             width: 13,
             name: 'Orientation',
             key:'orientation_deg',
             show: true,
-            attr: 'num'
+            type: 'num'
         },
         {
             width: 13,
             name: 'Comments',
             key:'comments',
             show: true,
-            attr: 'str'
+            type: 'str'
         }
     ]
 
@@ -416,44 +463,8 @@ console.log(sizes,size)
             data: this.pipe_sections.id,
             
             callback: data => {
-
-                const getTableRow = (a, b, f) => {
-
-                    const side = (obj, side) => {
-
-                        const att = (obj && obj.attributes) || null
-                        
-                        let out = {
-
-                            ['id_' + side]: (obj && obj.id) || '',
-                            ['feature_id_' + side]: (obj && obj.feature_id) || ''
-
-                        }
-                        
-                        this.gridColumns.forEach(col => {
-
-                            out[col.name + '_' + side] = (att && col.attr && ({
-                                num: col => (att[col] && Number(att[col]).toFixed(4)) || ' ',
-                                str: col => (att[col] && att[col]) || ''
-                            })[col.attr](col.key)) || ''
-                            
-                        })
-
-                        return out
-                        
-                    }
-
-                    return{
             
-                        ...side(a, 'A'),
-                        _gutter: f ? f : false,
-                        ...side(b, 'B'),
-            
-                    }
-            
-                }
-            
-                let pipeSection = {
+                let raw = {
 
                     id: data.id,
                     section_id: data.section_id,
@@ -462,44 +473,24 @@ console.log(sizes,size)
                     manually_checked: data.manually_checked,
                     features: {},
                     table: [],
+                    sizes: [],
                     weld_a_width: 0,
                     weld_b_width: 0,
                     welds: {}
 
                 },
-                pipeSectionTable = [],
-                temp = [],
                 featuresIn = []
 
-                const pipe = data.features || []
                 const pairs = data.feature_pairs || []
                 const welds = data.welds || []
 
-                pipe.forEach(p => {
-
-                    let feature = {
-        
-                            attributes: {},
-                            id: p.id,
-                            feature_id: p.feature_id,
-                            side: p.side,
-                            matched: p.matched
-        
-                        }
-        
-                    p.attributes.map(a => feature.attributes[a.attribute_name] = a.attribute_data)
-        
-                    temp.push(feature)
-        
-                })
-        
                 let weldsTemp = {}
 
                 welds.forEach(a => {
 
                     weldsTemp[a.side] = a
                     
-                    pipeSection['weld_'+ a.side.toLowerCase() + '_width'] = Number(a.us_weld_dist)
+                    raw['weld_'+ a.side.toLowerCase() + '_width'] = Number(a.us_weld_dist)
                     
                 })
 
@@ -507,47 +498,95 @@ console.log(sizes,size)
 
                 sidesAB.forEach(side => {
 
-                    pipeSection.welds[side] = {}
+                    raw.welds[side] = {}
 
-                    weldsTemp[side] && this.weldsTableColumns.map(col => pipeSection.welds[side][col.key] = weldsTemp[side][col.key])
+                    weldsTemp[side] && this.weldsTableColumns.map(col => raw.welds[side][col.key] = weldsTemp[side][col.key])
 
                 })
 
+                
+                const features = data.features || []
 
+                features.forEach(feat => {
 
-                for (let i = 0, ix = temp.length; i < ix; i +=1) {
-                    
-                    pipeSection.features[temp[i].id] = temp[i]
+                    let feature = {
         
-                    if (!~featuresIn.indexOf(temp[i].id))
+                            attributes: {},
+                            id: feat.id,
+                            feature_id: feat.feature_id,
+                            side: feat.side,
+                            matched: feat.matched
+        
+                        }
+
+                    feat.attributes.map(attr => feature.attributes[attr.attribute_name] = attr.attribute_data)
+
+                    const top = Number(feature.attributes.orientation_deg)
+
+                    feature.top = 360 - (!isNaN(top) ? top : 360) + this.offset.x
+                    feature.width_in = Number(feature.attributes.width_in) || 0
+                    feature.length_in = Number(feature.attributes.length_in) || 0
+
+                    if (feature.attributes.feature_category === 'metal loss / mill anomaly') {
+    
+                        feature.size = feature.width_in * feature.length_in
+                        raw.sizes.push(feature.size)
                         
-                        if (!temp[i].matched) {
+                    }
         
-                            featuresIn.push(temp[i].id)
-                            pipeSection.table.push(temp[i].side === 'A' ? getTableRow(temp[i], null) : getTableRow(null, temp[i]))
+                    raw.features[feature.id] = feature
+        
+                })
+
+                raw.sizes.sort((a, b) => b - a)
+
+                for (let id in raw.features) {
+        
+                    const feat =  raw.features[id]
+
+                    if (!~featuresIn.indexOf(id))
+                        
+                        if (!feat.matched) {
+        
+                            featuresIn.push(id)
+
+                            raw.table.push({
+                                [feat.side]: feat
+                            })
         
                         } else {
         
-                            for (let j = 0, jx = pairs.length; j < jx; j +=1) {
+                            for (let i = 0, ix = pairs.length; i < ix; i +=1) {
         
-                                for (let k = 0, kx = temp.length; k < kx; k +=1) {
+                                for (let id2 in raw.features) {
 
-                                    if (!~featuresIn.indexOf(temp[i].id) && !~featuresIn.indexOf(temp[k].id))
+                                    const pair = raw.features[id2]
 
-                                        if (temp[i].side === 'A' && temp[i].id === pairs[j].feature_a &&
-                                            temp[k].side === 'B' && temp[k].id === pairs[j].feature_b) {
+                                    if (!~featuresIn.indexOf(id) && !~featuresIn.indexOf(id2))
+
+                                        if (feat.side === 'A' && feat.id === pairs[i].feature_a &&
+                                            pair.side === 'B' && pair.id === pairs[i].feature_b) {
                                         
-                                            featuresIn.push(temp[i].id)
-                                            featuresIn.push(temp[k].id)
-                                                
-                                            pipeSection.table.push(getTableRow(temp[i], temp[k], pairs[j].id))
+                                            featuresIn.push(id)
+                                            featuresIn.push(id2)
+
+                                            raw.table.push({
+                                                A: feat,
+                                                B: pair,
+                                                match_pair: pairs[i].id
+                                            })
             
-                                        } else if (temp[i].side === 'B' && temp[i].id === pairs[j].feature_b &&
-                                                    temp[k].side === 'A' && temp[k].id === pairs[j].feature_a) {
+                                        } else if (feat.side === 'B' && feat.id === pairs[i].feature_b &&
+                                                    pair.side === 'A' && pair.id === pairs[i].feature_a) {
                                             
-                                            featuresIn.push(temp[i].id)
-                                            featuresIn.push(temp[k].id)
-                                            pipeSection.table.push(getTableRow(temp[k], temp[i], pairs[j].id))
+                                            featuresIn.push(id)
+                                            featuresIn.push(id2)
+
+                                            raw.table.push({
+                                                A: pair,
+                                                B: feat,
+                                                match_pair: pairs[i].id
+                                            })
             
                                         }
         
@@ -559,15 +598,15 @@ console.log(sizes,size)
         
                 }
 
-                this.pipe_section_raw = pipeSection
+
+                this.rawData = raw
                 
                 this.setState({
-                    id: pipeSection.id,
-                    pipe_section_table: pipeSectionTable,//pipeSection.table,
-                    welds: pipeSection.welds,
-                    manually_checked: pipeSection.manually_checked,
-                    max_weld_width: Math.max(pipeSection['weld_a_width'], pipeSection['weld_b_width']),
-                    section_id: pipeSection.section_id
+                    id: raw.id,
+                    welds: raw.welds,
+                    manually_checked: raw.manually_checked,
+                    max_weld_width: Math.max(raw['weld_a_width'], raw['weld_b_width']),
+                    section_id: raw.section_id
                 })
 
                 this.graphPipeSection()
@@ -666,18 +705,17 @@ console.log(sizes,size)
                 confirm_on={this.state.confirm_on}
                 manually_checked={this.state.manually_checked}
                 manualCheck={() => {
-                    const r = this.pipe_section_raw
+                    const raw = this.rawData
                     const data = [{
-                        id: r.id,
-                        section_id: r.section_id,
-                        run_match: r.run_match,
+                        id: raw.id,
+                        section_id: raw.section_id,
+                        run_match: raw.run_match,
                         manually_checked: !this.state.manually_checked
                     }]
-
                     data[0].id && this.apiClient.callAPI({
-                        method: 'put',
-                        endpoint: 'pipe_section',
-                        id: r.id,
+                        method: "put",
+                        endpoint: "pipe_section",
+                        id: raw.id,
                         data: JSON.stringify(data),
                         callback: data => {
                             this.setState({manually_checked: data.manually_checked}, ()=>this.setState({...this.state}))
@@ -688,8 +726,8 @@ console.log(sizes,size)
                 match_on={this.state.match_on}
                 nav_status={this.state.nav_status}
                 onCancel={() => {
-                    this.highlightDom(this.first_match, 'transparent')
-                    this.highlightDom(this.second_match, 'transparent')
+                    this.highlightDom(this.first_match, "transparent")
+                    this.highlightDom(this.second_match, "transparent")
                     this.first_match = 0
                     this.second_match = 0
                     this.setState({
@@ -698,16 +736,16 @@ console.log(sizes,size)
                     }, this.graphPipeSection)
                 }}
                 onConfirm={() => {
-                    const feature_a = this.pipe_section_raw.features[this.first_match].side === 'A' ? this.first_match : this.second_match
-                    const feature_b = this.pipe_section_raw.features[this.second_match].side === 'B' ? this.second_match : this.first_match   
+                    const feature_a = this.rawData.features[this.first_match].side === "A" ? this.first_match : this.second_match
+                    const feature_b = this.rawData.features[this.second_match].side === "B" ? this.second_match : this.first_match   
                     const data = [{
                         feature_a: feature_a,
                         feature_b: feature_b,
                         run_match: this.run_match,
                         pipe_section: this.pipe_sections.id
                     }]
-                    this.highlightDom(this.first_match, 'transparent')
-                    this.highlightDom(this.second_match, 'transparent')
+                    this.highlightDom(this.first_match, "transparent")
+                    this.highlightDom(this.second_match, "transparent")
                     this.first_match = 0
                     this.second_match = 0
                     this.setState({
@@ -715,16 +753,20 @@ console.log(sizes,size)
                         confirm_on: false
                     })
                     this.apiClient.callAPI({  
-                        method: 'post',
-                        endpoint: 'feature_pair',
+                        method: "post",
+                        endpoint: "feature_pair",
                         data: data,
-                        callback: () => this.loadPipeSection()
+                        callback: () => {
+                            
+                            this.loadPipeSection()
+                        
+                        }
                     })
                 }}
                 onMatch={() => {
                     if (this.first_match) {
-                        this.highlightDom(this.first_match, 'transparent')
-                        this.highlightDom(this.second_match, 'transparent')
+                        this.highlightDom(this.first_match, "transparent")
+                        this.highlightDom(this.second_match, "transparent")
                         this.first_match = 0
                         this.second_match = 0
                         this.graphPipeSection()
@@ -748,7 +790,7 @@ console.log(sizes,size)
                 }}
             />
             <WeldsTable
-                section_id={this.state.section_id || ''}
+                section_id={this.state.section_id || ""}
                 welds={this.state.welds} 
                 columns={this.weldsTableColumns}/>
             <div className="graph">
@@ -765,9 +807,9 @@ console.log(sizes,size)
                 clickFeature={this.clickFeature}
                 hoverFeature={this.hoverOnTable}
                 gridColumns={this.gridColumns}
-                unlink={id => window.confirm('Confirm unlinking the feature?') && this.apiClient.callAPI({
-                    method: 'delete',
-                    endpoint:'feature_pair',
+                unlink={id => window.confirm("Confirm unlinking the feature?") && this.apiClient.callAPI({
+                    method: "delete",
+                    endpoint:"feature_pair",
                     id: id,
                     callback: () => this.loadPipeSection()})}
                 width={this.state.screen_width - 40}

@@ -60,7 +60,6 @@ export default class Ctrl extends Component {
                 nav_status: props.nav_status,
                 run_match: props.run_match,
                 run_name: props.run_name,
-                section_id: props.section_id,
                 sectionIndex: props.sectionIndex,
                 sectionTotal: props.sectionTotal
 
@@ -354,19 +353,15 @@ export default class Ctrl extends Component {
                             placeholder="ID #"
                             onKeyPress={e => {
                                 if (e.key === "Enter") {
-                                    const param = escape("?weld_id=" + e.target.value + "&run_match=1")
                                     this.apiClient.callAPI({
                                         endpoint: "welds",
-                                        data: param,
-                                        callback: data => {
-                                            data.forEach(weld => {
-                                                if ((weld.side === "A" && this.state.weld_side_a) ||
-                                                    (weld.side === "B" && !this.state.weld_side_a))
-                                                        this.props.weldGo(weld.pipe_section_id)
-                                            })
-                                        }
+                                        data: "?weld_id=" + e.target.value + "&run_match=" + this.state.run_match,
+                                        callback: data => data.forEach(weld => {
+                                            if ((weld.side === "A" && this.state.weld_side_a) ||
+                                                (weld.side === "B" && !this.state.weld_side_a))
+                                                    this.props.weldGo(weld.pipe_section_id)
+                                        })
                                     })
-
                                 }
                             }}
                             style={{width: "100px"}}></Form.Control>
