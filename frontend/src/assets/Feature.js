@@ -30,12 +30,7 @@ export default class Feature extends Component {
         this.bars = ['valve', 'valve1', 'valve2', 'flange', 'casing']
 
         this.enlarge = 10
-        this.offsetY = 43
-        this.offsetFeat = {
-            y: -30,
-            x: -5
-        }
-
+        
     }
 
 
@@ -56,14 +51,15 @@ export default class Feature extends Component {
                 style={{
                     backgroundColor: this.props.matchMode ? feat.side === 'A' ? '#fed8b1' : 'lightblue' : 'transparent',
                     cursor: this.props.matchMode ? 'pointer' : 'default',
-                    left: left + this.offsetFeat.x - this.enlarge,
-                    top: this.offsetY,
+                    left: left - this.enlarge,
+                    top: 0,
                     height: 360,
                     opacity: this.props.matchMode ? 0.8 : 1,
                     paddingLeft: this.enlarge,
                     paddingRight: this.enlarge,
                     width: width,
-                    zIndex: this.props.matchMode ? 1 : 0
+                    zIndex: this.props.matchMode ? 1 : 0,
+                    position: 'absolute'
                 }}
             >
                 <div
@@ -99,7 +95,7 @@ export default class Feature extends Component {
 
             height = Math.max(feat.height, minsize)
             width = Math.max(feat.width, minsize)
-            top = feat.top + this.offsetFeat.y - height / 2
+            top = feat.top - height / 2
             nodim = false
 
         }
@@ -109,7 +105,7 @@ export default class Feature extends Component {
             isloss = true
             height = Math.max(feat.height, 2)
             width = Math.max(feat.width, 2)
-            top = feat.top + this.offsetFeat.y - Math.floor(height / 2)
+            top = feat.top - Math.floor(height / 2)
 
         }
 
@@ -124,13 +120,14 @@ export default class Feature extends Component {
                 style={{
                     backgroundColor: this.props.matchMode ? feat.side === 'A' ? '#fed8b1' : 'lightblue' : 'transparent',
                     cursor: this.props.matchMode ? 'pointer' : 'default',
-                    left: left + this.offsetFeat.x - this.enlarge,
-                    top: top + this.offsetY - this.enlarge,
+                    left: left - this.enlarge,
+                    top: top - this.enlarge,
                     height: height + this.enlarge * 2,
                     opacity: this.props.matchMode ? 0.8 : 1,
                     padding: this.enlarge,
                     width: width + this.enlarge * 2,
-                    zIndex: this.props.matchMode ? 1 : 0
+                    zIndex: this.props.matchMode ? 1 : 0,
+                    position: 'absolute'
                 }}
             >
                 <div

@@ -55,47 +55,6 @@ html, body
 
 
 
-.axes {
-  color: black;
-  font-size: 0.7rem;
-  height: 100%;
-  padding-left: 30px;
-}
-
-.axes > div {
-  position: absolute;
-}
-
-.axes > div:first-child {
-  margin-top: 6px;
-  left: 0;
-}
-
-.axes > div:nth-child(2) {
-  background-color: #fafafa;
-  top: 6px;
-  left: 50px;
-  height: 34px;
-}
-
-.axes > div:nth-child(3) {
-  background-color: #fff;
-  top: 43px;
-  left: 50px;
-  height: 361px;
-}
-
-.axes > div:last-child {
-  top: 425px;
-  left: 50px;
-  width: 500px;
-}
-
-.axes > div > div {
-  position: absolute;
-}
-
-
 
 /*
 card 
@@ -111,17 +70,6 @@ card
   text-align: center;
 }
 
-
-.graph {
-  background-color: #eee;
-  margin: 10px 5px 40px 5px;
-  height: 460px;
-  position: relative;
-}
-
-.graph > div {
-  position: absolute;
-}
 
 
 .info > div {
@@ -169,10 +117,6 @@ card
 }
 
 
-
-.custom-grid {
-  padding: 10px;
-}
 
 .custom-grid > .react-grid-Container > .react-grid-Main > .react-grid-Grid > div:last-child > .react-grid-Viewport > .react-grid-Canvas > div:last-child > .react-grid-Row > .react-grid-Cell {
   padding: 0px !important;

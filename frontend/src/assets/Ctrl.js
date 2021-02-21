@@ -267,7 +267,7 @@ export default class Ctrl extends Component {
                         <Button
                             disabled={this.state.nav_status.charAt(0) === "0"}
                             variant="outline-primary"
-                            onClick={() => this.props.sectionGo(-1,true, this.state.features_filter)}
+                            onClick={() => this.props.sectionGo(-1, true, this.state.features_filter)}
                         >
                             &lt;&lt;
                         </Button>
@@ -285,7 +285,7 @@ export default class Ctrl extends Component {
                         <Button
                             disabled={this.state.nav_status.charAt(1) === "0"}
                             variant="outline-primary"
-                            onClick={() => this.props.sectionGo(-1,false, this.state.features_filter)}
+                            onClick={() => this.props.sectionGo(-1, false, this.state.features_filter)}
                         >
                             &lt;
                         </Button>
@@ -307,7 +307,7 @@ export default class Ctrl extends Component {
                         <Button
                             disabled={this.state.nav_status.charAt(2) === "0"}
                             variant="outline-primary"
-                            onClick={() => this.props.sectionGo(1,false, this.state.features_filter)}
+                            onClick={() => this.props.sectionGo(1, false, this.state.features_filter)}
                         >
                             &gt;
                         </Button>
@@ -325,7 +325,7 @@ export default class Ctrl extends Component {
                         <Button
                             disabled={this.state.nav_status.charAt(3) === "0"}
                             variant="outline-primary"
-                            onClick={() => this.props.sectionGo(1,true, this.state.features_filter)}
+                            onClick={() => this.props.sectionGo(1, true, this.state.features_filter)}
                         >
                             &gt;&gt;
                         </Button>

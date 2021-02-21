@@ -14,21 +14,22 @@ export default class Discovery extends Component {
 
         this.state = {
 
-            id: 0,
             match_on: false,
             confirm_on: false,
             hover_graph: 0,
             hover_table: 0,
             nav_status: '0000',
             run_name: '',
+            features_graph: [],
             pipe_section_graph: [],
             pipe_section_table: [],
-            screen_width: 0,
             welds: {},
             manually_checked: false,
             max_weld_width: 0,
             sectionIndex: 0,
-            sectionTotal: 0
+            sectionTotal: 0,
+            updateNum: 0,
+            table_width: 1
 
         }
 
@@ -49,11 +50,6 @@ export default class Discovery extends Component {
         this.run_match = window.location.href.split('/').slice(-1)[0]
         this.first_match = 0
         this.second_match = 0
-        this.offset = {
-            margin: 30,
-            x: 30,
-            y: 55
-        }
         this.bgHi = 'yellow'
         this.lossLimit = null
 
@@ -113,9 +109,18 @@ export default class Discovery extends Component {
 
         })
 
-        window.addEventListener('resize', this.getGraphWidth)
+    
+        window.addEventListener('resize', () => {
+
+            clearTimeout(this.resizeTimer)
+
+            this.resizeTimer = setTimeout(this.getGraphWidth, 250)
+
+        })
         
     }
+
+    resizeTimer = null
 
     clickFeature = id => {
 
@@ -137,7 +142,7 @@ export default class Discovery extends Component {
             this.setState({
                 match_on: false,
                 confirm_on: true
-            }, ()=> this.setState({...this.state}))
+            }, () => this.setState({...this.state}))
 
         } else {
 
@@ -149,43 +154,27 @@ export default class Discovery extends Component {
     }
 
 
-    getGraphWidth = () => this._isMounted && this.setState({screen_width: parseFloat(window.innerWidth)}, this.graphPipeSection)
+    getGraphWidth = () => this._isMounted && this.setState({
+
+        table_width: parseFloat(document.getElementById('grid_container').getBoundingClientRect().width)
+
+    }, this.graphPipeSection)
+
 
 
     graphPipeSection = () => {
 
         const data = this.rawData.features
-        const graph_width = this.state.screen_width - this.offset.y - this.offset.margin
-        const max_width = this.state.max_weld_width
-        const minSize = 0.5
-        const noDimFeatureSize = 2
 
         let features = []
 
-        for (let f in data) {
+        for (let f in data)
  
             if (((this.filter.matched && data[f].matched) || (this.filter.unmatched && !data[f].matched)) &&
-                (!this.first_match || (this.first_match === Number(f) || this.rawData.features[this.first_match].side !== data[f].side))) {
-
-                let feature = {...data[f]}
-
-                const h = data[f].width_in
-                const w = data[f].length_in
-
-                if (!isNaN(h) && !isNaN(w)) {
-
-                    feature.width = w > minSize ? graph_width / max_width * w / 12 : noDimFeatureSize
-                    feature.height = h > minSize ? graph_width / max_width * h / 12 : noDimFeatureSize
-
-                }
-            
-                feature.left = graph_width / max_width * Number(data[f].attributes.us_weld_dist_wc_ft) + this.offset.y
+                (!this.first_match || (this.first_match === Number(f) || this.rawData.features[this.first_match].side !== data[f].side)))
                 
-                features.push(feature)
+                features.push({...data[f], matchMode: this.first_match && data[f].id !== this.first_match ? true : false})
 
-            }
-
-        }
 
         let allFeatures = []
 
@@ -261,19 +250,13 @@ export default class Discovery extends Component {
             }   
 
         })
-
-
+        
         this.setState({
-            pipe_section_table: table,
-            pipe_section_graph: features.map(feature => (
-                <Feature
-                    key={'feature_' + feature.id}
-                    feature={feature}
-                    onClick={this.clickFeature}
-                    onHover={this.hoverOnGraph}
-                    matchMode={this.first_match && feature.id !== this.first_match? true : false}
-                />
-            ))
+
+            features_graph: features,
+            updateNum: this.state.updateNum + 1,
+            pipe_section_table: table
+            
         })
 
     }
@@ -523,7 +506,7 @@ export default class Discovery extends Component {
 
                     const top = Number(feature.attributes.orientation_deg)
 
-                    feature.top = 360 - (!isNaN(top) ? top : 360) + this.offset.x
+                    feature.top = 360 - (!isNaN(top) ? top : 360)
                     feature.width_in = Number(feature.attributes.width_in) || 0
                     feature.length_in = Number(feature.attributes.length_in) || 0
 
@@ -602,11 +585,12 @@ export default class Discovery extends Component {
                 this.rawData = raw
                 
                 this.setState({
-                    id: raw.id,
+
                     welds: raw.welds,
                     manually_checked: raw.manually_checked,
                     max_weld_width: Math.max(raw['weld_a_width'], raw['weld_b_width']),
                     section_id: raw.section_id
+
                 })
 
                 this.graphPipeSection()
@@ -620,6 +604,9 @@ export default class Discovery extends Component {
 
 
     sectionGo = (dir, chk, filter) => {
+
+
+        
 
         const ps = this.pipe_sections.data
         const ix = ps.length
@@ -793,27 +780,34 @@ export default class Discovery extends Component {
                 section_id={this.state.section_id || ""}
                 welds={this.state.welds} 
                 columns={this.weldsTableColumns}/>
-            <div className="graph">
-                <Axes
-                    graphWidth={this.state.screen_width}
-                    weldWidth={this.state.max_weld_width}
-                    offset={this.offset}
-                />
-                {this.state.pipe_section_graph}
-            </div>
-            <CustomGrid
-                key="data_grid"
-                rows={this.state.pipe_section_table}
+            <Axes
+                weldWidth={this.state.max_weld_width}
+                features={this.state.features_graph}
+                updateNum={this.state.updateNum}
                 clickFeature={this.clickFeature}
-                hoverFeature={this.hoverOnTable}
-                gridColumns={this.gridColumns}
-                unlink={id => window.confirm("Confirm unlinking the feature?") && this.apiClient.callAPI({
-                    method: "delete",
-                    endpoint:"feature_pair",
-                    id: id,
-                    callback: () => this.loadPipeSection()})}
-                width={this.state.screen_width - 40}
+                hoverFeature={this.hoverOnGraph}
             />
+            <div
+                id="grid_container"
+                style={{
+                    marginLeft: 10,
+                    marginRight: 10
+                }}
+            >
+                <CustomGrid
+                    key="data_grid"
+                    rows={this.state.pipe_section_table}
+                    clickFeature={this.clickFeature}
+                    hoverFeature={this.hoverOnTable}
+                    gridColumns={this.gridColumns}
+                    unlink={id => window.confirm("Confirm unlinking the feature?") && this.apiClient.callAPI({
+                        method: "delete",
+                        endpoint:"feature_pair",
+                        id: id,
+                        callback: () => this.loadPipeSection()})}
+                    width={this.state.table_width}
+                />
+            </div>
         </>
         
     )
