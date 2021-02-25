@@ -18,6 +18,10 @@ export default class Axes extends Component {
 
         this.updateNum = this.props.updateNum
 
+        this.coords = {}
+
+        this.bars = ['valve', 'valve1', 'valve2', 'flange', 'casing']
+
     }
 
     graphWidth = 0
@@ -43,15 +47,15 @@ export default class Axes extends Component {
 
     componentDidUpdate(props) {
 
-        if (this.state.weld_width !== this.props.weldWidth)
+        if (this.state.weld_width !== props.weldWidth)
 
-            this.setState({weld_width: this.props.weldWidth}, this.xAxis)
+            this.setState({weld_width: props.weldWidth}, this.xAxis)
 
-        else if (this.updateNum !== this.props.updateNum) {
+        if (this.updateNum !== props.updateNum) {
+
+            this.updateNum = props.updateNum
             
-            this.updateNum = this.props.updateNum
-            
-            this.setState({features: this.props.features})
+            this.setState({features: props.features})
 
         }
 
@@ -74,14 +78,20 @@ export default class Axes extends Component {
 
     xAxis = () => {
 
-        const w = Math.round(this.state.weld_width * 10) / 10
-        const w1 = Math.round(this.state.weld_width / 2 * 10) / 10
+        //const w = Math.round(this.state.weld_width * 10) / 10
+        //const w1 = Math.round(this.state.weld_width / 2 * 10) / 10
 
 
-        const marks = Math.floor(this.graphWidth / 50)
+        const marks = Math.floor(this.graphWidth / 30)
         const width = this.graphWidth / marks
 
         let axis = []
+
+
+        const weldWidth = (Math.round(this.state.weld_width * 100) / 100)
+        const maxNotch = Math.round(weldWidth * 10 % 5) / 10
+
+        // !console.log(weldWidth, maxNotch, Math.round((weldWidth - maxNotch) * 10) / 10)
 
         for (let i = 0; i <= marks; i += 1) {
 
@@ -108,6 +118,134 @@ export default class Axes extends Component {
         this.setState({x_axis: axis})
 
     }
+    
+
+
+    render = () => (
+        <div style={this.styles.container}>
+            <div style={this.styles.plot}>
+                <div style={this.styles.yAxisContainer}>
+                    <div style={this.styles.yAxisRuler}>
+                    </div>
+                    {(() => {
+                        let out = []
+                        for (let i = 0; i <= 12; i += 1) {
+                            out.push(
+                                <div
+                                    key={'y_axis_num_' + i}
+                                    style={{
+                                        ...this.styles.yAxisNum,
+                                        top: i * 30 + 30
+                                    }}
+                                >
+                                    {360 - i * 30}
+                                </div>
+                            )
+                            out.push(
+                                <div
+                                    key={'y_axis_notch_' + i}
+                                    style={{
+                                        ...this.styles.yAxisNotch,
+                                        top: i * 30 + 37
+                                    }}>
+                                </div>
+                            )
+                        }
+                        return out
+                    })()}
+                </div>
+                <div
+                    style={this.styles.featureArea}
+                    id='feature_area'
+                >
+                </div>
+                <div
+                    style={this.styles.plotArea}
+                    id='plot_area'
+                >
+                    {(this.state.features || []).map(feature => {
+                        
+                        const graph_width = this.graphWidth
+                        const max_width = this.state.weld_width
+                        const minSize = 0.5
+                        const noDimFeatureSize = 2
+                        const minFeatSize = 18
+                        const minLossSize = 2
+                        const noWHFeatureSize = 28
+                        const noWHFeatureTop = -20
+                        const isBar = ~this.bars.indexOf(feature.attributes.feature_category) ? true : false
+
+                        const h = feature.width_in
+                        const w = feature.length_in
+
+                        let width,
+                            height,
+                            left,
+                            top
+
+                        if (!isNaN(h) && !isNaN(w)) {
+
+                            width = w > minSize ? graph_width / max_width * w / 12 : noDimFeatureSize
+                            height = h > minSize ? graph_width / max_width * h / 12 : noDimFeatureSize
+
+                        } 
+
+                        left = graph_width / max_width * Number(feature.attributes.us_weld_dist_wc_ft)
+                        left = isFinite(left) ? left : 0
+
+                        top = feature.top || noWHFeatureTop
+                
+                        if (height && width) {
+                
+                            height = Math.max(height, minFeatSize)
+                            width = Math.max(width, minFeatSize)
+                            top = top - height / 2
+                        
+                        } else
+
+                            width = height = noWHFeatureSize
+                
+                        if (feature.attributes.feature_category === 'metal loss / mill anomaly') {
+                
+                            height = Math.max(height, minLossSize)
+                            width = Math.max(width, minLossSize)
+                
+                        }
+
+
+                        this.coords[feature.id] = {}
+                        this.coords[feature.id].left = left
+                        this.coords[feature.id].top = top
+                        this.coords[feature.id].height = height
+                        this.coords[feature.id].width = width
+
+                        return (
+                            <Feature
+                                key={'feature_' + feature.id}
+                                feature={feature}
+                                onClick={this.props.clickFeature}
+                                onHover={this.props.hoverFeature}
+                                matchMode={feature.matchMode}
+                                isBar={isBar}
+                                pos={{
+                                    left: left,
+                                    top: top,
+                                    height: height,
+                                    width: width
+                                }}
+                            />
+                        )}
+                    )}
+                </div>
+                <div
+                    id="x_axis"
+                    style={this.styles.xAxis}
+                >
+                    {this.state.x_axis}
+                </div>
+            </div>
+        </div>
+    )
     
 
     styles = {
@@ -221,89 +359,6 @@ export default class Axes extends Component {
 
     }
 
-    render = () => (
-
-        <div style={this.styles.container}>
-            <div style={this.styles.plot}>
-                <div style={this.styles.yAxisContainer}>
-                    <div style={this.styles.yAxisRuler}>
-                    </div>
-                    {(() => {
-                        let out = []
-                        for (let i = 0; i <= 12; i += 1) {
-                            out.push(
-                                <div
-                                    key={'y_axis_num_' + i}
-                                    style={{
-                                        ...this.styles.yAxisNum,
-                                        top: i * 30 + 30
-                                    }}
-                                >
-                                    {360 - i * 30}
-                                </div>
-                            )
-                            out.push(
-                                <div
-                                    key={'y_axis_notch_' + i}
-                                    style={{
-                                        ...this.styles.yAxisNotch,
-                                        top: i * 30 + 37
-                                    }}>
-                                </div>
-                            )
-                        }
-                        return out
-                    })()}
-                </div>
-                <div
-                    style={this.styles.featureArea}
-                    id='feature_area'
-                >
-                </div>
-                <div
-                    style={this.styles.plotArea}
-                    id='plot_area'
-                >
-                    {(this.state.features || []).map(feature => {
-                        
-                        const graph_width = this.graphWidth
-                        const max_width = this.state.weld_width
-                        const minSize = 0.5
-                        const noDimFeatureSize = 2
-                
-                        const h = feature.width_in
-                        const w = feature.length_in
-
-                        if (!isNaN(h) && !isNaN(w)) {
-
-                            feature.width = w > minSize ? graph_width / max_width * w / 12 : noDimFeatureSize
-                            feature.height = h > minSize ? graph_width / max_width * h / 12 : noDimFeatureSize
-
-                        }
-                    
-                        feature.left = graph_width / max_width * Number(feature.attributes.us_weld_dist_wc_ft)
-//console.log(feature.matchMode)
-                        return (
-                            <Feature
-                                key={'feature_' + feature.id}
-                                feature={feature}
-                                onClick={this.props.clickFeature}
-                                onHover={this.props.hoverFeature}
-                                matchMode={feature.matchMode}
-                            />
-                        )}
-                    )}
-                </div>
-                <div
-                    id="x_axis"
-                    style={this.styles.xAxis}
-                >
-                    {this.state.x_axis}
-                </div>
-            </div>
-        </div>
-    )
-    
 
 }
 

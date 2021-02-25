@@ -1,8 +1,9 @@
-import React, { Component } from "react"
+import React, { Component, createRef } from "react"
 import PropTypes from 'prop-types'
 import Popup from "reactjs-popup"
 import './feature.css'
 
+  
 export default class Feature extends Component {
 
     constructor(props) {
@@ -27,32 +28,71 @@ export default class Feature extends Component {
 
         }
 
-        this.bars = ['valve', 'valve1', 'valve2', 'flange', 'casing']
-
         this.enlarge = 10
+
+        this.coords = {}
+
+        
         
     }
 
 
     //Valves, Markers, Flanges, Casings, Sleeves and Welds 
 
-    getBar = (feat, attr) => {
+
+    dragDiv = e => {
+
+        document.getElementsByClassName("popup-content")[0].style.display = "none"
+
+        const elmnt = e.currentTarget
+        let posX = 0,
+            posY = 0
+
+        e = e || window.event
+        e.preventDefault()
+        posX = e.clientX
+        posY = e.clientY
+        document.onmouseup = () => {
+            document.onmouseup = null
+            document.onmousemove = null
+        }
+        document.onmousemove = e => {
+            e = e || window.event
+            e.preventDefault()
+            elmnt.style.left = (elmnt.offsetLeft - posX + e.clientX) + "px"
+            elmnt.style.top = (elmnt.offsetTop - posY + e.clientY) + "px"
+            posX = e.clientX
+            posY = e.clientY
+        }
+        
+    }
+
+
+    getBar = (feat, attr, pos) => {
 
         const width = 3
+        const top = 0
             
-        let left = isFinite(feat.left) ? feat.left : 0
-
-        left -= width / 2
+        let left = isFinite(pos.left) ? pos.left : 0
+        
+        left = left - this.enlarge - width / 2
 
         return (
             <div
                 id={feat.id}
                 onClick={e => this.props.matchMode ? this.props.onClick(e.currentTarget.id) : () => false}
+                onMouseDown={e => this.dragDiv(e)}
+                onMouseUp={e => {
+                    const el = e.currentTarget
+                   // console.log(el)
+                    el.style.left = left + "px"
+                    el.style.top = top
+                }}
                 style={{
                     backgroundColor: this.props.matchMode ? feat.side === 'A' ? '#fed8b1' : 'lightblue' : 'transparent',
                     cursor: this.props.matchMode ? 'pointer' : 'default',
-                    left: left - this.enlarge,
-                    top: 0,
+                    left: left,
+                    top: top,
                     height: 360,
                     opacity: this.props.matchMode ? 0.8 : 1,
                     paddingLeft: this.enlarge,
@@ -79,23 +119,31 @@ export default class Feature extends Component {
 
     }
 
-    getIcon = (feat, attr) => {
+    getIcon = (feat, attr, pos) => {
 
         const border = feat.side === 'A' ? 'orange' : 'blue'
-        const minsize = 18
 
-        let left = isFinite(feat.left) ? feat.left : 0,
-            top = -20,
-            width = 28,
-            height = 28,
+        let left = pos.left
+        let top = pos.top
+console.log(left)
+        const minFeatSize = 18
+        const minLossSize = 2
+
+        let //left = isFinite(feat.left) ? feat.left : 0,
+  //          top = -20,
+          //  width = 28,
+            //height = 28,
             nodim = true,
             isloss = false
 
-        if (feat.height && feat.width) {
+            const width = pos.width
+            const height = pos.height
 
-            height = Math.max(feat.height, minsize)
-            width = Math.max(feat.width, minsize)
-            top = feat.top - height / 2
+        if (pos.height && pos.width) {
+
+       //     height = Math.max(feat.height, minFeatSize)
+         //   width = Math.max(feat.width, minFeatSize)
+           // top = feat.top - height / 2
             nodim = false
 
         }
@@ -103,13 +151,17 @@ export default class Feature extends Component {
         if (attr.feature_category === 'metal loss / mill anomaly') {
 
             isloss = true
-            height = Math.max(feat.height, 2)
-            width = Math.max(feat.width, 2)
-            top = feat.top - Math.floor(height / 2)
+       //     height = Math.max(feat.height, minLossSize)
+         //   width = Math.max(feat.width, minLossSize)
+           // top = feat.top - Math.floor(height / 2)
 
         }
 
-        left -= width / 2
+
+        
+        left = left - width / 2
+        top = top - this.enlarge
+        
 
         const icowh = Math.round(Math.min(height, width) - 4)
 
@@ -117,11 +169,20 @@ export default class Feature extends Component {
             <div
                 id={feat.id}
                 onClick={e => this.props.matchMode ? this.props.onClick(e.currentTarget.id) : () => false}
+                onMouseDown={e => this.dragDiv(e)}
+                
+                onMouseUp={e => {
+                    const el = e.currentTarget
+                //    console.log(el)
+                    el.style.left = (left - this.enlarge) + "px"
+                    el.style.top = top + "px"
+                }}
+                
                 style={{
                     backgroundColor: this.props.matchMode ? feat.side === 'A' ? '#fed8b1' : 'lightblue' : 'transparent',
                     cursor: this.props.matchMode ? 'pointer' : 'default',
                     left: left - this.enlarge,
-                    top: top - this.enlarge,
+                    top: top,
                     height: height + this.enlarge * 2,
                     opacity: this.props.matchMode ? 0.8 : 1,
                     padding: this.enlarge,
@@ -170,11 +231,12 @@ export default class Feature extends Component {
     
         const feat = this.props.feature
         const attr = feat.attributes
+        const pos = this.props.pos
         
         return (
             <Popup
                 key={feat.id + 'popup'}
-                trigger={(() => ~this.bars.indexOf(attr.feature_category) ? this.getBar(feat, attr) : this.getIcon(feat, attr))()}
+                trigger={(() => this.props.isBar ? this.getBar(feat, attr, pos) : this.getIcon(feat, attr, pos))()}
                 keepTooltipInside="#root"
                 position="top center"
                 on="hover"            
@@ -224,6 +286,8 @@ Feature.propTypes = {
     feature: PropTypes.object.isRequired,
     onClick: PropTypes.func.isRequired,
     onHover: PropTypes.func.isRequired,
-    matchMode: PropTypes.bool.isRequired
+    matchMode: PropTypes.bool.isRequired,
+    pos: PropTypes.object.isRequired
+
 
 }

@@ -16,8 +16,6 @@ export default class Discovery extends Component {
 
             match_on: false,
             confirm_on: false,
-            hover_graph: 0,
-            hover_table: 0,
             nav_status: '0000',
             run_name: '',
             features_graph: [],
@@ -50,6 +48,10 @@ export default class Discovery extends Component {
         this.run_match = window.location.href.split('/').slice(-1)[0]
         this.first_match = 0
         this.second_match = 0
+        this.hover = {
+            graph: 0,
+            table: 0
+        }
         this.bgHi = 'yellow'
         this.lossLimit = null
 
@@ -400,7 +402,7 @@ export default class Discovery extends Component {
     }
 
     hoverOnGraph = id => {
-
+        
         const hlt = (id, color) => {
 
             const docs = document.getElementsByName(id)
@@ -410,10 +412,10 @@ export default class Discovery extends Component {
                 docs[i].style.backgroundColor = color
 
         }
-
-        this.state.hover_table && hlt(this.state.hover_table, 'transparent')
-        this.setState({hover_table: id})
-        this.state.hover_table && hlt(id, 'lightblue')
+        
+        this.hover.table && hlt(this.hover.table, 'transparent')
+        this.hover.table = id
+        id && hlt(id, 'lightblue')
 
     }
 
@@ -423,15 +425,15 @@ export default class Discovery extends Component {
 
             return
 
-        if (this.state.hover_graph && 
-            this.first_match !== this.state.hover_graph &&
-            this.second_match !== this.state.hover_graph) {
+        if (this.hover.graph && 
+            this.first_match !== this.hover.graph &&
+            this.second_match !== this.hover.graph) {
         
-            this.highlightDom(this.state.hover_graph, 'transparent')
+            this.highlightDom(this.hover.graph, 'transparent')
 
         }
 
-        this.setState({hover_graph: id})
+        this.hover.graph = id
         this.highlightDom(id, this.bgHi)
 
     }
@@ -602,11 +604,16 @@ export default class Discovery extends Component {
     }
 
 
-
     sectionGo = (dir, chk, filter) => {
 
-
-        
+        this.highlightDom(this.first_match, "transparent")
+        this.highlightDom(this.second_match, "transparent")
+        this.first_match = 0
+        this.second_match = 0
+        this.setState({
+            match_on: false,
+            confirm_on: false
+        })
 
         const ps = this.pipe_sections.data
         const ix = ps.length
