@@ -24,7 +24,7 @@ export default class Ctrl extends Component {
                 unmatched: true
             },
             manually_checked: false,
-            match_on: false,
+          //  match_on: false,
             nav_status: props.nav_status,
             run_match: props.run_match,
             run_name: this.props.run_name,
@@ -45,8 +45,6 @@ export default class Ctrl extends Component {
     componentDidUpdate(props) {
         
         if (this.state.manually_checked !== props.manually_checked ||
-            this.state.match_on !== props.match_on ||
-            this.state.confirm_on !== props.confirm_on ||
             this.state.nav_status !== props.nav_status ||
             this.state.sectionIndex !== props.sectionIndex ||
             this.state.sectionTotal !== props.sectionTotal ||
@@ -54,9 +52,7 @@ export default class Ctrl extends Component {
 
             this.setState({
 
-                confirm_on: props.confirm_on,
                 manually_checked: props.manually_checked,
-                match_on: props.match_on,
                 nav_status: props.nav_status,
                 run_match: props.run_match,
                 run_name: props.run_name,
@@ -230,27 +226,6 @@ export default class Ctrl extends Component {
                     </InputGroup>
                 </Form.Group>
                 <div style={this.styles.divider}></div>
-                <div style={this.styles.icon} title="Feature Matching ON/OFF">
-                    <i className="fa fa-link"></i>
-                </div>
-                <Toggle
-                    active={this.state.match_on}
-                    on="ON"
-                    off="OFF"
-                    onstyle="primary"
-                    offstyle="default"
-                    width={68}
-                    height={38}
-                    onClick={this.props.onMatch}
-                />
-                <div style={{display: this.state.confirm_on ? "block" : "none"}}>
-                    <Button
-                        variant="primary"
-                        onClick={this.props.onConfirm}>Save</Button>{" "}
-                    <Button
-                        variant="secondary"
-                        onClick={this.props.onCancel}>Cancel</Button>
-                </div>
             </div>
             <div style={this.styles.section2}>
                 <div style={this.styles.nav}>
@@ -414,12 +389,8 @@ Ctrl.propTypes = {
     lossLimit: PropTypes.func.isRequired,
     manualCheck: PropTypes.func.isRequired,
     setMatchFilter: PropTypes.func.isRequired,
-    onCancel: PropTypes.func.isRequired,
-    onConfirm: PropTypes.func.isRequired,
     onMatch: PropTypes.func.isRequired,
     manually_checked: PropTypes.bool.isRequired,
-    confirm_on: PropTypes.bool.isRequired,
-    match_on: PropTypes.bool.isRequired,
     nav_status: PropTypes.string.isRequired,
     sectionIndex: PropTypes.number.isRequired,
     sectionTotal: PropTypes.number.isRequired

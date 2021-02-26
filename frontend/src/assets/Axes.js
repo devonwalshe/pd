@@ -10,17 +10,15 @@ export default class Axes extends Component {
 
         this.state = {
 
-            features: props.features,
-            weld_width: props.weldWidth,
+            keyLock: false,
             x_axis: []
 
         }
 
-        this.updateNum = this.props.updateNum
-
         this.coords = {}
 
         this.bars = ['valve', 'valve1', 'valve2', 'flange', 'casing']
+
 
     }
 
@@ -43,24 +41,52 @@ export default class Axes extends Component {
 
         window.addEventListener('resize', this.setArea)
 
+        document.onkeydown = e => {
+
+            e = e || window.event
+
+            if (e.ctrlKey)
+
+                this.setState({keyLock: true})
+
+        }
+
+        document.onkeyup = e => {
+
+            e = e || window.event
+
+            if (e.keyCode === 17) {
+
+                this.setState({keyLock: false})
+
+                this.props.cancelMatch()
+
+            }
+
+        }
+
+
     }
 
-    componentDidUpdate(props) {
+    componentDidUpdate() {
 
-        if (this.state.weld_width !== props.weldWidth)
+        if (this.state.weld_width !== this.props.weldWidth)
 
-            this.setState({weld_width: props.weldWidth}, this.xAxis)
+            this.setState({weld_width: this.props.weldWidth}, this.xAxis)
 
-        if (this.updateNum !== props.updateNum) {
+        if (this.updateNum !== this.props.updateNum) {
 
-            this.updateNum = props.updateNum
-            
-            this.setState({features: props.features})
+            this.updateNum = this.props.updateNum
+            this.coords = {}
+
+            this.setState({features: this.props.features})
 
         }
 
     }
     
+
+    getKeyState = () => this.keyLock
 
     setArea = () => {
 
@@ -88,14 +114,14 @@ export default class Axes extends Component {
         let axis = []
 
 
-        const weldWidth = (Math.round(this.state.weld_width * 100) / 100)
+        const weldWidth = (Math.round(this.props.weldWidth * 100) / 100)
         const maxNotch = Math.round(weldWidth * 10 % 5) / 10
 
         // !console.log(weldWidth, maxNotch, Math.round((weldWidth - maxNotch) * 10) / 10)
 
         for (let i = 0; i <= marks; i += 1) {
 
-            const val = Math.round(i * this.state.weld_width / marks * 100) / 100
+            const val = Math.round(i * this.props.weldWidth / marks * 100) / 100
 
             axis.push(
 
@@ -163,10 +189,10 @@ export default class Axes extends Component {
                     style={this.styles.plotArea}
                     id='plot_area'
                 >
-                    {(this.state.features || []).map(feature => {
+                    {(this.props.features || []).map(feature => {
                         
                         const graph_width = this.graphWidth
-                        const max_width = this.state.weld_width
+                        const max_width = this.props.weldWidth
                         const minSize = 0.5
                         const noDimFeatureSize = 2
                         const minFeatSize = 18
@@ -175,13 +201,14 @@ export default class Axes extends Component {
                         const noWHFeatureTop = -20
                         const isBar = ~this.bars.indexOf(feature.attributes.feature_category) ? true : false
 
-                        const h = feature.width_in
-                        const w = feature.length_in
+                        const h = Number(feature.attributes.width_in) || 0
+                        const w = Number(feature.attributes.length_in) || 0
 
                         let width,
                             height,
                             left,
-                            top
+                            top,
+                            noDim
 
                         if (!isNaN(h) && !isNaN(w)) {
 
@@ -193,31 +220,45 @@ export default class Axes extends Component {
                         left = graph_width / max_width * Number(feature.attributes.us_weld_dist_wc_ft)
                         left = isFinite(left) ? left : 0
 
-                        top = feature.top || noWHFeatureTop
+                        top = Number(feature.attributes.orientation_deg)
+                        top = 360 - (!isNaN(top) ? top : 360) || noWHFeatureTop
+
                 
                         if (height && width) {
                 
-                            height = Math.max(height, minFeatSize)
-                            width = Math.max(width, minFeatSize)
+                            const min = feature.isLoss ? minLossSize : minFeatSize
+
+                            height = Math.max(height, min)
+                            width = Math.max(width, min)
                             top = top - height / 2
+                            left = left - width / 2
+                            noDim = false
                         
-                        } else
+                        } else {
 
                             width = height = noWHFeatureSize
-                
-                        if (feature.attributes.feature_category === 'metal loss / mill anomaly') {
-                
-                            height = Math.max(height, minLossSize)
-                            width = Math.max(width, minLossSize)
-                
+                            noDim = true
+
                         }
 
 
-                        this.coords[feature.id] = {}
-                        this.coords[feature.id].left = left
-                        this.coords[feature.id].top = top
-                        this.coords[feature.id].height = height
-                        this.coords[feature.id].width = width
+                        if (isBar) {
+                            
+                            top = 0
+                            width = 3
+                            height = 360
+
+                        }
+
+                        this.coords[feature.id] = feature.pos = {
+                            left: left,
+                            top: top,
+                            height: height,
+                            width: width
+                        }
+
+                        feature.isBar = isBar
+                        feature.noDim = noDim
 
                         return (
                             <Feature
@@ -225,14 +266,8 @@ export default class Axes extends Component {
                                 feature={feature}
                                 onClick={this.props.clickFeature}
                                 onHover={this.props.hoverFeature}
-                                matchMode={feature.matchMode}
-                                isBar={isBar}
-                                pos={{
-                                    left: left,
-                                    top: top,
-                                    height: height,
-                                    width: width
-                                }}
+                                matchMode={this.props.matchMode}
+                                keyLock={this.state.keyLock}
                             />
                         )}
                     )}
@@ -367,8 +402,8 @@ Axes.propTypes = {
 
     features: PropTypes.array.isRequired,
     weldWidth: PropTypes.number.isRequired,
-    updateNum: PropTypes.number.isRequired,
     clickFeature: PropTypes.func.isRequired,
-    hoverFeature: PropTypes.func.isRequired
+    hoverFeature: PropTypes.func.isRequired,
+    cancelMatch: PropTypes.func.isRequired
 
 }

@@ -7,9 +7,6 @@
     display: flex;
 }
 
-.shape > div > div:first-child {
-    cursor: pointer;
-}
 
 .shape > div > div:last-child {
     font-size: small;
@@ -35,6 +32,10 @@
     top: -5px;
     background-repeat: no-repeat;
     background-position-x: center;
+}
+
+.match_on > div > div:before {
+    background-image: none !important;
 }
 
 .isloss:before {

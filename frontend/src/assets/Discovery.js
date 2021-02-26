@@ -1,10 +1,10 @@
 import React, { Component } from 'react'
 import CustomGrid from './CustomGrid'
-import Feature from './Feature.js'
 import APIClient from './APIClient.js'
 import Axes from './Axes'
 import WeldsTable from './WeldsTable'
 import Ctrl from './Ctrl'
+import { Modal, Button, Table as BootTable, Form } from 'react-bootstrap'
 
 export default class Discovery extends Component {
 
@@ -14,7 +14,6 @@ export default class Discovery extends Component {
 
         this.state = {
 
-            match_on: false,
             confirm_on: false,
             nav_status: '0000',
             run_name: '',
@@ -56,7 +55,6 @@ export default class Discovery extends Component {
         this.lossLimit = null
 
     }
-
     
     _isMounted = false
 
@@ -119,16 +117,30 @@ export default class Discovery extends Component {
             this.resizeTimer = setTimeout(this.getGraphWidth, 250)
 
         })
+
         
     }
 
     resizeTimer = null
 
+
+    cancelMatch = () => {
+
+        this.setState({confirm_on: false})
+        document.getElementById('plot_area').className = ''
+        this.highlightDom(this.first_match, "transparent")
+        this.highlightDom(this.second_match, "transparent")
+        this.first_match = 0
+        this.second_match = 0
+        this.graphPipeSection()
+
+    }
+
     clickFeature = id => {
 
         id = Number(id)
 
-        if (!this.state.match_on)
+        if (this.second_match)
 
             return
 
@@ -142,13 +154,13 @@ export default class Discovery extends Component {
             this.second_match = id
 
             this.setState({
-                match_on: false,
                 confirm_on: true
             }, () => this.setState({...this.state}))
 
         } else {
 
             this.first_match = id
+            document.getElementById('plot_area').className = 'match_on'
             this.graphPipeSection()
 
         }
@@ -163,20 +175,22 @@ export default class Discovery extends Component {
     }, this.graphPipeSection)
 
 
-
     graphPipeSection = () => {
 
         const data = this.rawData.features
 
         let features = []
 
-        for (let f in data)
+        for (let f in data) {
  
-            if (((this.filter.matched && data[f].matched) || (this.filter.unmatched && !data[f].matched)) &&
-                (!this.first_match || (this.first_match === Number(f) || this.rawData.features[this.first_match].side !== data[f].side)))
-                
-                features.push({...data[f], matchMode: this.first_match && data[f].id !== this.first_match ? true : false})
+            const filtered = (this.filter.matched && data[f].matched) || (this.filter.unmatched && !data[f].matched)
 
+            if (filtered && (!this.first_match || (this.first_match === data[f].id || (data[this.first_match].side !== data[f].side && !data[f].matched)))) {
+//console.log(this.first_match && data[f].id !== this.first_match ? true : false)
+                features.push({...data[f], matchTarget: this.first_match === data[f].id})
+
+            }
+        }
 
         let allFeatures = []
 
@@ -252,11 +266,10 @@ export default class Discovery extends Component {
             }   
 
         })
-        
+
         this.setState({
 
             features_graph: features,
-            updateNum: this.state.updateNum + 1,
             pipe_section_table: table
             
         })
@@ -505,17 +518,13 @@ export default class Discovery extends Component {
                         }
 
                     feat.attributes.map(attr => feature.attributes[attr.attribute_name] = attr.attribute_data)
-
-                    const top = Number(feature.attributes.orientation_deg)
-
-                    feature.top = 360 - (!isNaN(top) ? top : 360)
-                    feature.width_in = Number(feature.attributes.width_in) || 0
-                    feature.length_in = Number(feature.attributes.length_in) || 0
+                    feature.isLoss = false
 
                     if (feature.attributes.feature_category === 'metal loss / mill anomaly') {
     
                         feature.size = feature.width_in * feature.length_in
                         raw.sizes.push(feature.size)
+                        feature.isLoss = true
                         
                     }
         
@@ -611,7 +620,6 @@ export default class Discovery extends Component {
         this.first_match = 0
         this.second_match = 0
         this.setState({
-            match_on: false,
             confirm_on: false
         })
 
@@ -695,6 +703,50 @@ export default class Discovery extends Component {
     render = () => (
 
         <>
+
+                <Modal
+                    show={this.state.confirm_on}
+                    onHide={this.cancelMatch}
+                    dialogClassName="grid_adj"
+                >
+                    <Modal.Header closeButton>
+                        <Modal.Title>Confirm Feature Match</Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body className="custom-grid-adj">
+                        <BootTable bordered hover>
+                            <thead>
+                                <tr>
+                                    <th></th>
+                                    <th>Side A</th>
+                                    <th>Side B</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                
+                                
+                                <tr>
+                                </tr>
+                            </tbody>
+                        </BootTable>
+                    </Modal.Body>
+                    <Modal.Footer>
+                        <Button
+                            variant="secondary"
+                            onClick={this.cancelMatch}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            variant="primary"
+                            onClick={() => {
+                                ;
+                            }}>
+                            Save Match
+                        </Button>   
+                    </Modal.Footer>
+                </Modal>
+
+
             <Ctrl
                 confirm_on={this.state.confirm_on}
                 manually_checked={this.state.manually_checked}
@@ -717,15 +769,14 @@ export default class Discovery extends Component {
                         }
                     })
                 }}
-                match_on={this.state.match_on}
                 nav_status={this.state.nav_status}
                 onCancel={() => {
                     this.highlightDom(this.first_match, "transparent")
                     this.highlightDom(this.second_match, "transparent")
+                    document.getElementById('plot_area').className = ''
                     this.first_match = 0
                     this.second_match = 0
                     this.setState({
-                        match_on  : false,
                         confirm_on: false
                     }, this.graphPipeSection)
                 }}
@@ -740,10 +791,11 @@ export default class Discovery extends Component {
                     }]
                     this.highlightDom(this.first_match, "transparent")
                     this.highlightDom(this.second_match, "transparent")
+                    document.getElementById('plot_area').className = ''
                     this.first_match = 0
                     this.second_match = 0
                     this.setState({
-                        match_on: false,
+                        //match_on: false,
                         confirm_on: false
                     })
                     this.apiClient.callAPI({  
@@ -759,13 +811,14 @@ export default class Discovery extends Component {
                 }}
                 onMatch={() => {
                     if (this.first_match) {
+                        document.getElementById('plot_area').className = ''
                         this.highlightDom(this.first_match, "transparent")
                         this.highlightDom(this.second_match, "transparent")
                         this.first_match = 0
                         this.second_match = 0
                         this.graphPipeSection()
                     }
-                    this.setState({match_on: !this.state.match_on}, () => this.setState({...this.state}))
+                    //this.setState({match_on: !this.state.match_on}, () => this.setState({...this.state}))
                 }}
                 run_match={String(this.run_match)}
                 run_name={this.state.run_name}
@@ -790,9 +843,15 @@ export default class Discovery extends Component {
             <Axes
                 weldWidth={this.state.max_weld_width}
                 features={this.state.features_graph}
-                updateNum={this.state.updateNum}
                 clickFeature={this.clickFeature}
                 hoverFeature={this.hoverOnGraph}
+                cancelMatch={() => {
+                    if (!this.second_match) {
+                        this.first_match = 0
+                        document.getElementById('plot_area').className = ''
+                        this.graphPipeSection()
+                    }
+                }}
             />
             <div
                 id="grid_container"

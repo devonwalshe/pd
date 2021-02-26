@@ -204,34 +204,36 @@ export default class CustomGrid extends Component {
                         <Modal.Title>Customize Grid Columns</Modal.Title>
                     </Modal.Header>
                     <Modal.Body className="custom-grid-adj">
-                        <Paper style={{
-                                margin: 0,
-                                width: adjWidth
-                            }}>
-                        <Grid
-                            rows={[]}
-                            columns={this.state.adjColumns}
+                        <Paper
                             style={{
                                 margin: 0,
-                                maxWidth: adjWidth,
                                 width: adjWidth
                             }}
                         >
-                            <Table />
-                            <TableColumnResizing
-                                columnWidths={this.state.adjWidths}
-                                onColumnWidthsChange={e => {
-                                    const cols = [...this.state.gridColumns]
-                                    for (let i = 0, ix = e.length; i < ix; i += 1)
-                                        for (let j = 0, jx = cols.length; j < jx; j += 1)
-                                            if (e[i].columnName === cols[j].key && e[i].width !== 800 / 100 * cols[j].width)
-                                                cols[j].width = Math.round(e[i].width / 800 * 100)
-                                    this.setAdjGrid()
-                                    this.setState({ gridColumns: cols })
+                            <Grid
+                                rows={[]}
+                                columns={this.state.adjColumns}
+                                style={{
+                                    margin: 0,
+                                    maxWidth: adjWidth,
+                                    width: adjWidth
                                 }}
-                            />
-                            <TableHeaderRow />
-                        </Grid>
+                            >
+                                <Table />
+                                <TableColumnResizing
+                                    columnWidths={this.state.adjWidths}
+                                    onColumnWidthsChange={e => {
+                                        const cols = [...this.state.gridColumns]
+                                        for (let i = 0, ix = e.length; i < ix; i += 1)
+                                            for (let j = 0, jx = cols.length; j < jx; j += 1)
+                                                if (e[i].columnName === cols[j].key && e[i].width !== 800 / 100 * cols[j].width)
+                                                    cols[j].width = Math.round(e[i].width / 800 * 100)
+                                        this.setAdjGrid()
+                                        this.setState({ gridColumns: cols })
+                                    }}
+                                />
+                                <TableHeaderRow />
+                            </Grid>
                         </Paper>
                         <br></br><br></br>
                         <BootTable bordered hover>
@@ -333,13 +335,13 @@ export default class CustomGrid extends Component {
                         >
                             Cancel
                         </Button>
-                    <Button
-                        variant="primary"
-                        onClick={() => {
-                            handleClose()
-                    }}>
-                        Save Changes
-                    </Button>   
+                        <Button
+                            variant="primary"
+                            onClick={() => {
+                                handleClose()
+                        }}>
+                            Save Changes
+                        </Button>   
                     </Modal.Footer>
                 </Modal>
                 <div
