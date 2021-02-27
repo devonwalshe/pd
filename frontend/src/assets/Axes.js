@@ -19,10 +19,20 @@ export default class Axes extends Component {
 
         this.bars = ['valve', 'valve1', 'valve2', 'flange', 'casing']
 
+        this.hoverDiv = {
+            doc: null,
+            id: 0,
+            color: null
+        }
+
+        this.moveTimer = null
+
+
+        this.graphWidth = 0
 
     }
 
-    graphWidth = 0
+    
 
     _isMounted = false
 
@@ -85,8 +95,190 @@ export default class Axes extends Component {
 
     }
     
+    findFeature = (id, x, y) => {
 
-    getKeyState = () => this.keyLock
+        const co = this.coords
+        const pad = 5
+
+        for (let f in co) 
+
+            if (f !== id) {
+                    
+                const fe = co[f]
+                const l = fe.left - pad
+                const t = fe.top - pad
+                const w = fe.width + pad
+                const h = fe.height + pad
+
+                if (l <= x && t <= y && l + w >= x && t + h >= y)
+
+                    return f
+
+            }
+
+
+    }
+
+
+    generateFeatures = () => {
+
+        let out = []
+
+        this.coords = {}
+
+        for (let f in (this.props.features || {})) {
+            
+            const feature = this.props.features[f]
+            
+            const graph_width = this.graphWidth
+            const max_width = this.props.weldWidth
+            const minSize = 0.5
+            const noDimFeatureSize = 2
+            const minFeatSize = 18
+            const minLossSize = 2
+            const noWHFeatureSize = 28
+            const noWHFeatureTop = -20
+            const isBar = ~this.bars.indexOf(feature.attributes.feature_category) ? true : false
+
+            const h = Number(feature.attributes.width_in) || 0
+            const w = Number(feature.attributes.length_in) || 0
+
+            let width,
+                height,
+                left,
+                top,
+                noDim
+
+            if (!isNaN(h) && !isNaN(w)) {
+
+                width = w > minSize ? graph_width / max_width * w / 12 : noDimFeatureSize
+                height = h > minSize ? graph_width / max_width * h / 12 : noDimFeatureSize
+
+            } 
+
+            left = graph_width / max_width * Number(feature.attributes.us_weld_dist_wc_ft)
+            left = isFinite(left) ? left : 0
+
+            top = Number(feature.attributes.orientation_deg)
+            top = 360 - (!isNaN(top) ? top : 360) || noWHFeatureTop
+
+    
+            if (height && width) {
+    
+                const min = feature.isLoss ? minLossSize : minFeatSize
+
+                height = Math.max(height, min)
+                width = Math.max(width, min)
+                top = top - height / 2
+                left = left - width / 2
+                noDim = false
+            
+            } else {
+
+                width = height = noWHFeatureSize
+                noDim = true
+
+            }
+
+
+            if (isBar) {
+                
+                top = 0
+                width = 3
+                height = 360
+
+            }
+
+            this.coords[feature.id] = feature.pos = {
+                left: left,
+                top: top,
+                height: height,
+                width: width
+            }
+
+            feature.isBar = isBar
+            feature.noDim = noDim
+
+            out.push(
+                <Feature
+                    key={'feature_' + feature.id}
+                    feature={feature}
+                    onClick={this.props.clickFeature}
+                    onHover={this.props.hoverFeature}
+                    onMouseMove={this.mouseMove}
+                    onMouseUp={this.mouseUp}
+                    matchMode={this.props.matchMode}
+                    keyLock={this.state.keyLock}
+                />
+            )
+
+        }
+
+        return out
+
+    }
+
+    mouseMove = (id, x, y) => {
+
+        this.setState({keyLock: true})
+
+        const f = this.findFeature(id, x, y)
+        
+        if (!f || this.hoverDiv.id !== f) {
+
+            this.resetHover()
+
+        }
+
+        if (f && this.hoverDiv.id !== f) {
+
+            const doc = document.getElementById(f)
+
+            this.hoverDiv = {
+                doc: doc,
+                id: f,
+                color: doc.style.backgroundColor
+            }
+
+            doc.style.border = "1px solid red"
+            doc.style.zIndex = 2
+
+        }
+
+    }
+
+
+    mouseUp = (id, x, y) => {
+
+        const f = this.findFeature(id, x, y)
+        
+        if (f)
+        
+            this.props.clickFeature(Number(f))
+
+        else {
+
+            this.props.cancelMatch()
+            this.setState({keyLock:false})
+
+        }
+
+        this.resetHover()
+
+    }
+
+    resetHover = () => {
+
+        if (this.hoverDiv.id) {
+                
+            this.hoverDiv.doc.style.border = "1px solid transparent"
+            this.hoverDiv.doc.style.zIndex = 1
+
+        }
+
+        this.hoverDiv.id = 0
+
+    }
 
     setArea = () => {
 
@@ -103,10 +295,6 @@ export default class Axes extends Component {
     }
 
     xAxis = () => {
-
-        //const w = Math.round(this.state.weld_width * 10) / 10
-        //const w1 = Math.round(this.state.weld_width / 2 * 10) / 10
-
 
         const marks = Math.floor(this.graphWidth / 30)
         const width = this.graphWidth / marks
@@ -189,88 +377,7 @@ export default class Axes extends Component {
                     style={this.styles.plotArea}
                     id='plot_area'
                 >
-                    {(this.props.features || []).map(feature => {
-                        
-                        const graph_width = this.graphWidth
-                        const max_width = this.props.weldWidth
-                        const minSize = 0.5
-                        const noDimFeatureSize = 2
-                        const minFeatSize = 18
-                        const minLossSize = 2
-                        const noWHFeatureSize = 28
-                        const noWHFeatureTop = -20
-                        const isBar = ~this.bars.indexOf(feature.attributes.feature_category) ? true : false
-
-                        const h = Number(feature.attributes.width_in) || 0
-                        const w = Number(feature.attributes.length_in) || 0
-
-                        let width,
-                            height,
-                            left,
-                            top,
-                            noDim
-
-                        if (!isNaN(h) && !isNaN(w)) {
-
-                            width = w > minSize ? graph_width / max_width * w / 12 : noDimFeatureSize
-                            height = h > minSize ? graph_width / max_width * h / 12 : noDimFeatureSize
-
-                        } 
-
-                        left = graph_width / max_width * Number(feature.attributes.us_weld_dist_wc_ft)
-                        left = isFinite(left) ? left : 0
-
-                        top = Number(feature.attributes.orientation_deg)
-                        top = 360 - (!isNaN(top) ? top : 360) || noWHFeatureTop
-
-                
-                        if (height && width) {
-                
-                            const min = feature.isLoss ? minLossSize : minFeatSize
-
-                            height = Math.max(height, min)
-                            width = Math.max(width, min)
-                            top = top - height / 2
-                            left = left - width / 2
-                            noDim = false
-                        
-                        } else {
-
-                            width = height = noWHFeatureSize
-                            noDim = true
-
-                        }
-
-
-                        if (isBar) {
-                            
-                            top = 0
-                            width = 3
-                            height = 360
-
-                        }
-
-                        this.coords[feature.id] = feature.pos = {
-                            left: left,
-                            top: top,
-                            height: height,
-                            width: width
-                        }
-
-                        feature.isBar = isBar
-                        feature.noDim = noDim
-
-                        return (
-                            <Feature
-                                key={'feature_' + feature.id}
-                                feature={feature}
-                                onClick={this.props.clickFeature}
-                                onHover={this.props.hoverFeature}
-                                matchMode={this.props.matchMode}
-                                keyLock={this.state.keyLock}
-                            />
-                        )}
-                    )}
+                    {(() => this.generateFeatures())()}
                 </div>
                 <div
                     id="x_axis"
@@ -400,7 +507,7 @@ export default class Axes extends Component {
 
 Axes.propTypes = {
 
-    features: PropTypes.array.isRequired,
+    features: PropTypes.object.isRequired,
     weldWidth: PropTypes.number.isRequired,
     clickFeature: PropTypes.func.isRequired,
     hoverFeature: PropTypes.func.isRequired,

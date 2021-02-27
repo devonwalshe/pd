@@ -17,15 +17,13 @@ export default class Discovery extends Component {
             confirm_on: false,
             nav_status: '0000',
             run_name: '',
-            features_graph: [],
-            pipe_section_graph: [],
+            featuresPlot: {},
             pipe_section_table: [],
             welds: {},
             manually_checked: false,
             max_weld_width: 0,
             sectionIndex: 0,
             sectionTotal: 0,
-            updateNum: 0,
             table_width: 1
 
         }
@@ -132,13 +130,11 @@ export default class Discovery extends Component {
         this.highlightDom(this.second_match, "transparent")
         this.first_match = 0
         this.second_match = 0
-        this.graphPipeSection()
+        //this.graphPipeSection()
 
     }
 
     clickFeature = id => {
-
-        id = Number(id)
 
         if (this.second_match)
 
@@ -179,32 +175,39 @@ export default class Discovery extends Component {
 
         const data = this.rawData.features
 
-        let features = []
+        let features = {}
 
         for (let f in data) {
  
             const filtered = (this.filter.matched && data[f].matched) || (this.filter.unmatched && !data[f].matched)
 
             if (filtered && (!this.first_match || (this.first_match === data[f].id || (data[this.first_match].side !== data[f].side && !data[f].matched)))) {
-//console.log(this.first_match && data[f].id !== this.first_match ? true : false)
-                features.push({...data[f], matchTarget: this.first_match === data[f].id})
+
+                features[data[f].id] = {
+
+                    ...data[f],
+                    matchTarget: this.first_match && this.first_match !== data[f].id ? true : false,
+                    matched: this.first_match && this.first_match === data[f].id ? true : data[f].matched
+
+                }
 
             }
+
         }
 
         let allFeatures = []
 
         if (this.lossLimit && this.lossLimit < this.rawData.sizes.length)
 
-            for (let i = features.length - 1; i > -1; i -= 1) {
+            for (let f in features) {
                 
-                if (features[i].size && features[i].size < this.rawData.sizes[this.lossLimit])
+                if (features[f].size && features[f].size < this.rawData.sizes[this.lossLimit])
 
-                    features.splice(i, 1)
+                    delete features[f]
 
                 else
 
-                    allFeatures.push(features[i].id)
+                    allFeatures.push(f)
 
             }
 
@@ -268,8 +271,8 @@ export default class Discovery extends Component {
         })
 
         this.setState({
-
-            features_graph: features,
+            
+            featuresPlot: features,
             pipe_section_table: table
             
         })
@@ -522,7 +525,7 @@ export default class Discovery extends Component {
 
                     if (feature.attributes.feature_category === 'metal loss / mill anomaly') {
     
-                        feature.size = feature.width_in * feature.length_in
+                        feature.size = feature.attributes.width_in * feature.attributes.length_in
                         raw.sizes.push(feature.size)
                         feature.isLoss = true
                         
@@ -615,13 +618,7 @@ export default class Discovery extends Component {
 
     sectionGo = (dir, chk, filter) => {
 
-        this.highlightDom(this.first_match, "transparent")
-        this.highlightDom(this.second_match, "transparent")
-        this.first_match = 0
-        this.second_match = 0
-        this.setState({
-            confirm_on: false
-        })
+        this.cancelMatch()
 
         const ps = this.pipe_sections.data
         const ix = ps.length
@@ -706,8 +703,10 @@ export default class Discovery extends Component {
 
                 <Modal
                     show={this.state.confirm_on}
-                    onHide={this.cancelMatch}
-                    dialogClassName="grid_adj"
+                    onHide={() => {
+                        this.cancelMatch()
+                        this.graphPipeSection()
+                    }}
                 >
                     <Modal.Header closeButton>
                         <Modal.Title>Confirm Feature Match</Modal.Title>
@@ -732,14 +731,44 @@ export default class Discovery extends Component {
                     <Modal.Footer>
                         <Button
                             variant="secondary"
-                            onClick={this.cancelMatch}
+                            onClick={() => {
+                                this.cancelMatch()
+                                this.graphPipeSection()
+                            }}
                         >
                             Cancel
                         </Button>
                         <Button
                             variant="primary"
                             onClick={() => {
-                                ;
+
+                                const feature_a = this.rawData.features[this.first_match].side === "A" ? this.first_match : this.second_match
+                                const feature_b = this.rawData.features[this.second_match].side === "B" ? this.second_match : this.first_match   
+
+                                const data = [{
+
+                                    feature_a: feature_a,
+                                    feature_b: feature_b,
+                                    run_match: this.run_match,
+                                    pipe_section: this.pipe_sections.id
+
+                                }]
+
+                                this.cancelMatch()
+
+                                this.apiClient.callAPI({
+
+                                    method: "post",
+                                    endpoint: "feature_pair",
+                                    data: data,
+                                    callback: () => {
+                                        
+                                        this.loadPipeSection()
+
+                                    }
+
+                                })
+
                             }}>
                             Save Match
                         </Button>   
@@ -748,7 +777,6 @@ export default class Discovery extends Component {
 
 
             <Ctrl
-                confirm_on={this.state.confirm_on}
                 manually_checked={this.state.manually_checked}
                 manualCheck={() => {
                     const raw = this.rawData
@@ -770,56 +798,6 @@ export default class Discovery extends Component {
                     })
                 }}
                 nav_status={this.state.nav_status}
-                onCancel={() => {
-                    this.highlightDom(this.first_match, "transparent")
-                    this.highlightDom(this.second_match, "transparent")
-                    document.getElementById('plot_area').className = ''
-                    this.first_match = 0
-                    this.second_match = 0
-                    this.setState({
-                        confirm_on: false
-                    }, this.graphPipeSection)
-                }}
-                onConfirm={() => {
-                    const feature_a = this.rawData.features[this.first_match].side === "A" ? this.first_match : this.second_match
-                    const feature_b = this.rawData.features[this.second_match].side === "B" ? this.second_match : this.first_match   
-                    const data = [{
-                        feature_a: feature_a,
-                        feature_b: feature_b,
-                        run_match: this.run_match,
-                        pipe_section: this.pipe_sections.id
-                    }]
-                    this.highlightDom(this.first_match, "transparent")
-                    this.highlightDom(this.second_match, "transparent")
-                    document.getElementById('plot_area').className = ''
-                    this.first_match = 0
-                    this.second_match = 0
-                    this.setState({
-                        //match_on: false,
-                        confirm_on: false
-                    })
-                    this.apiClient.callAPI({  
-                        method: "post",
-                        endpoint: "feature_pair",
-                        data: data,
-                        callback: () => {
-                            
-                            this.loadPipeSection()
-                        
-                        }
-                    })
-                }}
-                onMatch={() => {
-                    if (this.first_match) {
-                        document.getElementById('plot_area').className = ''
-                        this.highlightDom(this.first_match, "transparent")
-                        this.highlightDom(this.second_match, "transparent")
-                        this.first_match = 0
-                        this.second_match = 0
-                        this.graphPipeSection()
-                    }
-                    //this.setState({match_on: !this.state.match_on}, () => this.setState({...this.state}))
-                }}
                 run_match={String(this.run_match)}
                 run_name={this.state.run_name}
                 section_id={this.state.section_id}
@@ -842,7 +820,7 @@ export default class Discovery extends Component {
                 columns={this.weldsTableColumns}/>
             <Axes
                 weldWidth={this.state.max_weld_width}
-                features={this.state.features_graph}
+                features={this.state.featuresPlot}
                 clickFeature={this.clickFeature}
                 hoverFeature={this.hoverOnGraph}
                 cancelMatch={() => {

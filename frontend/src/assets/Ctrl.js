@@ -373,12 +373,6 @@ export default class Ctrl extends Component {
     )
 
 }
-/*
-<div style={{display:"flex', direction:'row', alignItems:"center", float:"right"}}>
-                        <i className="fa fa-search-minus" style={{marginRight:'10px'}}></i>
-                        <Form.Control type="text" placeholder="1" style={{width:'50px'}} />
-                        <i className="fa fa-search-plus" style={{marginLeft:'10px'}}></i>
-                    </div>*/
 
 Ctrl.propTypes = {
 
@@ -389,7 +383,6 @@ Ctrl.propTypes = {
     lossLimit: PropTypes.func.isRequired,
     manualCheck: PropTypes.func.isRequired,
     setMatchFilter: PropTypes.func.isRequired,
-    onMatch: PropTypes.func.isRequired,
     manually_checked: PropTypes.bool.isRequired,
     nav_status: PropTypes.string.isRequired,
     sectionIndex: PropTypes.number.isRequired,

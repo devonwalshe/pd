@@ -1,7 +1,7 @@
 import React, { Component, createRef } from "react"
-import PropTypes from 'prop-types'
+import PropTypes from "prop-types"
 import Popup from "reactjs-popup"
-import './feature.css'
+import "./feature.css"
 
   
 export default class Feature extends Component {
@@ -12,19 +12,19 @@ export default class Feature extends Component {
 
         this.icons = {
 
-            agm: 'agm',
-            bend: 'bend',
-            casing: 'casing',
-            fitting: 'fitting',
-            flange: 'flange',
-            metal_loss: 'metal_loss',
-            repair: 'repair',
-            stopple: 'stopple',
-            tee: 'tee',
-            txt: 'txt',
-            valve1: 'valve1',
-            valve2: 'valve2',
-            'metal loss / mill anomaly': 'metal_loss'
+            agm: "agm",
+            bend: "bend",
+            casing: "casing",
+            fitting: "fitting",
+            flange: "flange",
+            metal_loss: "metal_loss",
+            repair: "repair",
+            stopple: "stopple",
+            tee: "tee",
+            txt: "txt",
+            valve1: "valve1",
+            valve2: "valve2",
+            "metal loss / mill anomaly": "metal_loss"
 
         }
 
@@ -34,14 +34,21 @@ export default class Feature extends Component {
 
         }
 
-        this.enlarge = 10
+        this.enlarge = 6
 
         this.coords = {}
 
+        this.container = document.getElementById("plot_area").getBoundingClientRect()
+
+        this.cursorOff = {
+            x: 0,
+            y: 0
+        }
         
+        this.mouseMoved = false
         
     }
-
+    s
 
     //Valves, Markers, Flanges, Casings, Sleeves and Welds 
 
@@ -74,18 +81,27 @@ export default class Feature extends Component {
 
     dragDiv = e => {
 
-        document.getElementsByClassName("popup-content")[0].style.display = "none"
+        const pop = document.getElementsByClassName("popup-content")
+
+        pop && pop[0] && (pop[0].style.display = "none")
 
         const elmnt = e.currentTarget
+//console.log(elmnt.id)
+        elmnt.style.zIndex = 3
 
-        let posX = 0,
-            posY = 0
+        this.props.onClick(Number(elmnt.id))
 
         e = e || window.event
         e.preventDefault()
 
-        posX = e.clientX
-        posY = e.clientY
+
+        const rect = elmnt.getBoundingClientRect()
+//console.log(rect)
+        this.cursorOff.x = rect.width / 2 - e.clientX + rect.left
+        this.cursorOff.y = this.props.feature.isBar ? 0 : rect.height / 2  - e.clientY + rect.top
+
+        let posX = e.clientX,
+            posY = e.clientY
 
         document.onmouseup = () => {
 
@@ -96,12 +112,21 @@ export default class Feature extends Component {
 
         document.onmousemove = e => {
 
+            this.mouseMoved = true
+
             e = e || window.event
             e.preventDefault()
+
             elmnt.style.left = (elmnt.offsetLeft - posX + e.clientX) + "px"
             elmnt.style.top = (elmnt.offsetTop - posY + e.clientY) + "px"
+
             posX = e.clientX
             posY = e.clientY
+
+            const l = e.clientX - this.container.left + this.cursorOff.x
+            const t = e.clientY - this.container.top + this.cursorOff.y
+            
+            this.props.onMouseMove(elmnt.id, l, t)
 
         }
         
@@ -109,9 +134,11 @@ export default class Feature extends Component {
 
 
 
-    plotFeature = feature => {
+    plotFeature = () => {
 
-        const border = feature.side === 'A' ? 'orange' : 'blue'
+        const feature = this.props.feature
+
+        const border = feature.side === "A" ? "orange" : "blue"
         const category = feature.attributes.category
         const left = feature.pos.left
         const top = feature.pos.top
@@ -124,39 +151,56 @@ export default class Feature extends Component {
         const matched = feature.matched
         const id = feature.id        
         const icowh = Math.round(Math.min(height, width) - 4)
-        const backgroundColor = matchTarget ? feature.side === 'A' ? '#fed8b1' : 'lightblue' : 'transparent'
-        
+        const backgroundColor = matchTarget ? feature.side === "A" ? "#fed8b1" : "lightblue" : "transparent"
+        const cursor = this.state.keyLock && (!matched || matchTarget) ? "pointer" : "default"
+
         return (
             <div
                 id={id}
-                onMouseDown={e => this.dragDiv(e)}
+                onMouseDown={e => !matched && this.dragDiv(e)}
                 onMouseUp={e => {
+
+                    if (!this.mouseMoved)
+
+                        return
+
+                    e = e || window.event
+                    e.preventDefault()
+            
                     const el = e.currentTarget
+
                     el.style.left = (left - this.enlarge) + "px"
                     el.style.top = (top - this.enlarge) + "px"
+
+                    const l = e.clientX - this.container.left + this.cursorOff.x
+                    const t = e.clientY - this.container.top + this.cursorOff.y
+                    
+                    this.props.onMouseUp(el.id, l, t)
+
+
                 }}
                 onMouseOver={e => {
                     const el = e.currentTarget
                     this.props.onHover(el.id)
                 }}
-                onClick={e => this.state.keyLock && !matched && !matchTarget && this.props.onClick(e.currentTarget.id)}
+                //onClick={e => !matched && !matchTarget && this.props.onClick(Number(e.currentTarget.id))}
                 style={{
                     backgroundColor: backgroundColor,
-                    cursor: this.state.keyLock && !matched && !matchTarget ? "pointer" : "default",
-                    left: left - this.enlarge,
-                    top: top - this.enlarge,
-                    height: height + this.enlarge * 2,
-                    opacity: matchTarget ? 0.8 : 1,
-                    padding: this.enlarge,
-                    width: width + this.enlarge * 2,
-                    zIndex: matchTarget ? 1 : 0,
-                    position: 'absolute'
+                    border: "1px solid transparent",
+                    cursor: cursor,
+                    left: left - this.enlarge - 1,
+                    top: top - this.enlarge - 1,
+                    height: height + this.enlarge * 2 + 2,
+                    width: width + this.enlarge * 2 + 2,
+                    position: "absolute",
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center"
                 }}
             >
-                {(() => isBar &&
-                    (
+                {(() => isBar && (
                         <div
-                            className={"matchbg " + (matched ? '' : 'unmatched')}
+                            className={"matchbg " + (matched ? "" : "unmatched")}
                             id={id}
                             style={{
                                 backgroundColor: category !== "sleeve" ? "gray": "darkblue",
@@ -167,33 +211,22 @@ export default class Feature extends Component {
                         </div>
                     ) || (
                         <div
-                            className={'shape matchbg ' + (matched ? '' : 'unmatched') + (isLoss ? ' isloss' : '')}
+                            className={"shape matchbg " + (matched ? "" : "unmatched") + (isLoss ? " isloss" : "")}
                             style={{
-                                height: height,
-                                width: width
+                                border: "1px solid " + border,
+                                height: height + 2,
+                                width: width + 2
                             }}
                         >
-                            <div>
-                                <div
-                                    id={id}
-                                    style={{
-                                        padding: 1,
-                                        border: "1px solid " + border,
-                                        height: height,
-                                        width: width
-                                    }}
-                                >
-                                    {isLoss || !noDim ? '' : (
-                                        <img
-                                            alt={category}
-                                            width={icowh}
-                                            height={icowh}
-                                            src={"../feature_icons/" + (this.icons[category] || "unknown") + ".png"}
-                                        />
-                                    )}
-                                </div>
-                            </div>
-                            {noDim ? (<div></div>) : ''}
+                            {isLoss || !noDim ? "" : (
+                                <img
+                                    alt={category}
+                                    width={icowh}
+                                    height={icowh}
+                                    src={"../feature_icons/" + (this.icons[category] || "unknown") + ".png"}
+                                />
+                            )}
+                            {noDim ? (<div></div>) : ""}
                         </div>
                     ))()}
             </div>
@@ -203,8 +236,8 @@ export default class Feature extends Component {
 
     render = () => (
         <Popup
-            key={this.props.feature.id + 'popup'}
-            trigger={(() => this.plotFeature(this.props.feature))()}
+            key={this.props.feature.id + "popup"}
+            trigger={this.plotFeature}
             keepTooltipInside="#root"
             position="top center"
             on="hover"
@@ -214,15 +247,15 @@ export default class Feature extends Component {
                     {((item) => {
 
                         const disp = [
-                            'feature',
-                            'feature_category',
-                            'orientation_deg',
-                            'us_weld_dist_wc_ft',
-                            'us_weld_dist_coord_m',
-                            'length_in',
-                            'width_in',
-                            'depth_in',
-                            'comments'
+                            "feature",
+                            "feature_category",
+                            "orientation_deg",
+                            "us_weld_dist_wc_ft",
+                            "us_weld_dist_coord_m",
+                            "length_in",
+                            "width_in",
+                            "depth_in",
+                            "comments"
                         ]
                         
                         let out = [
@@ -232,10 +265,10 @@ export default class Feature extends Component {
                         ]
 
                         disp.forEach((a, i) => {
-                            out.push(<b key={a + i + 'b'}>{a}</b>)
-                            out.push(<span key={a + i + 'c'}>:</span>)
-                            out.push(<span key={a + i + 'd'}>{item.attributes[a]}</span>)
-                            out.push(<br key={a + i + 'e'} />)
+                            out.push(<b key={a + i + "b"}>{a}</b>)
+                            out.push(<span key={a + i + "c"}>:</span>)
+                            out.push(<span key={a + i + "d"}>{item.attributes[a]}</span>)
+                            out.push(<br key={a + i + "e"} />)
                         })
 
                         return out
@@ -252,6 +285,8 @@ Feature.propTypes = {
 
     feature: PropTypes.object.isRequired,
     onClick: PropTypes.func.isRequired,
-    onHover: PropTypes.func.isRequired
+    onHover: PropTypes.func.isRequired,
+    onMouseMove: PropTypes.func.isRequired,
+    onMouseUp: PropTypes.func.isRequired
 
 }
