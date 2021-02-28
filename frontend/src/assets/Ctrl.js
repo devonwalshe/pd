@@ -122,7 +122,7 @@ export default class Ctrl extends Component {
         divider:{
             borderRight: "1px solid #444",
             marginLeft: 0,
-            marginRight: 25,
+            marginRight: 5,
             height: 30
         },
         nav: {

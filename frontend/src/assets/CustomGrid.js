@@ -1,17 +1,17 @@
 import React, { Component } from "react";
-import PropTypes from 'prop-types';
-import ReactDataGrid from 'react-data-grid'
-import fontawesome from '@fortawesome/fontawesome'
-import { faCog, faArrowDown, faArrowUp} from '@fortawesome/free-solid-svg-icons'
-import Paper from '@material-ui/core/Paper'
+import PropTypes from "prop-types";
+import ReactDataGrid from "react-data-grid"
+import fontawesome from "@fortawesome/fontawesome"
+import { faCog, faArrowDown, faArrowUp} from "@fortawesome/free-solid-svg-icons"
+import Paper from "@material-ui/core/Paper"
 import {
   Grid,
   Table,
   TableHeaderRow,
   TableColumnResizing,
-} from '@devexpress/dx-react-grid-material-ui'
-import { Modal, Button, Table as BootTable, Form } from 'react-bootstrap'
-import '../grid_style.css'
+} from "@devexpress/dx-react-grid-material-ui"
+import { Modal, Button, Table as BootTable, Form } from "react-bootstrap"
+import "../grid_style.css"
 
 fontawesome.library.add(faCog, faArrowUp, faArrowDown)
 
@@ -28,37 +28,122 @@ export default class CustomGrid extends Component {
             gridColumns: this.props.gridColumns.map(col => Object.assign({}, col)),
             adjColumns: [],
             adjWidths: [],
-            totalPercent: 0
+            totalPercent: 0,
+            keyLock: false
         }
 
         this.adjGridWidth = 800
 
     }
 
-    _isMounted = false
 
     componentDidMount() {
-
-        this._isMounted = true
 
         this.setAdjGrid()
 
     }
 
-    componentWillUnmount() {
 
-        this._isMounted = false
+    componentDidUpdate() {
+
+        if (this.state.keyLock !== this.props.keyLock)
+
+            this.setState({
+
+                keyLock: this.props.keyLock
+
+            })
 
     }
 
-    
 
+    getColumns = () => {
+
+        let out = []
+
+        if (this.props.width < 0)
+
+            return out
+
+
+        const gutterWidth = 15
+        const scrollBarWidth = 16
+        const fltr = this.state.gridColumns.filter(col => col.show)
+        const pixPerPercent = (this.props.width - gutterWidth - scrollBarWidth) / 2 / 100
+
+        const side = s => fltr.map(col => out.push({
+
+            key: col.key + "_" + s,
+            name: col.name,
+            editable: false,
+            sortable: false,
+            resizable: true,
+            width: col.width * pixPerPercent,
+            formatter: cell => this.getGridColumn(s, cell)
+
+        }))
+
+        side("A")
+
+        out.push({
+
+            key: "match_pair",
+            width: gutterWidth,
+            formatter: cell => (
+                <div 
+                    style={{
+                        cursor: cell.value ? "pointer" : "default",
+                        color: cell.value ? "inherit" : "lightgray",
+                        backgroundColor:"lightgray",
+                        fontSize: "11px",
+                        padding:4
+                    }}
+                    onClick={() => cell.value && this.props.unlink(Number(cell.value))}
+                >X</div>
+            )
+
+        })
+
+        side("B")
+
+        return out
+
+    }
+
+
+    getGridColumn = (side,item) => {
+
+        const matched = typeof item.value === "boolean" && !item.value
+        
+        const style = {
+            
+            color: matched ? "yellow" : "#212529",
+            cursor: this.state.keyLock ? "pointer" : "default",
+            backgroundColor: matched ? "yellow" : "white",
+            padding: 4,
+            fontSize: "0.7rem"
+        
+        }
+
+        return (
+            <div
+                name={!matched ? item.row["id_" + side] : "not_matched"}
+                onClick={() => this.props.clickFeature(item.row["id_" + side])}
+                onMouseOver={e => {
+                 
+                    e.currentTarget.style.cursor = this.state.keyLock ? "pointer" : "default"
+                    this.props.hoverFeature(item.row["id_" + side])
+                
+                }}
+                style={style}
+            >
+                {matched ? "_" : item.value}
+            </div>
+        )
+
+    }
 
     setAdjGrid = () => {
-
-        if (!this._isMounted)
-        
-            return
 
         const fltr = this.state.gridColumns.filter(col => col.show)
 
@@ -88,77 +173,6 @@ export default class CustomGrid extends Component {
     }
 
     
-    getColumns = () => {
-
-        let out = []
-
-        if (this.props.width < 0)
-
-            return out
-
-
-        const gutterWidth = 15
-        const scrollBarWidth = 16
-        const fltr = this.state.gridColumns.filter(col => col.show)
-        const pixPerPercent = (this.props.width - gutterWidth - scrollBarWidth) / 2 / 100
-
-        const side = s => fltr.map(col => out.push({
-
-            key: col.key + '_' + s,
-            name: col.name,
-            editable: false,
-            sortable: false,
-            resizable: true,
-            width: col.width * pixPerPercent,
-            formatter: cell => this.getGridColumn(s, cell)
-
-        }))
-
-        side('A')
-
-        out.push({
-
-            key: 'match_pair',
-            width: gutterWidth,
-            formatter: cell => (
-                <div 
-                    style={{
-                        cursor: cell.value ? 'pointer' : 'arrow',
-                        color: cell.value ? 'inherit' : 'lightgray',
-                        backgroundColor:'lightgray',
-                        fontSize: '11px',
-                        padding:4
-                    }}
-                    onClick={() => cell.value && this.props.unlink(Number(cell.value))}
-                >X</div>
-            )
-
-        })
-
-        side('B')
-
-        return out
-
-    }
-
-
-    getGridColumn = (side,item) => {
-
-        const matched = typeof item.value === 'boolean' && !item.value
-        
-        const style = {color: matched ? 'yellow' : '#212529', backgroundColor: matched ? 'yellow' : 'white', padding:4, fontSize:'0.7rem'}
-        return (
-            <div
-                name={!matched ? item.row['id_' + side] : 'not_matched'}
-                onClick={() => this.props.clickFeature(item.row['id_' + side])}
-                onMouseOver={() => this.props.hoverFeature(item.row['id_' + side])}
-                style={style}
-            >
-                {matched ? '_' : item.value}
-            </div>)
-
-    }
-
 
     setGridSides = () => {
 
@@ -172,15 +186,15 @@ export default class CustomGrid extends Component {
 
             if (i < mid)
 
-                children[i].style.borderTop = '3px solid orange'
+                children[i].style.borderTop = "3px solid orange"
 
             else if (i > mid)
 
-                children[i].style.borderTop = '3px solid blue'
+                children[i].style.borderTop = "3px solid blue"
 
             else if (i === mid)
 
-                children[i].style.borderTop = '3px solid white'
+                children[i].style.borderTop = "3px solid white"
 
 
     }
@@ -361,7 +375,12 @@ export default class CustomGrid extends Component {
                     })()}
                     rowGetter={i => this.props.rows[i]}
                     rowsCount={this.props.rows.length}
-                    onGridRowsUpdated={this.onGridRowsUpdated}
+                    onGridRowsUpdated={()=>{
+
+                        this.onGridRowsUpdated()
+                        this.blur()
+                        
+                    }}
                     enableCellSelect={true}
                 />
             </div>
@@ -377,6 +396,7 @@ CustomGrid.propTypes = {
     clickFeature: PropTypes.func.isRequired,
     hoverFeature: PropTypes.func.isRequired,
     unlink: PropTypes.func.isRequired,
-    width: PropTypes.number.isRequired
+    width: PropTypes.number.isRequired,
+    keyLock: PropTypes.bool.isRequired
 
 }

@@ -30,7 +30,8 @@ export default class Feature extends Component {
 
         this.state = {
 
-            keyLock: false
+            keyLock: false,
+            matchMode: false
 
         }
 
@@ -41,97 +42,31 @@ export default class Feature extends Component {
         this.container = document.getElementById("plot_area").getBoundingClientRect()
 
         this.cursorOff = {
+
             x: 0,
             y: 0
+
         }
         
         this.mouseMoved = false
         
     }
-    s
 
     //Valves, Markers, Flanges, Casings, Sleeves and Welds 
 
 
-
-    _isMounted = false
-
-
-    componentWillUnmount() {
-
-        this._isMounted = false
-
-    }
-
-    componentDidMount() {
-
-        this._isMounted = true
-
-    }
-
     componentDidUpdate() {
 
-        if (this.state.keyLock !== this.props.keyLock)
+        if (this.state.keyLock !== this.props.keyLock || this.state.matchMode !== this.props.matchMode)
 
-            this.setState({keyLock: this.props.keyLock})
+            this.setState({
 
+                keyLock: this.props.keyLock,
+                matchMode: this.props.matchMode
+
+            })
 
     }
-    
-
-    dragDiv = e => {
-
-        const pop = document.getElementsByClassName("popup-content")
-
-        pop && pop[0] && (pop[0].style.display = "none")
-
-        const elmnt = e.currentTarget
-//console.log(elmnt.id)
-        elmnt.style.zIndex = 3
-
-        this.props.onClick(Number(elmnt.id))
-
-        e = e || window.event
-        e.preventDefault()
-
-
-        const rect = elmnt.getBoundingClientRect()
-//console.log(rect)
-        this.cursorOff.x = rect.width / 2 - e.clientX + rect.left
-        this.cursorOff.y = this.props.feature.isBar ? 0 : rect.height / 2  - e.clientY + rect.top
-
-        let posX = e.clientX,
-            posY = e.clientY
-
-        document.onmouseup = () => {
-
-            document.onmouseup = null
-            document.onmousemove = null
-
-        }
-
-        document.onmousemove = e => {
-
-            this.mouseMoved = true
-
-            e = e || window.event
-            e.preventDefault()
-
-            elmnt.style.left = (elmnt.offsetLeft - posX + e.clientX) + "px"
-            elmnt.style.top = (elmnt.offsetTop - posY + e.clientY) + "px"
-
-            posX = e.clientX
-            posY = e.clientY
-
-            const l = e.clientX - this.container.left + this.cursorOff.x
-            const t = e.clientY - this.container.top + this.cursorOff.y
-            
-            this.props.onMouseMove(elmnt.id, l, t)
-
-        }
-        
-    }
-
 
 
     plotFeature = () => {
@@ -139,7 +74,7 @@ export default class Feature extends Component {
         const feature = this.props.feature
 
         const border = feature.side === "A" ? "orange" : "blue"
-        const category = feature.attributes.category
+        const category = feature.attributes.feature_category
         const left = feature.pos.left
         const top = feature.pos.top
         const width = feature.pos.width
@@ -147,54 +82,121 @@ export default class Feature extends Component {
         const isBar = feature.isBar
         const isLoss = feature.isLoss
         const noDim = feature.noDim
-        const matchTarget = feature.matchTarget
         const matched = feature.matched
-        const id = feature.id        
-        const icowh = Math.round(Math.min(height, width) - 4)
-        const backgroundColor = matchTarget ? feature.side === "A" ? "#fed8b1" : "lightblue" : "transparent"
-        const cursor = this.state.keyLock && (!matched || matchTarget) ? "pointer" : "default"
+        const id = feature.id
+        const firstMatch = feature.firstMatch === id ? true : false
+        const icoWH = Math.round(Math.min(height, width) - 4)
+        const matchMode = this.state.matchMode
+        const backgroundColor = matchMode && !firstMatch ? feature.side === "A" ? "#fed8b1" : "lightblue" : "transparent"
+        const cursor = this.state.keyLock && (!matched || !firstMatch) ? "pointer" : "default"
+
+        const l = left - this.enlarge - 1
+        const t = top - this.enlarge - 1
+        const h = height + this.enlarge * 2 + 2
+        const w = width + this.enlarge * 2 + 2
 
         return (
             <div
                 id={id}
-                onMouseDown={e => !matched && this.dragDiv(e)}
-                onMouseUp={e => {
+                onMouseDown={e => {
 
-                    if (!this.mouseMoved)
+                    if (matched)
 
                         return
+
+                    e = e || window.event
+                    e.preventDefault()
+                    
+                    const el = e.currentTarget
+                    const rect = el.getBoundingClientRect()
+                    const pop = document.getElementsByClassName("popup-content")
+            
+                    pop && pop[0] && (pop[0].style.display = "none")
+            
+                    el.style.zIndex = 3
+            
+                    this.cursorOff.x = rect.width / 2 - e.clientX + rect.left
+                    this.cursorOff.y = this.props.feature.isBar ? 0 : rect.height / 2  - e.clientY + rect.top
+            
+                    let posX = e.clientX,
+                        posY = e.clientY
+            
+                    document.onmouseup = () => {
+            
+                        document.onmouseup = null
+                        document.onmousemove = null
+            
+                    }
+            
+                    document.onmousemove = e => {
+            
+                        !this.mouseMoved && this.props.onClick(Number(el.id))
+            
+                        this.mouseMoved = true
+            
+                        if (this.state.keyLock)
+            
+                            return
+            
+                        e = e || window.event
+                        e.preventDefault()
+            
+                        el.style.left = (el.offsetLeft - posX + e.clientX) + "px"
+                        el.style.top = (el.offsetTop - posY + e.clientY) + "px"
+            
+                        posX = e.clientX
+                        posY = e.clientY
+            
+                        const l = e.clientX - this.container.left + this.cursorOff.x
+                        const t = e.clientY - this.container.top + this.cursorOff.y
+            
+                        this.props.onMouseMove(el.id, l, t)
+            
+                    }
+            
+
+                }}
+                onMouseUp={e => {
 
                     e = e || window.event
                     e.preventDefault()
             
                     const el = e.currentTarget
 
+                    if (!this.mouseMoved) {
+
+                        this.state.keyLock && !matched && this.props.onClick(Number(el.id))
+                        return
+
+                    }
+
+                    this.mouseMoved = false
+
                     el.style.left = (left - this.enlarge) + "px"
                     el.style.top = (top - this.enlarge) + "px"
 
-                    const l = e.clientX - this.container.left + this.cursorOff.x
-                    const t = e.clientY - this.container.top + this.cursorOff.y
+                    el.style.zIndex = 1
+
+                    const x = e.clientX - this.container.left + this.cursorOff.x
+                    const y = e.clientY - this.container.top + this.cursorOff.y
                     
-                    this.props.onMouseUp(el.id, l, t)
+                    this.props.onMouseUp(el.id, x, y)
 
 
                 }}
-                onMouseOver={e => {
-                    const el = e.currentTarget
-                    this.props.onHover(el.id)
-                }}
-                //onClick={e => !matched && !matchTarget && this.props.onClick(Number(e.currentTarget.id))}
+                onMouseOver={e => this.props.onHover(e.currentTarget.id)}
                 style={{
-                    backgroundColor: backgroundColor,
+                    backgroundColor:  backgroundColor,
                     border: "1px solid transparent",
                     cursor: cursor,
-                    left: left - this.enlarge - 1,
-                    top: top - this.enlarge - 1,
-                    height: height + this.enlarge * 2 + 2,
-                    width: width + this.enlarge * 2 + 2,
+                    left: l,
+                    top: t,
+                    height: h,
+                    width: w,
                     position: "absolute",
                     display: "flex",
                     justifyContent: "center",
+                    zIndex: 1,
                     alignItems: "center"
                 }}
             >
@@ -221,8 +223,8 @@ export default class Feature extends Component {
                             {isLoss || !noDim ? "" : (
                                 <img
                                     alt={category}
-                                    width={icowh}
-                                    height={icowh}
+                                    width={icoWH}
+                                    height={icoWH}
                                     src={"../feature_icons/" + (this.icons[category] || "unknown") + ".png"}
                                 />
                             )}
@@ -287,6 +289,8 @@ Feature.propTypes = {
     onClick: PropTypes.func.isRequired,
     onHover: PropTypes.func.isRequired,
     onMouseMove: PropTypes.func.isRequired,
-    onMouseUp: PropTypes.func.isRequired
+    onMouseUp: PropTypes.func.isRequired,
+    keyLock: PropTypes.bool.isRequired,
+    matchMode: PropTypes.bool.isRequired
 
 }

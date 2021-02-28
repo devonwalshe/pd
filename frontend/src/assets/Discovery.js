@@ -1,10 +1,10 @@
-import React, { Component } from 'react'
-import CustomGrid from './CustomGrid'
-import APIClient from './APIClient.js'
-import Axes from './Axes'
-import WeldsTable from './WeldsTable'
-import Ctrl from './Ctrl'
-import { Modal, Button, Table as BootTable, Form } from 'react-bootstrap'
+import React, { Component } from "react"
+import CustomGrid from "./CustomGrid"
+import APIClient from "./APIClient.js"
+import Axes from "./Axes"
+import WeldsTable from "./WeldsTable"
+import Ctrl from "./Ctrl"
+import { Modal, Button, Table as BootTable, Form } from "react-bootstrap"
 
 export default class Discovery extends Component {
 
@@ -15,9 +15,10 @@ export default class Discovery extends Component {
         this.state = {
 
             confirm_on: false,
-            nav_status: '0000',
-            run_name: '',
+            nav_status: "0000",
+            run_name: "",
             featuresPlot: {},
+            keyLock: false,
             pipe_section_table: [],
             welds: {},
             manually_checked: false,
@@ -42,14 +43,14 @@ export default class Discovery extends Component {
         }
 
         this.rawData = {}
-        this.run_match = window.location.href.split('/').slice(-1)[0]
+        this.run_match = window.location.href.split("/").slice(-1)[0]
         this.first_match = 0
         this.second_match = 0
         this.hover = {
             graph: 0,
             table: 0
         }
-        this.bgHi = 'yellow'
+        this.bgHi = "yellow"
         this.lossLimit = null
 
     }
@@ -69,31 +70,27 @@ export default class Discovery extends Component {
         
         this.apiClient.callAPI({
             
-            endpoint: 'run_match',
+            endpoint: "run_match",
             
-            data: this.run_match + '/pipe_sections',
+            data: this.run_match + "/pipe_sections",
             
             callback: data => {
 
-                if (this._isMounted) {
-
-                    this.pipe_sections = {
-                        data: data,
-                        id: data[0].id,
-                        index: 0
-                    }
-
-                    this.navStatus()
-                    this.loadPipeSection()
-                    this.setState({
-                        
-                        sectionIndex: this.pipe_sections.index + 1,
-
-                        sectionTotal: this.pipe_sections.data.length
-
-                    })
-
+                this.pipe_sections = {
+                    data: data,
+                    id: data[0].id,
+                    index: 0
                 }
+
+                this.navStatus()
+                this.loadPipeSection()
+                this.setState({
+                    
+                    sectionIndex: this.pipe_sections.index + 1,
+
+                    sectionTotal: this.pipe_sections.data.length
+
+                })
 
             }
 
@@ -101,20 +98,61 @@ export default class Discovery extends Component {
 
         this.apiClient.callAPI({
 
-            endpoint: 'run_match',
+            endpoint: "run_match",
             data: this.run_match,
-            callback: data => this._isMounted && this.setState({run_name: data.name})
+            callback: data => this.setState({run_name: data.name})
 
         })
 
     
-        window.addEventListener('resize', () => {
+        window.addEventListener("resize", () => {
 
             clearTimeout(this.resizeTimer)
 
             this.resizeTimer = setTimeout(this.getGraphWidth, 250)
 
         })
+
+
+        document.onkeydown = e => {
+
+            e = e || window.event
+
+            if (e.ctrlKey)
+
+                this.setState({keyLock: true})
+
+        }
+
+
+        document.onkeyup = e => {
+
+            e = e || window.event
+
+            if (e.key === "Control") {
+
+                this.setState({
+                    keyLock: false
+                })
+
+                document.getElementById("plot_area").className = ""
+
+                this.highlightDom(this.first_match, "transparent")
+                this.highlightDom(this.second_match, "transparent")
+                
+                if (!this.second_match)
+
+                    this.first_match = 0
+                    
+                this.graphPipeSection()
+                
+                setTimeout(() => this.highlightTable(this.first_match, "transparent"), 100)
+                setTimeout(() => this.highlightTable(this.second_match, "transparent"), 100)
+
+
+            }
+
+        }
 
         
     }
@@ -124,19 +162,19 @@ export default class Discovery extends Component {
 
     cancelMatch = () => {
 
-        this.setState({confirm_on: false})
-        document.getElementById('plot_area').className = ''
+        document.getElementById("plot_area").className = ""
         this.highlightDom(this.first_match, "transparent")
         this.highlightDom(this.second_match, "transparent")
+        setTimeout(() => this.highlightTable(this.first_match, "transparent"), 100)
+        setTimeout(() => this.highlightTable(this.last_match, "transparent"), 100)
         this.first_match = 0
         this.second_match = 0
-        //this.graphPipeSection()
 
     }
 
     clickFeature = id => {
-
-        if (this.second_match)
+        
+        if (this.second_match || (this.state.featuresPlot[id] && this.state.featuresPlot[id].matched))
 
             return
 
@@ -156,8 +194,9 @@ export default class Discovery extends Component {
         } else {
 
             this.first_match = id
-            document.getElementById('plot_area').className = 'match_on'
+            document.getElementById("plot_area").className = "match_on"
             this.graphPipeSection()
+            setTimeout(() => this.highlightTable(id, this.state.featuresPlot[id].side === "A" ? "#fed8b1" : "lightblue"), 100)
 
         }
 
@@ -166,7 +205,7 @@ export default class Discovery extends Component {
 
     getGraphWidth = () => this._isMounted && this.setState({
 
-        table_width: parseFloat(document.getElementById('grid_container').getBoundingClientRect().width)
+        table_width: parseFloat(document.getElementById("grid_container").getBoundingClientRect().width)
 
     }, this.graphPipeSection)
 
@@ -181,35 +220,26 @@ export default class Discovery extends Component {
  
             const filtered = (this.filter.matched && data[f].matched) || (this.filter.unmatched && !data[f].matched)
 
-            if (filtered && (!this.first_match || (this.first_match === data[f].id || (data[this.first_match].side !== data[f].side && !data[f].matched)))) {
+            if (filtered && (!this.first_match || (this.first_match === data[f].id || (data[this.first_match].side !== data[f].side && !data[f].matched))))
 
                 features[data[f].id] = {
 
                     ...data[f],
-                    matchTarget: this.first_match && this.first_match !== data[f].id ? true : false,
-                    matched: this.first_match && this.first_match === data[f].id ? true : data[f].matched
+                    firstMatch: this.first_match
 
                 }
 
-            }
-
         }
 
-        let allFeatures = []
-
+        
         if (this.lossLimit && this.lossLimit < this.rawData.sizes.length)
 
-            for (let f in features) {
+            for (let f in features)
                 
                 if (features[f].size && features[f].size < this.rawData.sizes[this.lossLimit])
 
                     delete features[f]
 
-                else
-
-                    allFeatures.push(f)
-
-            }
 
         const getTableRow = (a, b, pair) => {
 
@@ -219,16 +249,18 @@ export default class Discovery extends Component {
                 
                 let out = {
 
-                    ['id_' + side]: (obj && obj.id) || false,
-                    ['feature_id_' + side]: (obj && obj.feature_id) || false
+                    ["id_" + side]: (obj && obj.id) || false,
+                    ["feature_id_" + side]: (obj && obj.feature_id) || false
 
                 }
                 
                 this.gridColumns.filter(col => col.type).forEach(col => {
 
-                    out[col.key + '_' + side] = (attr && ({
-                        num: key => (attr[key] && Number(attr[key]).toFixed(4)) || ' ',
-                        str: key => attr[key] || ' '
+                    out[col.key + "_" + side] = (attr && ({
+
+                        num: key => (attr[key] && Number(attr[key]).toFixed(4)) || " ",
+                        str: key => attr[key] || " "
+
                     })[col.type](col.key)) || false
                     
                 })
@@ -239,9 +271,9 @@ export default class Discovery extends Component {
 
             return{
     
-                ...side(a, 'A'),
+                ...side(a, "A"),
                 match_pair: a && b ? pair : false,
-                ...side(b, 'B'),
+                ...side(b, "B"),
     
             }
     
@@ -252,21 +284,13 @@ export default class Discovery extends Component {
         const tableRaw = this.rawData.table || []
         
         tableRaw.forEach(row => {
-
-            if (!allFeatures.length)
-
-                table.push(getTableRow(row.A, row.B, row.match_pair))
-
-            else {
                 
-                const a = (~allFeatures.indexOf(row.A.id) && row.A) || null
-                const b = (~allFeatures.indexOf(row.B.id) && row.B) || null
+            const a = (row.A && features[row.A.id] && row.A) || null
+            const b = (row.B && features[row.B.id] && row.B) || null
 
-                if (a || b)
+            if (a || b)
 
-                    table.push(getTableRow(a, b, row.match_pair))
-
-            }   
+                table.push(getTableRow(a, b, row.match_pair))
 
         })
 
@@ -282,73 +306,73 @@ export default class Discovery extends Component {
 
     gridColumns = [
         {
-            width:11,
-            name: 'ID',
-            key:'feature_id',
+            width: 11,
+            name: "ID",
+            key:"feature_id",
             show: true
         },
         {
             width: 7,
-            name: 'Feature',
-            key:'feature',
+            name: "Feature",
+            key:"feature",
             show: true,
-            type: 'str'
+            type: "str"
         },
         {
             width: 13,
-            name: 'feature_category',
-            key:'feature_category',
+            name: "feature_category",
+            key:"feature_category",
             show: false,
-            type: 'str'
+            type: "str"
         },
         {
             width: 16,
-            name: 'us_weld_dist_wc_ft',
-            key: 'us_weld_dist_wc_ft',
+            name: "us_weld_dist_wc_ft",
+            key: "us_weld_dist_wc_ft",
             show: true,
-            type: 'num'
+            type: "num"
         },
         {
             width: 18,
-            name: 'us_weld_dist_coord_m',
-            key:'us_weld_dist_coord_m',
+            name: "us_weld_dist_coord_m",
+            key:"us_weld_dist_coord_m",
             show: true,
-            type: 'num'
+            type: "num"
         },
         {
             width: 7,
-            name: 'Depth',
-            key:'depth_in',
+            name: "Depth",
+            key:"depth_in",
             show: true,
-            type: 'num'
+            type: "num"
         },
         {
             width: 8,
-            name: 'Length',
-            key:'length_in',
+            name: "Length",
+            key:"length_in",
             show: true,
-            type: 'num'
+            type: "num"
         },
         {
             width: 7,
-            name: 'Width',
-            key:'width_in',
+            name: "Width",
+            key:"width_in",
             show: true,
-            type: 'num'
+            type: "num"
         },
         {
             width: 13,
-            name: 'Orientation',
-            key:'orientation_deg',
+            name: "Orientation",
+            key:"orientation_deg",
             show: true,
-            type: 'num'
+            type: "num"
         },
         {
             width: 13,
-            name: 'Comments',
-            key:'comments',
+            name: "Comments",
+            key:"comments",
             show: true,
-            type: 'str'
+            type: "str"
         }
     ]
 
@@ -357,7 +381,7 @@ export default class Discovery extends Component {
 
         const doc = document.getElementById(id)
 
-        if (doc && !doc.childNodes.length && color === 'transparent')
+        if (doc && !doc.childNodes.length && color === "transparent")
 
             doc.style.backgroundColor = doc.style.borderColor
         
@@ -368,6 +392,16 @@ export default class Discovery extends Component {
     }
 
 
+    highlightTable = (id, color) => {
+
+        const docs = document.getElementsByName(id)
+
+        for (let i = 0, ix = docs.length; i < ix; i += 1)
+
+            docs[i].style.backgroundColor = color
+
+    }
+
     navStatus = filter => {
 
         const p = this.pipe_sections
@@ -377,15 +411,15 @@ export default class Discovery extends Component {
 
         if (!ln)
 
-            n = '0000'
+            n = "0000"
 
         else if (!p.index)
 
-            n = '0011'
+            n = "0011"
 
         else if (p.index === (ln - 1))
 
-            n = '1100'
+            n = "1100"
 
         else {
 
@@ -409,7 +443,7 @@ export default class Discovery extends Component {
 
                 }
 
-            n = nx.join('')
+            n = nx.join("")
 
         }
 
@@ -419,19 +453,9 @@ export default class Discovery extends Component {
 
     hoverOnGraph = id => {
         
-        const hlt = (id, color) => {
-
-            const docs = document.getElementsByName(id)
-
-            for (let i = 0, ix = docs.length; i < ix; i += 1)
-
-                docs[i].style.backgroundColor = color
-
-        }
-        
-        this.hover.table && hlt(this.hover.table, 'transparent')
+        this.hover.table && this.highlightTable(this.hover.table, "transparent")
         this.hover.table = id
-        id && hlt(id, 'lightblue')
+        id && this.highlightTable(id, "lightblue")
 
     }
 
@@ -445,7 +469,7 @@ export default class Discovery extends Component {
             this.first_match !== this.hover.graph &&
             this.second_match !== this.hover.graph) {
         
-            this.highlightDom(this.hover.graph, 'transparent')
+            this.highlightDom(this.hover.graph, "transparent")
 
         }
 
@@ -459,7 +483,7 @@ export default class Discovery extends Component {
         
         this.apiClient.callAPI({
             
-            endpoint: 'pipe_section',
+            endpoint: "pipe_section",
             
             data: this.pipe_sections.id,
             
@@ -491,11 +515,11 @@ export default class Discovery extends Component {
 
                     weldsTemp[a.side] = a
                     
-                    raw['weld_'+ a.side.toLowerCase() + '_width'] = Number(a.us_weld_dist)
+                    raw["weld_"+ a.side.toLowerCase() + "_width"] = Number(a.us_weld_dist)
                     
                 })
 
-                const sidesAB = ['A', 'B']
+                const sidesAB = ["A", "B"]
 
                 sidesAB.forEach(side => {
 
@@ -523,7 +547,7 @@ export default class Discovery extends Component {
                     feat.attributes.map(attr => feature.attributes[attr.attribute_name] = attr.attribute_data)
                     feature.isLoss = false
 
-                    if (feature.attributes.feature_category === 'metal loss / mill anomaly') {
+                    if (feature.attributes.feature_category === "metal loss / mill anomaly") {
     
                         feature.size = feature.attributes.width_in * feature.attributes.length_in
                         raw.sizes.push(feature.size)
@@ -561,8 +585,8 @@ export default class Discovery extends Component {
 
                                     if (!~featuresIn.indexOf(id) && !~featuresIn.indexOf(id2))
 
-                                        if (feat.side === 'A' && feat.id === pairs[i].feature_a &&
-                                            pair.side === 'B' && pair.id === pairs[i].feature_b) {
+                                        if (feat.side === "A" && feat.id === pairs[i].feature_a &&
+                                            pair.side === "B" && pair.id === pairs[i].feature_b) {
                                         
                                             featuresIn.push(id)
                                             featuresIn.push(id2)
@@ -573,8 +597,8 @@ export default class Discovery extends Component {
                                                 match_pair: pairs[i].id
                                             })
             
-                                        } else if (feat.side === 'B' && feat.id === pairs[i].feature_b &&
-                                                    pair.side === 'A' && pair.id === pairs[i].feature_a) {
+                                        } else if (feat.side === "B" && feat.id === pairs[i].feature_b &&
+                                                    pair.side === "A" && pair.id === pairs[i].feature_a) {
                                             
                                             featuresIn.push(id)
                                             featuresIn.push(id2)
@@ -602,7 +626,7 @@ export default class Discovery extends Component {
 
                     welds: raw.welds,
                     manually_checked: raw.manually_checked,
-                    max_weld_width: Math.max(raw['weld_a_width'], raw['weld_b_width']),
+                    max_weld_width: Math.max(raw["weld_a_width"], raw["weld_b_width"]),
                     section_id: raw.section_id
 
                 })
@@ -680,101 +704,111 @@ export default class Discovery extends Component {
 
     weldsTableColumns = [
         {
-            key: 'weld_id',
-            name: 'Weld ID'
+            key: "weld_id",
+            name: "Weld ID"
         },
         {
-            key: 'us_weld_dist',
-            name: 'Weld ID'
+            key: "us_weld_dist",
+            name: "Weld ID"
         },
         {
-            key: 'joint_length',
-            name: 'Distance'
+            key: "joint_length",
+            name: "Distance"
         },
         {
-            key: 'comments',
-            name: 'Comment'
+            key: "comments",
+            name: "Comment"
         }
     ]
 
     render = () => (
 
         <>
-
-                <Modal
-                    show={this.state.confirm_on}
-                    onHide={() => {
-                        this.cancelMatch()
-                        this.graphPipeSection()
-                    }}
-                >
-                    <Modal.Header closeButton>
-                        <Modal.Title>Confirm Feature Match</Modal.Title>
-                    </Modal.Header>
-                    <Modal.Body className="custom-grid-adj">
-                        <BootTable bordered hover>
-                            <thead>
-                                <tr>
-                                    <th></th>
-                                    <th>Side A</th>
-                                    <th>Side B</th>
+            <Modal
+                show={this.state.confirm_on}
+                onHide={() => {
+                    this.setState({confirm_on: false})
+                    this.cancelMatch()
+                    this.graphPipeSection()
+                }}
+            >
+                <Modal.Header closeButton>
+                    <Modal.Title>Confirm Feature Match</Modal.Title>
+                </Modal.Header>
+                <Modal.Body className="custom-grid-adj">
+                    <BootTable bordered hover>
+                        <thead>
+                            <tr>
+                                <th></th>
+                                <th>Side A</th>
+                                <th>Side B</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {(() => this.gridColumns.map(col => (
+                                <tr key={"conf_" + col.key}>
+                                    <td>
+                                        {col.name}
+                                    </td>
+                                    <td>
+                                        {this.first_match ? col.type ? this.state.featuresPlot[this.first_match].attributes[col.key] : this.state.featuresPlot[this.first_match][col.key] : null}
+                                    </td>
+                                    <td>
+                                        {this.second_match ? col.type ? this.state.featuresPlot[this.second_match].attributes[col.key] : this.state.featuresPlot[this.second_match][col.key] : null}
+                                    </td>
                                 </tr>
-                            </thead>
-                            <tbody>
-                                
-                                
-                                <tr>
-                                </tr>
-                            </tbody>
-                        </BootTable>
-                    </Modal.Body>
-                    <Modal.Footer>
-                        <Button
-                            variant="secondary"
-                            onClick={() => {
-                                this.cancelMatch()
-                                this.graphPipeSection()
-                            }}
-                        >
-                            Cancel
-                        </Button>
-                        <Button
-                            variant="primary"
-                            onClick={() => {
+                            )))()}
+                        </tbody>
+                    </BootTable>
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button
+                        variant="secondary"
+                        onClick={() => {
+                            this.setState({confirm_on: false})
+                            this.cancelMatch()
+                            this.graphPipeSection()
+                        }}
+                    >
+                        Cancel
+                    </Button>
+                    <Button
+                        variant="primary"
+                        onClick={() => {
 
-                                const feature_a = this.rawData.features[this.first_match].side === "A" ? this.first_match : this.second_match
-                                const feature_b = this.rawData.features[this.second_match].side === "B" ? this.second_match : this.first_match   
+                            const feature_a = this.rawData.features[this.first_match].side === "A" ? this.first_match : this.second_match
+                            const feature_b = this.rawData.features[this.second_match].side === "B" ? this.second_match : this.first_match   
 
-                                const data = [{
+                            const data = [{
 
-                                    feature_a: feature_a,
-                                    feature_b: feature_b,
-                                    run_match: this.run_match,
-                                    pipe_section: this.pipe_sections.id
+                                feature_a: feature_a,
+                                feature_b: feature_b,
+                                run_match: this.run_match,
+                                pipe_section: this.pipe_sections.id
 
-                                }]
+                            }]
 
-                                this.cancelMatch()
+                            this.cancelMatch()
+                            this.setState({confirm_on: false})
 
-                                this.apiClient.callAPI({
+                            this.apiClient.callAPI({
 
-                                    method: "post",
-                                    endpoint: "feature_pair",
-                                    data: data,
-                                    callback: () => {
-                                        
-                                        this.loadPipeSection()
+                                method: "post",
+                                endpoint: "feature_pair",
+                                data: data,
+                                callback: () => {
+                                    
+                                    this.loadPipeSection()
 
-                                    }
+                                }
 
-                                })
+                            })
 
-                            }}>
-                            Save Match
-                        </Button>   
-                    </Modal.Footer>
-                </Modal>
-
+                        }}>
+                        Save Match
+                    </Button>   
+                </Modal.Footer>
+            </Modal>
 
             <Ctrl
                 manually_checked={this.state.manually_checked}
@@ -823,13 +857,19 @@ export default class Discovery extends Component {
                 features={this.state.featuresPlot}
                 clickFeature={this.clickFeature}
                 hoverFeature={this.hoverOnGraph}
-                cancelMatch={() => {
+                cancelDrag={() => {
+
                     if (!this.second_match) {
-                        this.first_match = 0
-                        document.getElementById('plot_area').className = ''
+
+                        this.cancelMatch()
                         this.graphPipeSection()
+                        
                     }
+
+                    this.first_match = 0
+
                 }}
+                keyLock={this.state.keyLock}
             />
             <div
                 id="grid_container"
@@ -841,7 +881,7 @@ export default class Discovery extends Component {
                 <CustomGrid
                     key="data_grid"
                     rows={this.state.pipe_section_table}
-                    clickFeature={this.clickFeature}
+                    clickFeature={id => this.state.keyLock && this.clickFeature(id)}
                     hoverFeature={this.hoverOnTable}
                     gridColumns={this.gridColumns}
                     unlink={id => window.confirm("Confirm unlinking the feature?") && this.apiClient.callAPI({
@@ -850,6 +890,7 @@ export default class Discovery extends Component {
                         id: id,
                         callback: () => this.loadPipeSection()})}
                     width={this.state.table_width}
+                    keyLock={this.state.keyLock}
                 />
             </div>
         </>

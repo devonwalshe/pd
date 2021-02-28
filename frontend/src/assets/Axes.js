@@ -1,6 +1,6 @@
-import React, { Component } from 'react'
-import PropTypes from 'prop-types'
-import Feature from './Feature.js'
+import React, { Component } from "react"
+import PropTypes from "prop-types"
+import Feature from "./Feature.js"
 
 export default class Axes extends Component {
 
@@ -11,13 +11,14 @@ export default class Axes extends Component {
         this.state = {
 
             keyLock: false,
+            matchMode: false,
             x_axis: []
 
         }
 
         this.coords = {}
 
-        this.bars = ['valve', 'valve1', 'valve2', 'flange', 'casing']
+        this.bars = ["valve", "valve1", "valve2", "flange", "casing"]
 
         this.hoverDiv = {
             doc: null,
@@ -25,56 +26,17 @@ export default class Axes extends Component {
             color: null
         }
 
-        this.moveTimer = null
-
-
         this.graphWidth = 0
 
     }
 
     
-
-    _isMounted = false
-
-
-    componentWillUnmount() {
-
-        this._isMounted = false
-
-    }
-
+    
     componentDidMount() {
-
-        this._isMounted = true
-        
+    
         this.setArea()
 
-        window.addEventListener('resize', this.setArea)
-
-        document.onkeydown = e => {
-
-            e = e || window.event
-
-            if (e.ctrlKey)
-
-                this.setState({keyLock: true})
-
-        }
-
-        document.onkeyup = e => {
-
-            e = e || window.event
-
-            if (e.keyCode === 17) {
-
-                this.setState({keyLock: false})
-
-                this.props.cancelMatch()
-
-            }
-
-        }
-
+        window.addEventListener("resize", this.setArea)
 
     }
 
@@ -93,7 +55,17 @@ export default class Axes extends Component {
 
         }
 
+        if (this.state.keyLock !== this.props.keyLock)
+
+            this.setState({
+                
+                keyLock: this.props.keyLock,
+                matchMode: this.state.keyLock && !this.props.keyLock ? false : this.state.keyLock
+            
+            })
+
     }
+
     
     findFeature = (id, x, y) => {
 
@@ -140,8 +112,8 @@ export default class Axes extends Component {
             const noWHFeatureTop = -20
             const isBar = ~this.bars.indexOf(feature.attributes.feature_category) ? true : false
 
-            const h = Number(feature.attributes.width_in) || 0
-            const w = Number(feature.attributes.length_in) || 0
+            const h = Number(feature.attributes.width_in)
+            const w = Number(feature.attributes.length_in)
 
             let width,
                 height,
@@ -175,6 +147,8 @@ export default class Axes extends Component {
             
             } else {
 
+                top = -34
+                left -= noWHFeatureSize
                 width = height = noWHFeatureSize
                 noDim = true
 
@@ -201,14 +175,19 @@ export default class Axes extends Component {
 
             out.push(
                 <Feature
-                    key={'feature_' + feature.id}
+                    key={"feature_" + feature.id}
                     feature={feature}
-                    onClick={this.props.clickFeature}
+                    onClick={id => {
+
+                        this.state.keyLock && this.setState({matchMode: true})
+                        this.props.clickFeature(id)
+
+                    }}
                     onHover={this.props.hoverFeature}
                     onMouseMove={this.mouseMove}
                     onMouseUp={this.mouseUp}
-                    matchMode={this.props.matchMode}
                     keyLock={this.state.keyLock}
+                    matchMode={this.state.matchMode}
                 />
             )
 
@@ -220,24 +199,25 @@ export default class Axes extends Component {
 
     mouseMove = (id, x, y) => {
 
-        this.setState({keyLock: true})
+        this.state.matchMode || this.setState({matchMode: true})
 
         const f = this.findFeature(id, x, y)
         
-        if (!f || this.hoverDiv.id !== f) {
+        if (!f || this.hoverDiv.id !== f)
 
             this.resetHover()
 
-        }
 
         if (f && this.hoverDiv.id !== f) {
 
             const doc = document.getElementById(f)
 
             this.hoverDiv = {
+
                 doc: doc,
                 id: f,
                 color: doc.style.backgroundColor
+
             }
 
             doc.style.border = "1px solid red"
@@ -252,17 +232,9 @@ export default class Axes extends Component {
 
         const f = this.findFeature(id, x, y)
         
-        if (f)
-        
-            this.props.clickFeature(Number(f))
-
-        else {
-
-            this.props.cancelMatch()
-            this.setState({keyLock:false})
-
-        }
-
+        f ? this.props.clickFeature(Number(f)) : this.props.cancelDrag()
+    
+        this.setState({matchMode: false})
         this.resetHover()
 
     }
@@ -284,19 +256,20 @@ export default class Axes extends Component {
 
         this.graphWidth = window.innerWidth - 95
 
-        const px = this.graphWidth + 'px'
+        const px = this.graphWidth + "px"
 
-        document.getElementById('x_axis').style.width = px
-        document.getElementById('feature_area').style.width = px
-        document.getElementById('plot_area').style.width = px
+        document.getElementById("x_axis").style.width = px
+        document.getElementById("feature_area").style.width = px
+        document.getElementById("plot_area").style.width = px
 
-        this._isMounted && this.xAxis()
+        //this._isMounted && 
+        this.xAxis()
         
     }
 
     xAxis = () => {
 
-        const marks = Math.floor(this.graphWidth / 30)
+        const marks = Math.floor(this.graphWidth / 50)
         const width = this.graphWidth / marks
 
         let axis = []
@@ -346,7 +319,7 @@ export default class Axes extends Component {
                         for (let i = 0; i <= 12; i += 1) {
                             out.push(
                                 <div
-                                    key={'y_axis_num_' + i}
+                                    key={"y_axis_num_" + i}
                                     style={{
                                         ...this.styles.yAxisNum,
                                         top: i * 30 + 30
@@ -357,7 +330,7 @@ export default class Axes extends Component {
                             )
                             out.push(
                                 <div
-                                    key={'y_axis_notch_' + i}
+                                    key={"y_axis_notch_" + i}
                                     style={{
                                         ...this.styles.yAxisNotch,
                                         top: i * 30 + 37
@@ -370,12 +343,12 @@ export default class Axes extends Component {
                 </div>
                 <div
                     style={this.styles.featureArea}
-                    id='feature_area'
+                    id="feature_area"
                 >
                 </div>
                 <div
                     style={this.styles.plotArea}
-                    id='plot_area'
+                    id="plot_area"
                 >
                     {(() => this.generateFeatures())()}
                 </div>
@@ -394,21 +367,21 @@ export default class Axes extends Component {
 
         container: {
 
-            backgroundColor: '#eee',
-            margin: '0px 5px 40px 5px',
-            height: '460px',
-            padding: '0px 10px 0px 10px',
-            position: 'relative'
+            backgroundColor: "#eee",
+            margin: "0px 5px 40px 5px",
+            height: "460px",
+            padding: "0px 10px 0px 10px",
+            position: "relative"
               
         },
 
         plot: {
 
-            color: 'black',
-            fontSize: '0.7rem',
-            height: '100%',
-            paddingLeft: '30px',
-            position: 'absolute'
+            color: "black",
+            fontSize: "0.7rem",
+            height: "100%",
+            paddingLeft: "30px",
+            position: "absolute"
 
         },
 
@@ -417,14 +390,14 @@ export default class Axes extends Component {
             left: 0,
             marginRight: 10,
             marginTop: 6,
-            position: 'absolute'
+            position: "absolute"
             
         },
 
         yAxisNotch: {
             
-            position: 'absolute',
-            backgroundColor: 'black',
+            position: "absolute",
+            backgroundColor: "black",
             left: 26,
             height: 1,
             width: 8
@@ -433,69 +406,69 @@ export default class Axes extends Component {
 
         yAxisNum: {
 
-            position:'absolute',
-            textAlign:'right',
+            position:"absolute",
+            textAlign:"right",
             width: 20
 
         },
 
         yAxisRuler: {
 
-            backgroundColor:'black',
+            backgroundColor:"black",
             top: 37,
             left: 33,
             height:360,
             width: 0.8,
-            position:'absolute'
+            position:"absolute"
 
         },
 
         featureArea: {
 
-            backgroundColor: '#fafafa',
-            top: '6px',
-            left: '50px',
-            height: '34px',
-            position: 'absolute'
+            backgroundColor: "#fafafa",
+            top: "6px",
+            left: "50px",
+            height: "34px",
+            position: "absolute"
 
         },
 
         plotArea: {
 
-            backgroundColor: '#fff',
-            top: '43px',
-            left: '50px',
-            height: '361px',
-            position: 'absolute'
+            backgroundColor: "#fff",
+            top: "43px",
+            left: "50px",
+            height: "361px",
+            position: "absolute"
 
         },
 
         xAxis: {
             
-            backgroundColor:'black',
+            backgroundColor:"black",
             height: 0.8,
-            top: '425px',
-            left: '50px',
-            width: '500px',
-            position:'absolute'
+            top: "425px",
+            left: "50px",
+            width: "500px",
+            position:"absolute"
           
         },
 
         xAxisNotch: {
             
-            backgroundColor:'black',
+            backgroundColor:"black",
             left: 0,
             top: 0,
             width:1,
             height: 8,
-            position:'absolute'
+            position:"absolute"
 
         },
 
         xAxisNum: {
 
-            top: '10px',
-            position: 'absolute'
+            top: "10px",
+            position: "absolute"
 
         }
 
@@ -511,6 +484,7 @@ Axes.propTypes = {
     weldWidth: PropTypes.number.isRequired,
     clickFeature: PropTypes.func.isRequired,
     hoverFeature: PropTypes.func.isRequired,
-    cancelMatch: PropTypes.func.isRequired
+    cancelDrag: PropTypes.func.isRequired,
+    keyLock: PropTypes.bool.isRequired
 
 }
