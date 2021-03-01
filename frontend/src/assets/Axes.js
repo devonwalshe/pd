@@ -98,7 +98,7 @@ export default class Axes extends Component {
 
         this.coords = {}
 
-        for (let f in (this.props.features || {})) {
+        for (let f in this.props.features || {}) {
             
             const feature = this.props.features[f]
             

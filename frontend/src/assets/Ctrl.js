@@ -24,7 +24,6 @@ export default class Ctrl extends Component {
                 unmatched: true
             },
             manually_checked: false,
-          //  match_on: false,
             nav_status: props.nav_status,
             run_match: props.run_match,
             run_name: this.props.run_name,
@@ -175,8 +174,8 @@ export default class Ctrl extends Component {
                     checked={this.state.filter.matched} />
                 <img
                     alt="Unmatched"
-                    width={12}
-                    height={12}
+                    width={16}
+                    height={16}
                     src={"../feature_icons/link.png"}
                 />
                 <div style={{width: "15px"}}></div>
@@ -194,8 +193,8 @@ export default class Ctrl extends Component {
                     checked={this.state.filter.unmatched} />
                 <img
                     alt="Unmatched"
-                    width={12}
-                    height={12}
+                    width={16}
+                    height={16}
                     src={"../feature_icons/unlink.png"}
                 />
                 <Form.Group as={Col} style={{marginBottom:0}}>

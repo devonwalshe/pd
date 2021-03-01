@@ -25,7 +25,7 @@ export default class Discovery extends Component {
             max_weld_width: 0,
             sectionIndex: 0,
             sectionTotal: 0,
-            table_width: 1
+            table_width: 800
 
         }
 
@@ -145,7 +145,7 @@ export default class Discovery extends Component {
                     this.first_match = 0
                     
                 this.graphPipeSection()
-                
+
                 setTimeout(() => this.highlightTable(this.first_match, "transparent"), 100)
                 setTimeout(() => this.highlightTable(this.second_match, "transparent"), 100)
 
@@ -158,7 +158,6 @@ export default class Discovery extends Component {
     }
 
     resizeTimer = null
-
 
     cancelMatch = () => {
 
@@ -326,15 +325,15 @@ export default class Discovery extends Component {
             type: "str"
         },
         {
-            width: 16,
-            name: "us_weld_dist_wc_ft",
+            width: 13,
+            name: "Distance",
             key: "us_weld_dist_wc_ft",
             show: true,
             type: "num"
         },
         {
-            width: 18,
-            name: "us_weld_dist_coord_m",
+            width: 21,
+            name: "Dist. from US Weld",
             key:"us_weld_dist_coord_m",
             show: true,
             type: "num"
