@@ -305,9 +305,29 @@ export default class Ctrl extends Component {
                         </Button>
                     </OverlayTrigger>
                     &nbsp;
-                    <div className="feature_filter">
-                        <div>Features</div>
-                        <div>
+                    <div
+                        style={{
+                            padding: "0px 10px 0px 10px"
+                        }}
+                    >
+                        <div
+                            style={{
+                                display: "table-cell",
+                                fontSize: "smaller",
+                                padding: "0px 10px 0px 10px"
+                            }}
+                        >
+                            Features
+                        </div>
+                        <div
+                            style={{
+                                background: "white",
+                                marginLeft: "10px",
+                                display: "table-cell",
+                                fontSize: "smaller",
+                                padding: "0px 10px 0px 10px"
+                            }}
+                        >
                             <Toggle
                                 active={this.state.features_filter}
                                 style={{border: "1px solid lightgrey"}}
@@ -321,7 +341,12 @@ export default class Ctrl extends Component {
                         </div>
                     </div>
                     &nbsp;
-                    <div style={{display: "inherit", position: "relative"}}>
+                    <div
+                        style={{
+                            display: "inherit",
+                            position: "relative"
+                        }}
+                    >
                         <Form.Control
                             type="text"
                             placeholder="ID #"
@@ -338,7 +363,8 @@ export default class Ctrl extends Component {
                                     })
                                 }
                             }}
-                            style={{width: "100px"}}></Form.Control>
+                            style={{width: "100px"}}
+                        />
                         <Toggle
                             style={this.styles.goto_toggle}
                             active={this.state.weld_side_a}

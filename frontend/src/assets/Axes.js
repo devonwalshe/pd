@@ -262,7 +262,6 @@ export default class Axes extends Component {
         document.getElementById("feature_area").style.width = px
         document.getElementById("plot_area").style.width = px
 
-        //this._isMounted && 
         this.xAxis()
         
     }

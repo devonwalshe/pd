@@ -1,22 +1,6 @@
-.shape {
-    position: absolute;
-    text-align: center;
-}
-
-.shape > div {
-    display: flex;
-}
-
-
-.shape > div > div:last-child {
-    font-size: small;
-}
-.shape > div:nth-child(2) {
-    left:14px;
-    height:370px;
-    width: 0.8px;
-    background-color: black;
-    position: absolute;
+.isloss:before {
+    right: -5px;
+    top: -15px;
 }
 
 .matchbg:before {
@@ -38,34 +22,12 @@
     background-image: none !important;
 }
 
-.isloss:before {
-    right: -5px;
-    top: -15px;
-}
-
-.shape > div > div > img {
-    display: block;
-}
 .matched:before{
     background-image: url(./link.png);
 }
+
 .unmatched:before{
     background-image: url(./unlink.png);
-}
-
-
-.feature_filter {
-    padding: 0px 10px 0px 10px;
-}
-
-.feature_filter > div {
-    display: table-cell;
-    font-size: smaller;
-    padding: 0px 10px 0px 10px;
-}
-.feature_filter > div:last-child {
-    background: white;
-    margin-left: 10px;
 }
 
 .btn-side_a {

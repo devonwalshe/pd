@@ -72,8 +72,6 @@ export default class Feature extends Component {
     plotFeature = () => {
 
         const feature = this.props.feature
-
-        const border = feature.side === "A" ? "orange" : "blue"
         const category = feature.attributes.feature_category
         const left = feature.pos.left
         const top = feature.pos.top
@@ -88,6 +86,8 @@ export default class Feature extends Component {
         const icoWH = Math.round(Math.min(height, width) - 4)
         const matchMode = this.state.matchMode
         const backgroundColor = matchMode && !firstMatch ? feature.side === "A" ? "#fed8b1" : "lightblue" : "transparent"
+        const iconBorder = "1px solid " + (feature.side === "A" ? "orange" : "blue")
+        const barBackground = matchMode ? "gray" : matched ? category !== "sleeve" ? "gray": "darkblue" : feature.side === "A" ? "#fed8b1" : "lightblue"
         const cursor = this.state.keyLock && (!matched || !firstMatch) ? "pointer" : "default"
 
         const l = left - this.enlarge - 1
@@ -205,7 +205,7 @@ export default class Feature extends Component {
                             className={"matchbg " + (matched ? "" : "unmatched")}
                             id={id}
                             style={{
-                                backgroundColor: category !== "sleeve" ? "gray": "darkblue",
+                                backgroundColor: barBackground,
                                 height: height,
                                 width: width
                             }}
@@ -215,7 +215,9 @@ export default class Feature extends Component {
                         <div
                             className={"shape matchbg " + (matched ? "" : "unmatched") + (isLoss ? " isloss" : "")}
                             style={{
-                                border: "1px solid " + border,
+                                position: "absolute",
+                                textAlign: "center",                            
+                                border: iconBorder,
                                 height: height + 2,
                                 width: width + 2
                             }}
@@ -228,7 +230,15 @@ export default class Feature extends Component {
                                     src={"../feature_icons/" + (this.icons[category] || "unknown") + ".png"}
                                 />
                             )}
-                            {noDim ? (<div></div>) : ""}
+                            {
+                                noDim ? (
+                                    <div
+                                        style={{
+                                            display: "flex"
+                                        }}>
+                                    </div>
+                                ) : ""
+                            }
                         </div>
                     ))()}
             </div>

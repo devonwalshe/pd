@@ -70,7 +70,7 @@ export default class CustomGrid extends Component {
         const scrollBarWidth = 16
         const fltr = this.state.gridColumns.filter(col => col.show)
         const pixPerPercent = (this.props.width - gutterWidth - scrollBarWidth) / 2 / 100
-console.log(pixPerPercent,this.props.width)
+
         const side = s => fltr.map(col => out.push({
 
             key: col.key + "_" + s,
@@ -105,7 +105,7 @@ console.log(pixPerPercent,this.props.width)
         })
 
         side("B")
-console.log(out)
+
         return out
 
     }
