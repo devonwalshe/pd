@@ -268,31 +268,36 @@ export default class Axes extends Component {
 
     xAxis = () => {
 
-        const marks = Math.floor(this.graphWidth / 50)
-        const width = this.graphWidth / marks
+        const minNotchWidth = 50
+        const notches = Math.floor(this.graphWidth / minNotchWidth)
+        const charWidth = 5
+        const notchWidth = this.graphWidth / notches
+        const weldWidth = (Math.round(this.props.weldWidth * 100) / 100)
+        const maxNotch = Math.round(weldWidth * 10 % 5) / 10
+        
+        let notchStep = Number(maxNotch.toString().replace(/^[0.]+/g, ''))
+
+        notchStep = notchStep < 5 ? 5 : 10
 
         let axis = []
 
 
-        const weldWidth = (Math.round(this.props.weldWidth * 100) / 100)
-        const maxNotch = Math.round(weldWidth * 10 % 5) / 10
+        console.log(weldWidth, maxNotch, notchStep, Math.round((weldWidth - maxNotch) * 10) / 10)
 
-        // !console.log(weldWidth, maxNotch, Math.round((weldWidth - maxNotch) * 10) / 10)
+        for (let i = 0; i <= notches; i += 1) {
 
-        for (let i = 0; i <= marks; i += 1) {
-
-            const val = Math.round(i * this.props.weldWidth / marks * 100) / 100
+            const val = Math.round(i * this.props.weldWidth / notches * 100) / 100
 
             axis.push(
 
                 <div
                     key={"x_" + i}
-                    style={{...this.styles.xAxisNotch, left: width * i}}
+                    style={{...this.styles.xAxisNotch, left: notchWidth * i}}
                 >
                 </div>,
                 <div
                     key={"x__" + i}
-                    style={{...this.styles.xAxisNum, left: width * i - (String(val).length * 5 / 2)}}
+                    style={{...this.styles.xAxisNum, left: notchWidth * i - (String(val).length * charWidth / 2)}}
                 >
                     {val}
                 </div>
