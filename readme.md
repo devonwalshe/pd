@@ -17,7 +17,8 @@ Pre-requisites:
   ` $ pip install -r requirements.txt`
   
 3. Bootstrap seed data
-	
+
+  ` $ createdb pd`	
   ` $ python bootstrap.py`
   
 4. Start flask api server:
